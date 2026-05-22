@@ -111,7 +111,7 @@ BAĞLAM:
 - Pozisyon: ${pozisyon || 'Genel'}
 - Zorluk Seviyesi: ${zorlukTurk}
 - Döküman Kaynaklı: ${belgeMetin ? `${dokHedef} soru (döküman içeriğinden)` : 'Yok'}
-- AI Üretimi: ${aiHedef + (belgeMetin ? 0 : dokHedef)} soru (pozisyon/yetkinlik bilgisine göre)${yetStr}${dokStr}
+- AI Üretimi: ${aiHedef + (belgeMetin ? 0 : dokHedef)} soru (pozisyona özgü teknik konulara göre)${yetStr}${dokStr}
 
 ÇIKTI FORMAT (sadece JSON, başka hiçbir şey yazma):
 {
@@ -138,8 +138,8 @@ BAĞLAM:
 KURALLAR:
 - Soru Tipi Tercihi: ${tipiTalimat}
 - "kaynak": döküman içeriğinden üretilen için "dokuman", yetkinlik/pozisyon bilgisinden için "ai"
-- ${belgeMetin ? `İlk ${dokHedef} soruyu döküman içeriğine dayandır` : 'Tüm soruları yetkinlik/pozisyon profiline göre üret'}
-${yetkinlikSecili ? `- KONU KISITI: Sorular SADECE belirtilen yetkinliklerden (${yetkinlikler.join(', ')}) türetilmeli — başka konu, beceri veya alan GİRMEMELİ\n- Her yetkinlik için dengeli soru dağılımı yap (toplam ${toplamAIHedef} soruyu ${yetkinlikler.length} yetkinliğe paylaştır)` : '- Soruları gerçekçi, iş dünyasına özgü ve ölçülebilir yetkinliklere dayandır'}
+- ${belgeMetin ? `İlk ${dokHedef} soruyu döküman içeriğine dayandır` : 'Tüm soruları pozisyon için gereken teknik bilgi, araç ve metodolojilere dayandır'}
+- Soruları pozisyona özgü teknik konulara odakla: kullanılan teknolojiler, metodolojiler, araçlar, sektörel uygulamalar
 - Türkçe yaz`;
 
     try {
