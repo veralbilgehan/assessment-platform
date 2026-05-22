@@ -579,7 +579,6 @@ export default function TestModulu() {
 
   async function projeOlusturVeUret({ _belgeMetin, _projeAd, _soruTipi } = {}) {
     setUretimDurum('Proje oluşturuluyor...'); setUretildi(false); setSorularOnizle([]);
-    const yetIds = [];
     const kullanBelgeMetin = _belgeMetin ?? belgeMetin;
     const kullanProjeAd   = _projeAd   ?? projeAd;
     const kullanSoruTipi  = _soruTipi  ?? soruTipi;
@@ -591,7 +590,7 @@ export default function TestModulu() {
         body: JSON.stringify({
           ad: kullanProjeAd || 'Yeni Test', belge_metin: kullanBelgeMetin || null,
           sektor_id: sektorId || null, departman_id: deptId || null,
-          pozisyon_id: pozId || null, yetkinlik_ids: yetIds.length ? yetIds : null,
+          pozisyon_id: pozId || null, yetkinlik_ids: null,
           soru_sayisi: soruSayisi, zorluk, sure_dakika: sureDakika,
           kaynak_modu: kaynakModu, dokuman_oran: dokOran, havuz_oran: havuzOran, ai_oran: aiOran,
           soru_tipi: kullanSoruTipi,
@@ -803,7 +802,7 @@ export default function TestModulu() {
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.5rem' }}>
         <div>
           <h1 style={{ fontSize:'1.2rem', fontWeight:800, margin:0 }}>Test Hazırlama & Değerlendirme</h1>
-          <p style={{ fontSize:13, color:'var(--muted)', margin:'4px 0 0' }}>Döküman, yetkinlik ve AI destekli hibrit test motoru</p>
+          <p style={{ fontSize:13, color:'var(--muted)', margin:'4px 0 0' }}>Döküman ve AI destekli hibrit test motoru</p>
         </div>
       </div>
 
