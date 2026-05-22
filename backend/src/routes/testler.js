@@ -86,8 +86,10 @@ async function soruUret({ projeId, belgeMetin, pozisyon, sektor, yetkinlikler, y
   if (toplamAIHedef > 0) {
     res?.write(`data: ${JSON.stringify({ tip: 'durum', mesaj: `AI ${toplamAIHedef} soru üretiyor...` })}\n\n`);
 
-    const yetStr = yetkinlikler?.length
-      ? `\nHedef yetkinlikler: ${yetkinlikler.join(', ')}`
+    // Seçili yetkinlikler varsa ZORUNLU kısıt, yoksa genel pozisyon bilgisi
+    const yetkinlikSecili = yetkinlikler?.length > 0;
+    const yetStr = yetkinlikSecili
+      ? `\n\n⚠️ ZORUNLU YETKİNLİK KISITI: Sorular YALNIZCA şu yetkinlikler hakkında olmalı:\n${yetkinlikler.map((y, i) => `  ${i+1}. ${y}`).join('\n')}\nBu listede olmayan hiçbir konuda soru üretme.`
       : '';
     const dokStr = belgeMetin
       ? `\n\nReferans döküman (ilk 6000 karakter):\n${belgeMetin.slice(0, 6000)}`
@@ -106,10 +108,10 @@ async function soruUret({ projeId, belgeMetin, pozisyon, sektor, yetkinlikler, y
 
 BAĞLAM:
 - Sektör: ${sektor || 'Genel'}
-- Pozisyon: ${pozisyon || 'Genel'}${yetStr}
+- Pozisyon: ${pozisyon || 'Genel'}
 - Zorluk Seviyesi: ${zorlukTurk}
 - Döküman Kaynaklı: ${belgeMetin ? `${dokHedef} soru (döküman içeriğinden)` : 'Yok'}
-- AI Üretimi: ${aiHedef + (belgeMetin ? 0 : dokHedef)} soru (pozisyon/yetkinlik bilgisine göre)${dokStr}
+- AI Üretimi: ${aiHedef + (belgeMetin ? 0 : dokHedef)} soru (pozisyon/yetkinlik bilgisine göre)${yetStr}${dokStr}
 
 ÇIKTI FORMAT (sadece JSON, başka hiçbir şey yazma):
 {
@@ -137,7 +139,7 @@ KURALLAR:
 - Soru Tipi Tercihi: ${tipiTalimat}
 - "kaynak": döküman içeriğinden üretilen için "dokuman", yetkinlik/pozisyon bilgisinden için "ai"
 - ${belgeMetin ? `İlk ${dokHedef} soruyu döküman içeriğine dayandır` : 'Tüm soruları yetkinlik/pozisyon profiline göre üret'}
-- Soruları gerçekçi, iş dünyasına özgü ve ölçülebilir yetkinliklere dayandır
+${yetkinlikSecili ? `- KONU KISITI: Sorular SADECE belirtilen yetkinliklerden (${yetkinlikler.join(', ')}) türetilmeli — başka konu, beceri veya alan GİRMEMELİ\n- Her yetkinlik için dengeli soru dağılımı yap (toplam ${toplamAIHedef} soruyu ${yetkinlikler.length} yetkinliğe paylaştır)` : '- Soruları gerçekçi, iş dünyasına özgü ve ölçülebilir yetkinliklere dayandır'}
 - Türkçe yaz`;
 
     try {
