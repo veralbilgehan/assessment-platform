@@ -7,7 +7,8 @@ const pool = require('../db/pool');
 
 const router = Router();
 function getClient() {
-  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const apiKey = (process.env.ANTHROPIC_API_KEY || '').replace(/^﻿/, '').trim();
+  return new Anthropic({ apiKey });
 }
 
 // Belgeleri bellekte tut, diske yazma

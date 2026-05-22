@@ -22,7 +22,10 @@ const { optionalAuth } = require('../middleware/auth');
 const { raporGonder, davetGonder, hesaplaGruplar } = require('../services/emailService');
 
 const router = Router();
-function getClient() { return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }); }
+function getClient() {
+  const apiKey = (process.env.ANTHROPIC_API_KEY || '').replace(/^﻿/, '').trim();
+  return new Anthropic({ apiKey });
+}
 
 /* ═══════════════════════════════════════════════════════════
    YARDIMCI: Soru üretim motoru
