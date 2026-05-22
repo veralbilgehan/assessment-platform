@@ -1,0 +1,47 @@
+# Claude workspace (bu klasörler sadece Claude'a ait)
+projects/
+sessions/
+history.jsonl
+cache/
+backups/
+database/
+debug/
+downloads/
+file-history/
+daemon/
+daemon.log
+ide/
+jobs/
+launch.json
+makale-prompt.ps1
+mcp-needs-auth-cache.json
+paste-cache/
+plugins/
+session-env/
+shell-snapshots/
+skills/
+telemetry/
+todos/
+config.json
+settings.json
+settings.local.json
+
+# Bağımlılıklar
+**/node_modules/
+
+# Build çıktıları
+frontend-react/dist/
+frontend-react/.vite/
+
+# Ortam değişkenleri (GİZLİ - asla commit etme)
+**/.env
+**/.env.local
+**/.env.production
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

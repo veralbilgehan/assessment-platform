@@ -1,0 +1,8 @@
+**/node_modules
+**/.env
+**/dist
+frontend-react/dist
+backend/src/db/migrations/*.sql
+.git
+.gitignore
+*.md
