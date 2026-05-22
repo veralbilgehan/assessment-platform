@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import {
   getHiyerarsiSektorler, getHiyerarsiDeptlar,
-  getHiyerarsiPozisyonlar, getHiyerarsiYetenekler,
+  getHiyerarsiPozisyonlar,
 } from '../api/index.js';
 
 const API = import.meta.env.VITE_API_URL || '';
@@ -483,7 +483,6 @@ export default function TestModulu() {
   const [sektorId, setSektorId]   = useState('');
   const [deptId, setDeptId]       = useState('');
   const [pozId, setPozId]         = useState('');
-  const [secYetkinlikler, setSecYetkinlikler] = useState([]);
 
   // Belge seçim sekmesi
   const [belgeSecTab, setBelgeSecTab] = useState('dosya'); // 'dosya' | 'belgeler'
@@ -528,7 +527,6 @@ export default function TestModulu() {
   const sektorObj = sektorler.find(s => s.id === +sektorId);
   const { data: deptlar = [] } = useQuery({ queryKey:['h-deptlar', sektorId], queryFn: () => getHiyerarsiDeptlar(sektorId), enabled:!!sektorId });
   const { data: pozlar = [] } = useQuery({ queryKey:['h-pozlar', deptId], queryFn: () => getHiyerarsiPozisyonlar(deptId), enabled:!!deptId });
-  const { data: yetenekler = [] } = useQuery({ queryKey:['h-yetenekler', pozId], queryFn: () => getHiyerarsiYetenekler(pozId), enabled:!!pozId });
 
   useEffect(() => { yukleProjeListesi(); }, []);
 
@@ -581,7 +579,7 @@ export default function TestModulu() {
 
   async function projeOlusturVeUret({ _belgeMetin, _projeAd, _soruTipi } = {}) {
     setUretimDurum('Proje oluşturuluyor...'); setUretildi(false); setSorularOnizle([]);
-    const yetIds = yetenekler.filter(y => secYetkinlikler.includes(y.yetenek_id)).map(y => y.yetenek_id);
+    const yetIds = [];
     const kullanBelgeMetin = _belgeMetin ?? belgeMetin;
     const kullanProjeAd   = _projeAd   ?? projeAd;
     const kullanSoruTipi  = _soruTipi  ?? soruTipi;
@@ -1026,49 +1024,12 @@ export default function TestModulu() {
               </div>
               <div>
                 <Lbl>Pozisyon</Lbl>
-                <select value={pozId} onChange={e => { setPozId(e.target.value); setSecYetkinlikler([]); }} style={{ width:'100%' }} disabled={!deptId}>
+                <select value={pozId} onChange={e => setPozId(e.target.value)} style={{ width:'100%' }} disabled={!deptId}>
                   <option value="">{deptId ? 'Pozisyon seçin...' : 'Önce departman'}</option>
                   {pozlar.map(p => <option key={p.id} value={p.id}>{p.ad}{p.seviye ? ` (${p.seviye})` : ''}</option>)}
                 </select>
               </div>
             </div>
-          </Kart>
-
-          <Kart>
-            <div style={{ fontSize:13, fontWeight:600, marginBottom:'1rem' }}>
-              ⚡ Yetkinlik Seçimi
-              {yetenekler.length > 0 && <span style={{ fontSize:11, color:'var(--muted)', fontWeight:400, marginLeft:6 }}>{secYetkinlikler.length}/{yetenekler.length} seçili</span>}
-            </div>
-            {!pozId ? (
-              <div style={{ textAlign:'center', padding:'2rem', color:'var(--muted)', fontSize:13 }}>Pozisyon seçin</div>
-            ) : yetenekler.length === 0 ? (
-              <div style={{ textAlign:'center', padding:'2rem', color:'var(--muted)', fontSize:13 }}>Bu pozisyon için yetkinlik yok</div>
-            ) : (
-              <div>
-                <div style={{ marginBottom:8, display:'flex', gap:6 }}>
-                  <Chip label="Tümünü Seç" active={secYetkinlikler.length === yetenekler.length}
-                    onClick={() => setSecYetkinlikler(yetenekler.map(y => y.yetenek_id))} color='#22c55e' />
-                  <Chip label="Temizle" active={false} onClick={() => setSecYetkinlikler([])} color='#ef4444' />
-                </div>
-                <div style={{ maxHeight:280, overflowY:'auto', display:'flex', flexDirection:'column', gap:6 }}>
-                  {yetenekler.map(y => (
-                    <label key={y.yetenek_id} style={{
-                      display:'flex', alignItems:'center', gap:8, padding:'0.5rem 0.7rem',
-                      borderRadius:6, cursor:'pointer',
-                      background: secYetkinlikler.includes(y.yetenek_id) ? 'var(--accent-dim)' : 'var(--surface2)',
-                      border:`1px solid ${secYetkinlikler.includes(y.yetenek_id) ? 'var(--accent)' : 'var(--border)'}`,
-                    }}>
-                      <input type="checkbox" checked={secYetkinlikler.includes(y.yetenek_id)}
-                        onChange={e => setSecYetkinlikler(prev => e.target.checked ? [...prev, y.yetenek_id] : prev.filter(x => x !== y.yetenek_id))}
-                        style={{ accentColor:'var(--accent)' }} />
-                      <span style={{ flex:1, fontSize:12, fontWeight:500 }}>{y.yetenek_adi}</span>
-                      {y.zorunlu && <span style={{ fontSize:10, color:'#ef4444' }}>ZORUNLU</span>}
-                      <span style={{ fontSize:10, color:y.renk_kodu||'var(--muted)', background:`${y.renk_kodu||'var(--border)'}22`, padding:'1px 5px', borderRadius:8 }}>{y.kategori_adi}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
           </Kart>
 
           <div style={{ gridColumn:'1/-1', display:'flex', justifyContent:'space-between' }}>
