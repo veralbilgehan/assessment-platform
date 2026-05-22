@@ -530,6 +530,17 @@ export default function TestModulu() {
 
   useEffect(() => { yukleProjeListesi(); }, []);
 
+  // Pozisyon seçilince otomatik proje adı üret
+  useEffect(() => {
+    if (pozId && pozlar.length) {
+      const poz = pozlar.find(p => String(p.id) === String(pozId));
+      if (poz) {
+        const tarih = new Date().toLocaleDateString('tr-TR', { month:'short', year:'numeric' });
+        setProjeAd(`${poz.ad} Testi — ${tarih}`);
+      }
+    }
+  }, [pozId, pozlar]);
+
   async function yukleProjeListesi() {
     const res = await fetch(`${API}/api/testler/proje`, { headers: authH() });
     const data = await res.json();
@@ -1140,11 +1151,10 @@ export default function TestModulu() {
 
           <div style={{ gridColumn:'1/-1', display:'flex', justifyContent:'space-between' }}>
             <button onClick={() => setAdim(1)} style={{ padding:'0.65rem 1.5rem', borderRadius:8, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:13, cursor:'pointer' }}>← Geri</button>
-            <button onClick={() => { setAdim(3); projeOlusturVeUret({}); }} disabled={!projeAd} style={{
+            <button onClick={() => { setAdim(3); projeOlusturVeUret({}); }} style={{
               padding:'0.65rem 2rem', borderRadius:8, border:'none',
-              background: projeAd ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : 'var(--muted)',
-              color:'#fff', fontSize:13, fontWeight:700,
-              cursor: projeAd ? 'pointer' : 'not-allowed',
+              background:'linear-gradient(135deg,#6366f1,#8b5cf6)',
+              color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer',
             }}>✦ Testi Üret →</button>
           </div>
         </div>
