@@ -508,6 +508,14 @@ export default function TestModulu() {
   const [sonuc, setSonuc]           = useState(null);
   const [secilenProje, setSecilenProje] = useState(null);
 
+  // Test Ata modal
+  const [testAtaProje, setTestAtaProje]       = useState(null);
+  const [ataEmail, setAtaEmail]               = useState('');
+  const [ataAd, setAtaAd]                     = useState('');
+  const [ataGonderildi, setAtaGonderildi]     = useState(false);
+  const [ataGonderiliyor, setAtaGonderiliyor] = useState(false);
+  const [ataKopyalandi, setAtaKopyalandi]     = useState(false);
+
   // Cascading queries
   const { data: sektorler = [] } = useQuery({ queryKey:['h-sektorler'], queryFn: getHiyerarsiSektorler });
   const sektorObj = sektorler.find(s => s.id === +sektorId);
@@ -547,36 +555,106 @@ export default function TestModulu() {
     setUretimDurum('Proje oluşturuluyor...'); setUretildi(false); setSorularOnizle([]);
     const yetIds = yetenekler.filter(y => secYetkinlikler.includes(y.yetenek_id)).map(y => y.yetenek_id);
 
-    const projeRes = await fetch(`${API}/api/testler/proje`, {
-      method:'POST', headers:{ 'Content-Type':'application/json', ...authH() },
-      body: JSON.stringify({
-        ad: projeAd || 'Yeni Test', belge_metin: belgeMetin || null,
-        sektor_id: sektorId || null, departman_id: deptId || null,
-        pozisyon_id: pozId || null, yetkinlik_ids: yetIds.length ? yetIds : null,
-        soru_sayisi: soruSayisi, zorluk, sure_dakika: sureDakika,
-        kaynak_modu: kaynakModu, dokuman_oran: dokOran, havuz_oran: havuzOran, ai_oran: aiOran,
-      }),
-    });
-    const { id: projeId } = await projeRes.json();
-
-    const uretRes = await fetch(`${API}/api/testler/proje/${projeId}/uret`, {
-      method:'POST', headers: authH(),
-    });
-    const reader = uretRes.body.getReader(); const dec = new TextDecoder();
-    while (true) {
-      const { done, value } = await reader.read(); if (done) break;
-      for (const line of dec.decode(value, { stream:true }).split('\n')) {
-        if (!line.startsWith('data: ')) continue;
-        const p = line.slice(6).trim(); if (p === '[DONE]') break;
-        try {
-          const obj = JSON.parse(p);
-          if (obj.tip === 'durum') setUretimDurum(obj.mesaj);
-          if (obj.tip === 'ilerleme') setUretimDurum(`AI yazıyor... (${obj.karakter} karakter)`);
-          if (obj.tip === 'bitti') { setSorularOnizle(obj.sorular || []); setUretildi(true); setUretimDurum(''); }
-        } catch {}
-      }
+    let projeId;
+    try {
+      const projeRes = await fetch(`${API}/api/testler/proje`, {
+        method:'POST', headers:{ 'Content-Type':'application/json', ...authH() },
+        body: JSON.stringify({
+          ad: projeAd || 'Yeni Test', belge_metin: belgeMetin || null,
+          sektor_id: sektorId || null, departman_id: deptId || null,
+          pozisyon_id: pozId || null, yetkinlik_ids: yetIds.length ? yetIds : null,
+          soru_sayisi: soruSayisi, zorluk, sure_dakika: sureDakika,
+          kaynak_modu: kaynakModu, dokuman_oran: dokOran, havuz_oran: havuzOran, ai_oran: aiOran,
+        }),
+      });
+      const data = await projeRes.json();
+      projeId = data.id;
+    } catch(e) {
+      setUretimDurum('❌ Proje oluşturulamadı: ' + e.message);
+      return;
     }
-    await yukleProjeListesi();
+
+    setUretimDurum('🤖 AI sorular üretiyor — bu işlem 1-2 dakika sürebilir...');
+
+    try {
+      const uretRes = await fetch(`${API}/api/testler/proje/${projeId}/uret`, {
+        method:'POST', headers: authH(),
+      });
+      const reader = uretRes.body.getReader(); const dec = new TextDecoder();
+      let tamamlandi = false;
+      while (true) {
+        const { done, value } = await reader.read(); if (done) break;
+        for (const line of dec.decode(value, { stream:true }).split('\n')) {
+          if (line.startsWith(':')) continue; // keepalive ping — yoksay
+          if (!line.startsWith('data: ')) continue;
+          const p = line.slice(6).trim(); if (p === '[DONE]') { tamamlandi = true; break; }
+          try {
+            const obj = JSON.parse(p);
+            if (obj.tip === 'durum')    setUretimDurum(`⚙️ ${obj.mesaj}`);
+            if (obj.tip === 'ilerleme') setUretimDurum(`🤖 AI yazıyor... (${obj.karakter} karakter)`);
+            if (obj.tip === 'uyari')    setUretimDurum(`⚠️ ${obj.mesaj}`);
+            if (obj.tip === 'bitti') {
+              setSorularOnizle(obj.sorular || []);
+              setUretildi(true);
+              setUretimDurum('');
+              tamamlandi = true;
+            }
+          } catch {}
+        }
+        if (tamamlandi) break;
+      }
+      if (!tamamlandi) {
+        setUretimDurum('⚠️ Bağlantı kesildi — proje kaydedildi, listeden açabilirsiniz.');
+        await yukleProjeListesi();
+        setTimeout(() => setAdim(0), 3000); // 3 saniye sonra listeye dön
+      }
+    } catch(e) {
+      setUretimDurum('❌ Soru üretimi başarısız: ' + e.message);
+      await yukleProjeListesi();
+      setTimeout(() => setAdim(0), 3000);
+    } finally {
+      // Başarılı tamamlanmışsa listeyi yenile ama adımı değiştirme
+      await yukleProjeListesi();
+    }
+  }
+
+  /* ── Test Ata yardımcıları ─────────────────────────── */
+  function openAtaModal(proje) {
+    setTestAtaProje(proje);
+    setAtaEmail(''); setAtaAd(''); setAtaGonderildi(false);
+    setAtaGonderiliyor(false); setAtaKopyalandi(false);
+  }
+
+  function getAtaLink(projeId) {
+    return `${window.location.origin}/test?proje=${projeId}&aday=${encodeURIComponent(ataAd)}`;
+  }
+
+  async function kopyalaAtaLink() {
+    await navigator.clipboard.writeText(getAtaLink(testAtaProje?.id));
+    setAtaKopyalandi(true);
+    setTimeout(() => setAtaKopyalandi(false), 2000);
+  }
+
+  async function ataDavetGonder() {
+    if (!ataEmail.trim()) { alert('E-posta adresi zorunlu'); return; }
+    setAtaGonderiliyor(true);
+    try {
+      const t = localStorage.getItem('token');
+      const r = await fetch(`${API}/api/testler/davet`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+        body: JSON.stringify({
+          proje_id:    testAtaProje?.id,
+          aday_ad:     ataAd || 'Aday',
+          aday_eposta: ataEmail,
+          pozisyon:    testAtaProje?.pozisyon_adi || '',
+          test_linki:  getAtaLink(testAtaProje?.id),
+        }),
+      });
+      if (!r.ok) { const e = await r.json(); throw new Error(e.hata || 'Gönderilemedi'); }
+      setAtaGonderildi(true);
+    } catch(e) { alert(e.message); }
+    finally { setAtaGonderiliyor(false); }
   }
 
   /* ── Test Çözüm Akışı ── */
@@ -600,6 +678,98 @@ export default function TestModulu() {
   /* ── Yönetim Paneli ── */
   return (
     <div style={{ animation:'fadeIn 0.2s' }}>
+
+      {/* ── MODAL: Test Ata ── */}
+      {testAtaProje && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.65)', zIndex:1000,
+          display:'flex', alignItems:'center', justifyContent:'center' }}
+          onClick={() => setTestAtaProje(null)}>
+          <div style={{ background:'var(--surface)', borderRadius:14, padding:'1.75rem',
+            maxWidth:480, width:'92%', boxShadow:'0 20px 60px rgba(0,0,0,0.4)' }}
+            onClick={e => e.stopPropagation()}>
+
+            {/* Başlık */}
+            <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'1rem' }}>
+              <div>
+                <div style={{ fontSize:'1rem', fontWeight:800, marginBottom:4 }}>🧪 Test Ata</div>
+                <div style={{ fontSize:12, color:'var(--muted)' }}>
+                  <span style={{ color:'var(--accent)', fontWeight:600 }}>{testAtaProje.ad}</span>
+                  {testAtaProje.pozisyon_adi && ` · ${testAtaProje.pozisyon_adi}`}
+                </div>
+              </div>
+              <button onClick={() => setTestAtaProje(null)} style={{
+                background:'transparent', border:'none', color:'var(--muted)',
+                cursor:'pointer', fontSize:20, lineHeight:1, padding:2,
+              }}>✕</button>
+            </div>
+
+            {/* Aday Adı */}
+            <div style={{ marginBottom:'0.85rem' }}>
+              <div style={{ fontSize:11, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--muted)', marginBottom:6 }}>Aday Adı (Opsiyonel)</div>
+              <input
+                placeholder="Ad Soyad..."
+                value={ataAd}
+                onChange={e => setAtaAd(e.target.value)}
+                style={{ width:'100%' }}
+              />
+            </div>
+
+            {/* Test Linki */}
+            <div style={{ marginBottom:'1rem' }}>
+              <div style={{ fontSize:11, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--muted)', marginBottom:6 }}>Test Bağlantısı</div>
+              <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                <input readOnly value={getAtaLink(testAtaProje.id)}
+                  style={{ flex:1, fontSize:11, color:'var(--muted)', background:'var(--surface2)' }} />
+                <button onClick={kopyalaAtaLink} style={{
+                  padding:'0.4rem 0.85rem', borderRadius:6, border:'none', flexShrink:0,
+                  background: ataKopyalandi ? '#22c55e' : 'var(--surface2)',
+                  color: ataKopyalandi ? '#fff' : 'var(--text)',
+                  fontSize:12, fontWeight:600, cursor:'pointer',
+                }}>{ataKopyalandi ? '✓ Kopyalandı' : '📋 Kopyala'}</button>
+              </div>
+            </div>
+
+            <div style={{ borderTop:'1px dashed var(--border)', margin:'1rem 0' }} />
+
+            {/* E-posta Gönder */}
+            {!ataGonderildi ? (
+              <div>
+                <div style={{ fontSize:11, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--muted)', marginBottom:6 }}>Davet E-postası Gönder</div>
+                <div style={{ display:'flex', gap:8 }}>
+                  <input
+                    type="email"
+                    placeholder="aday@email.com"
+                    value={ataEmail}
+                    onChange={e => setAtaEmail(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && ataDavetGonder()}
+                    style={{ flex:1 }}
+                  />
+                  <button onClick={ataDavetGonder} disabled={!ataEmail.trim() || ataGonderiliyor} style={{
+                    padding:'0.4rem 0.85rem', borderRadius:6, border:'none', flexShrink:0,
+                    background: (!ataEmail.trim() || ataGonderiliyor) ? 'var(--muted)' : 'var(--accent)',
+                    color:'#fff', fontSize:12, fontWeight:600,
+                    cursor:(!ataEmail.trim() || ataGonderiliyor) ? 'not-allowed' : 'pointer',
+                  }}>{ataGonderiliyor ? '⚙️...' : '📧 Gönder'}</button>
+                </div>
+                <div style={{ fontSize:11, color:'var(--muted)', marginTop:6 }}>
+                  Adaya test daveti ve bağlantı e-posta ile gönderilir.
+                </div>
+              </div>
+            ) : (
+              <div style={{
+                background:'rgba(34,197,94,0.12)', border:'1px solid rgba(34,197,94,0.3)',
+                borderRadius:10, padding:'0.85rem 1rem', textAlign:'center',
+              }}>
+                <div style={{ fontSize:16, marginBottom:4 }}>✅</div>
+                <div style={{ fontSize:13, fontWeight:700, color:'#22c55e' }}>Davet gönderildi!</div>
+                <div style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>
+                  <strong>{ataEmail}</strong> adresine test daveti iletildi.
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.5rem' }}>
         <div>
           <h1 style={{ fontSize:'1.2rem', fontWeight:800, margin:0 }}>Test Hazırlama & Değerlendirme</h1>
@@ -672,9 +842,39 @@ export default function TestModulu() {
                     </div>
                     <span style={{
                       fontSize:10, padding:'2px 6px', borderRadius:10,
-                      background: p.durum==='hazir' ? 'rgba(34,197,94,0.15)' : 'rgba(251,191,36,0.15)',
-                      color: p.durum==='hazir' ? '#22c55e' : '#f59e0b',
-                    }}>{p.durum}</span>
+                      background: p.durum==='hazir' ? 'rgba(34,197,94,0.15)' : p.durum==='uretiliyor' ? 'rgba(99,102,241,0.15)' : 'rgba(251,191,36,0.15)',
+                      color: p.durum==='hazir' ? '#22c55e' : p.durum==='uretiliyor' ? '#6366f1' : '#f59e0b',
+                    }}>
+                      {p.durum === 'uretiliyor' ? '⚙️ üretiliyor' : p.durum}
+                    </span>
+                    {/* Takılı kalan "uretiliyor" projeleri için Yeniden Dene */}
+                    {p.durum === 'uretiliyor' && (
+                      <button onClick={async () => {
+                        setAdim(3); setUretimDurum('⚙️ Yeniden üretiliyor...');
+                        const uretRes = await fetch(`${API}/api/testler/proje/${p.id}/uret`, { method:'POST', headers: authH() });
+                        const reader2 = uretRes.body.getReader(); const dec2 = new TextDecoder();
+                        let ok = false;
+                        while (true) {
+                          const { done, value } = await reader2.read(); if (done) break;
+                          for (const line of dec2.decode(value, { stream:true }).split('\n')) {
+                            if (line.startsWith(':')) continue;
+                            if (!line.startsWith('data: ')) continue;
+                            const p2 = line.slice(6).trim();
+                            try { const obj = JSON.parse(p2); if (obj.tip === 'ilerleme') setUretimDurum(`🤖 AI yazıyor... (${obj.karakter} kr)`); if (obj.tip === 'bitti') { setSorularOnizle(obj.sorular||[]); setUretildi(true); ok=true; } } catch {}
+                          }
+                        }
+                        await yukleProjeListesi();
+                        if (ok) setAdim(3); else setAdim(0);
+                      }} style={{ padding:'0.3rem 0.6rem', borderRadius:6, border:'1px solid #6366f1', background:'transparent', color:'#6366f1', fontSize:11, fontWeight:700, cursor:'pointer' }}>
+                        🔄 Tekrar
+                      </button>
+                    )}
+                    {p.durum !== 'uretiliyor' && (
+                      <button onClick={() => openAtaModal(p)} title="Test Ata" style={{
+                        padding:'0.3rem 0.6rem', borderRadius:6, border:'1px solid var(--accent)',
+                        background:'transparent', color:'var(--accent)', fontSize:11, fontWeight:700, cursor:'pointer',
+                      }}>🧪 Ata</button>
+                    )}
                     {p.durum === 'hazir' && (
                       <button onClick={() => { setSecilenProje(p); setMod('aday_giris'); }} style={{
                         padding:'0.3rem 0.7rem', borderRadius:6, border:'none',
@@ -868,14 +1068,28 @@ export default function TestModulu() {
         <div>
           {!uretildi ? (
             <Kart style={{ textAlign:'center', padding:'3rem' }}>
-              <div style={{ fontSize:48, marginBottom:12 }}>⚙️</div>
-              <div style={{ fontSize:16, fontWeight:700, marginBottom:8 }}>Test Üretiliyor...</div>
-              <div style={{ fontSize:13, color:'var(--muted)', marginBottom:16 }}>{uretimDurum}</div>
-              <div style={{ maxWidth:400, margin:'0 auto' }}>
-                <div style={{ height:6, background:'var(--surface2)', borderRadius:3, overflow:'hidden' }}>
-                  <div style={{ height:'100%', background:'var(--accent)', borderRadius:3, animation:'progressAnim 2s ease-in-out infinite' }} />
-                </div>
+              <div style={{ fontSize:48, marginBottom:12 }}>
+                {uretimDurum.startsWith('❌') || uretimDurum.startsWith('⚠️') ? '⚠️' : '⚙️'}
               </div>
+              <div style={{ fontSize:16, fontWeight:700, marginBottom:8 }}>
+                {uretimDurum.startsWith('❌') ? 'Hata Oluştu' : uretimDurum.startsWith('⚠️') ? 'Dikkat' : 'Test Üretiliyor...'}
+              </div>
+              <div style={{ fontSize:13, color:'var(--muted)', marginBottom:16, maxWidth:480, margin:'0 auto 16px' }}>{uretimDurum}</div>
+              {!uretimDurum.startsWith('❌') && !uretimDurum.startsWith('⚠️') && (
+                <div style={{ maxWidth:400, margin:'0 auto 16px' }}>
+                  <div style={{ height:6, background:'var(--surface2)', borderRadius:3, overflow:'hidden' }}>
+                    <div style={{ height:'100%', background:'var(--accent)', borderRadius:3, animation:'progressAnim 2s ease-in-out infinite' }} />
+                  </div>
+                  <div style={{ fontSize:11, color:'var(--muted)', marginTop:8 }}>
+                    Bu işlem soru sayısına göre 1-3 dakika sürebilir ☕
+                  </div>
+                </div>
+              )}
+              <button onClick={() => { setAdim(0); yukleProjeListesi(); }} style={{
+                marginTop:12, padding:'0.5rem 1.5rem', borderRadius:8,
+                border:'1px solid var(--border)', background:'var(--surface2)',
+                color:'var(--text)', fontSize:12, cursor:'pointer',
+              }}>← Listeye Dön</button>
               <style>{`@keyframes progressAnim { 0%{width:0%} 50%{width:80%} 100%{width:95%} }`}</style>
             </Kart>
           ) : (

@@ -255,6 +255,15 @@ export default function AdayKiyasla() {
   const [gecmisler, setGecmisler] = useState([]);
   const [seciliGecmis, setSeciliGecmis] = useState(null);
 
+  // Test Ata modal
+  const [testAtaAday, setTestAtaAday]     = useState(null); // null | 'A' | 'B'
+  const [testProjeler, setTestProjeler]   = useState([]);
+  const [testProjeSec, setTestProjeSec]   = useState('');
+  const [testEmail, setTestEmail]         = useState('');
+  const [testGonderildi, setTestGonderildi] = useState(false);
+  const [testKopyalandi, setTestKopyalandi] = useState(false);
+  const [testGonderiliyor, setTestGonderiliyor] = useState(false);
+
   const { data: sektorler = [] } = useQuery({ queryKey:['h-sektorler'], queryFn: () => fetch(`${API}/api/hiyerarsi/sektorler`).then(r=>r.json()) });
   const { data: deptlar = [] }   = useQuery({ queryKey:['h-deptlar', sektorId], queryFn: () => fetch(`${API}/api/hiyerarsi/departmanlar/${sektorId}`).then(r=>r.json()), enabled:!!sektorId });
   const { data: pozlar = [] }    = useQuery({ queryKey:['h-pozlar', deptId], queryFn: () => fetch(`${API}/api/hiyerarsi/pozisyonlar/${deptId}`).then(r=>r.json()), enabled:!!deptId });
@@ -373,6 +382,56 @@ export default function AdayKiyasla() {
     setAiYukleniyor(false); setAiDurum('');
   }
 
+  /* ─── Test Ata yardımcıları ─────────────────────────── */
+  async function openTestAtaModal(aday) {
+    setTestAtaAday(aday);
+    setTestEmail('');
+    setTestProjeSec('');
+    setTestGonderildi(false);
+    setTestKopyalandi(false);
+    setTestGonderiliyor(false);
+    try {
+      const r = await fetch(`${API}/api/testler/proje`, { headers: aH() });
+      const data = await r.json();
+      setTestProjeler(Array.isArray(data) ? data.filter(p => p.durum === 'hazir') : []);
+    } catch { setTestProjeler([]); }
+  }
+
+  function getTestLink(aday) {
+    const ad = aday === 'A' ? adayAIsim : adayBIsim;
+    const base = window.location.origin;
+    return testProjeSec
+      ? `${base}/test?proje=${testProjeSec}&aday=${encodeURIComponent(ad)}`
+      : `${base}/test?aday=${encodeURIComponent(ad)}`;
+  }
+
+  async function kopyalaTestLink() {
+    await navigator.clipboard.writeText(getTestLink(testAtaAday));
+    setTestKopyalandi(true);
+    setTimeout(() => setTestKopyalandi(false), 2000);
+  }
+
+  async function testDavetGonder() {
+    if (!testEmail.trim()) { alert('E-posta adresi zorunlu'); return; }
+    const adayAd = testAtaAday === 'A' ? adayAIsim : adayBIsim;
+    setTestGonderiliyor(true);
+    try {
+      const r = await fetch(`${API}/api/testler/davet`, {
+        method: 'POST', headers: jH(),
+        body: JSON.stringify({
+          proje_id:   testProjeSec || null,
+          aday_ad:    adayAd,
+          aday_eposta: testEmail,
+          pozisyon:   pozAcik || pozlar.find(p => p.id === +pozId)?.ad || '',
+          test_linki: getTestLink(testAtaAday),
+        }),
+      });
+      if (!r.ok) { const e = await r.json(); throw new Error(e.hata || 'Gönderilemedi'); }
+      setTestGonderildi(true);
+    } catch(e) { alert(e.message); }
+    finally { setTestGonderiliyor(false); }
+  }
+
   const puanlarA = kriterler ? kriterler.map(k => puanlar[`${k.id}-A`]?.puan ?? null) : [];
   const puanlarB = kriterler ? kriterler.map(k => puanlar[`${k.id}-B`]?.puan ?? null) : [];
   const aiYuklendi = Object.keys(puanlar).length > 0;
@@ -448,6 +507,108 @@ export default function AdayKiyasla() {
         </div>
       )}
 
+      {/* ── MODAL: Test Ata ── */}
+      {testAtaAday && (() => {
+        const renk  = testAtaAday === 'A' ? 'var(--accent)' : '#6366f1';
+        const isim  = testAtaAday === 'A' ? adayAIsim || 'Aday A' : adayBIsim || 'Aday B';
+        return (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.65)', zIndex:1000,
+            display:'flex', alignItems:'center', justifyContent:'center' }}
+            onClick={() => setTestAtaAday(null)}>
+            <div style={{ background:'var(--surface)', borderRadius:14, padding:'1.75rem',
+              maxWidth:500, width:'92%', boxShadow:'0 20px 60px rgba(0,0,0,0.4)' }}
+              onClick={e => e.stopPropagation()}>
+
+              {/* Başlık */}
+              <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'1.25rem' }}>
+                <div>
+                  <div style={{ fontSize:'1rem', fontWeight:800, marginBottom:4 }}>🧪 Test Ata</div>
+                  <div style={{ fontSize:12, color:'var(--muted)' }}>
+                    Aday {testAtaAday} —{' '}
+                    <span style={{ color:renk, fontWeight:700 }}>{isim}</span>
+                  </div>
+                </div>
+                <button onClick={() => setTestAtaAday(null)} style={{
+                  background:'transparent', border:'none', color:'var(--muted)',
+                  cursor:'pointer', fontSize:20, lineHeight:1, padding:2,
+                }}>✕</button>
+              </div>
+
+              {/* Test Projesi Seç */}
+              <div style={{ marginBottom:'1rem' }}>
+                <Lbl>Test Projesi (Opsiyonel)</Lbl>
+                {testProjeler.length === 0
+                  ? <div style={{ fontSize:12, color:'var(--muted)', fontStyle:'italic', padding:'8px 0' }}>
+                      Hazır test projesi bulunamadı — Test Modülü'nden önce bir test oluşturun.
+                    </div>
+                  : <select value={testProjeSec} onChange={e => setTestProjeSec(e.target.value)} style={{ width:'100%' }}>
+                      <option value="">Seçin...</option>
+                      {testProjeler.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.ad}{p.soru_uretilen ? ` — ${p.soru_uretilen} soru` : ''}{p.sektor_adi ? ` (${p.sektor_adi})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                }
+              </div>
+
+              {/* Test Linki */}
+              <div style={{ marginBottom:'1.25rem' }}>
+                <Lbl>Test Bağlantısı</Lbl>
+                <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                  <input readOnly value={getTestLink(testAtaAday)}
+                    style={{ flex:1, fontSize:11, color:'var(--muted)', background:'var(--surface2)', cursor:'text' }} />
+                  <Btn color={testKopyalandi ? 'green' : 'gray'} onClick={kopyalaTestLink}
+                    style={{ flexShrink:0, minWidth:90 }}>
+                    {testKopyalandi ? '✓ Kopyalandı' : '📋 Kopyala'}
+                  </Btn>
+                </div>
+              </div>
+
+              {/* Ayırıcı */}
+              <div style={{ borderTop:'1px dashed var(--border)', margin:'1rem 0' }} />
+
+              {/* E-posta Gönder */}
+              {!testGonderildi ? (
+                <div>
+                  <Lbl>Davet E-postası Gönder</Lbl>
+                  <div style={{ display:'flex', gap:8 }}>
+                    <input
+                      type="email"
+                      placeholder={`${isim.split(' ')[0].toLowerCase()}@email.com`}
+                      value={testEmail}
+                      onChange={e => setTestEmail(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && testDavetGonder()}
+                      style={{ flex:1 }}
+                    />
+                    <Btn color="accent"
+                      onClick={testDavetGonder}
+                      disabled={!testEmail.trim() || testGonderiliyor}
+                      style={{ flexShrink:0, minWidth:80 }}>
+                      {testGonderiliyor ? '⚙️...' : '📧 Gönder'}
+                    </Btn>
+                  </div>
+                  <div style={{ fontSize:11, color:'var(--muted)', marginTop:6 }}>
+                    Adaya test daveti ve bağlantı e-posta ile gönderilir.
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  background:'rgba(34,197,94,0.12)', border:'1px solid rgba(34,197,94,0.3)',
+                  borderRadius:10, padding:'0.85rem 1rem', textAlign:'center',
+                }}>
+                  <div style={{ fontSize:16, marginBottom:4 }}>✅</div>
+                  <div style={{ fontSize:13, fontWeight:700, color:'#22c55e' }}>Davet gönderildi!</div>
+                  <div style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>
+                    <strong>{testEmail}</strong> adresine test daveti iletildi.
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ── PANEL: Yeni Kıyaslama ── */}
       {panel === 'yeni' && (
         <div style={{ display:'grid', gridTemplateColumns:'1fr 420px', gap:16, alignItems:'start' }}>
@@ -491,13 +652,27 @@ export default function AdayKiyasla() {
             <Kart style={{ marginBottom:12 }}>
               <div style={{ fontSize:13, fontWeight:600, marginBottom:'0.75rem' }}>👤 Adaylar</div>
               <div style={{ display:'flex', gap:16 }}>
-                <CvYukle label="Aday A" color="var(--accent)"
-                  isim={adayAIsim} onIsim={setAdayAIsim}
-                  metin={adayAMetin} onMetin={setAdayAMetin} />
-                <div style={{ width:1, background:'var(--border)' }} />
-                <CvYukle label="Aday B" color="#6366f1"
-                  isim={adayBIsim} onIsim={setAdayBIsim}
-                  metin={adayBMetin} onMetin={setAdayBMetin} />
+                {/* Aday A */}
+                <div style={{ flex:1, display:'flex', flexDirection:'column', gap:10 }}>
+                  <CvYukle label="Aday A" color="var(--accent)"
+                    isim={adayAIsim} onIsim={setAdayAIsim}
+                    metin={adayAMetin} onMetin={setAdayAMetin} />
+                  <Btn color="accent" onClick={() => openTestAtaModal('A')}
+                    style={{ alignSelf:'flex-start', display:'flex', alignItems:'center', gap:6 }}>
+                    🧪 Test Ata
+                  </Btn>
+                </div>
+                <div style={{ width:1, background:'var(--border)', alignSelf:'stretch' }} />
+                {/* Aday B */}
+                <div style={{ flex:1, display:'flex', flexDirection:'column', gap:10 }}>
+                  <CvYukle label="Aday B" color="#6366f1"
+                    isim={adayBIsim} onIsim={setAdayBIsim}
+                    metin={adayBMetin} onMetin={setAdayBMetin} />
+                  <Btn color="purple" onClick={() => openTestAtaModal('B')}
+                    style={{ alignSelf:'flex-start', display:'flex', alignItems:'center', gap:6 }}>
+                    🧪 Test Ata
+                  </Btn>
+                </div>
               </div>
             </Kart>
 

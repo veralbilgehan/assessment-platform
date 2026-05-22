@@ -47,6 +47,7 @@ router.post('/analiz/stream', upload.single('dosya'), async (req, res, next) => 
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
 
     // Ham metni döndür (kaydederken kullanılacak)
     res.write(`data: ${JSON.stringify({ tip: 'metin', veri: metin.slice(0, 5000) })}\n\n`);
@@ -159,6 +160,11 @@ router.post('/profil/olustur', async (req, res, next) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    const keepalive = setInterval(() => {
+      try { res.write(': ping\n\n'); } catch (_) {}
+    }, 20000);
 
     const prompt = `Sen bir İK ve değerlendirme uzmanısın. Aşağıdaki profili kullanarak, adayı düşündüren ve konuşturan gerçekçi bir Problem Case (Vaka Sorusu) oluştur.
 
@@ -187,17 +193,21 @@ Bu vakayı değerlendirirken bakılacak 3 temel kriter
 
 Türkçe yaz, profesyonel ama akıcı bir dil kullan.`;
 
-    const stream = getClient().messages.stream({
-      model: 'claude-opus-4-7',
-      max_tokens: 2000,
-      thinking: { type: 'adaptive' },
-      messages: [{ role: 'user', content: prompt }],
-    });
+    try {
+      const stream = getClient().messages.stream({
+        model: 'claude-opus-4-7',
+        max_tokens: 5000,
+        thinking: { type: 'adaptive' },
+        messages: [{ role: 'user', content: prompt }],
+      });
 
-    for await (const event of stream) {
-      if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-        res.write(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`);
+      for await (const event of stream) {
+        if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+          res.write(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`);
+        }
       }
+    } finally {
+      clearInterval(keepalive);
     }
 
     res.write('data: [DONE]\n\n');
@@ -273,20 +283,29 @@ Türkçe yaz, nesnel ve kanıta dayalı ol. Her güçlü eşleşme için belgede
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
 
-    const stream = getClient().messages.stream({
-      model: 'claude-opus-4-7',
-      max_tokens: 2500,
-      thinking: { type: 'adaptive' },
-      messages: [{ role: 'user', content: prompt }],
-    });
+    const keepalive = setInterval(() => {
+      try { res.write(': ping\n\n'); } catch (_) {}
+    }, 20000);
 
     let tamRapor = '';
-    for await (const event of stream) {
-      if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-        tamRapor += event.delta.text;
-        res.write(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`);
+    try {
+      const stream = getClient().messages.stream({
+        model: 'claude-opus-4-7',
+        max_tokens: 5000,
+        thinking: { type: 'adaptive' },
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      for await (const event of stream) {
+        if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+          tamRapor += event.delta.text;
+          res.write(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`);
+        }
       }
+    } finally {
+      clearInterval(keepalive);
     }
 
     // Skoru parse et ve kaydet

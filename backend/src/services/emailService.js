@@ -257,4 +257,60 @@ async function raporGonder({ alici, aliciAd, oturum, detay }) {
   return { mesaj_id: bilgi.messageId, alici };
 }
 
-module.exports = { raporGonder, olusturHTMLRapor, hesaplaGruplar };
+/* ─── Test Davet E-postası ──────────────────────────── */
+async function davetGonder({ alici, aliciAd, testLinki, proje_adi, pozisyon, davet_eden }) {
+  if (!process.env.SMTP_USER || process.env.SMTP_USER === 'ornek@gmail.com') {
+    throw new Error('SMTP ayarları yapılandırılmamış. .env dosyasındaki SMTP_USER ve SMTP_PASS değerlerini güncelleyin.');
+  }
+
+  const pozText = pozisyon || proje_adi || 'Yetkinlik Değerlendirmesi';
+  const html = `<!DOCTYPE html>
+<html lang="tr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background:#f3f4f6;">
+<div style="max-width:600px;margin:0 auto;padding:24px 16px;">
+
+  <div style="background:linear-gradient(135deg,#057c3c,#6366f1);border-radius:16px 16px 0 0;padding:32px;color:#fff;text-align:center;">
+    <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;opacity:0.8;margin-bottom:8px;">DEĞERLENDİRME SİSTEMİ — TEST DAVETİ</div>
+    <div style="font-size:32px;margin-bottom:8px;">🧪</div>
+    <div style="font-size:22px;font-weight:900;margin-bottom:6px;">Test Davetiniz Hazır</div>
+    <div style="font-size:14px;opacity:0.85;">Sayın ${aliciAd}</div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:28px;border-radius:0 0 16px 16px;">
+    <p style="font-size:15px;color:#374151;line-height:1.7;margin:0 0 20px;">
+      <strong>${davet_eden || 'Değerlendirme ekibi'}</strong> sizi <strong>${pozText}</strong> pozisyonu için bir yetkinlik değerlendirme testine davet etti.
+    </p>
+
+    ${proje_adi ? `
+    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:20px;">
+      <div style="font-size:10px;color:#9ca3af;text-transform:uppercase;font-weight:700;margin-bottom:4px;">Test Adı</div>
+      <div style="font-size:15px;font-weight:700;color:#111827;">${proje_adi}</div>
+    </div>` : ''}
+
+    ${testLinki ? `
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${testLinki}" style="display:inline-block;background:linear-gradient(135deg,#057c3c,#6366f1);color:#fff;text-decoration:none;padding:14px 32px;border-radius:10px;font-size:15px;font-weight:800;letter-spacing:0.02em;">
+        🚀 Teste Başla
+      </a>
+    </div>
+    <div style="text-align:center;font-size:11px;color:#9ca3af;margin-bottom:20px;">veya bu linki tarayıcınıza yapıştırın:<br><span style="color:#6366f1;word-break:break-all;">${testLinki}</span></div>
+    ` : ''}
+
+    <div style="border-top:1px solid #f3f4f6;padding-top:16px;font-size:12px;color:#9ca3af;">
+      Bu e-posta Değerlendirme Sistemi tarafından otomatik olarak gönderilmiştir.
+    </div>
+  </div>
+</div>
+</body></html>`;
+
+  await getTransporter().sendMail({
+    from:    process.env.EMAIL_FROM || `"Değerlendirme Sistemi" <${process.env.SMTP_USER}>`,
+    to:      `"${aliciAd}" <${alici}>`,
+    subject: `🧪 Test Daveti — ${pozText}`,
+    text:    `Sayın ${aliciAd},\n\n${davet_eden || 'Değerlendirme ekibi'} sizi ${pozText} pozisyonu için bir yetkinlik değerlendirme testine davet etti.\n\nTest linki: ${testLinki || '—'}`,
+    html,
+  });
+}
+
+module.exports = { raporGonder, davetGonder, olusturHTMLRapor, hesaplaGruplar };

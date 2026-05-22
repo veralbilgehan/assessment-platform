@@ -19,7 +19,7 @@ const { Router } = require('express');
 const Anthropic   = require('@anthropic-ai/sdk');
 const pool        = require('../db/pool');
 const { optionalAuth } = require('../middleware/auth');
-const { raporGonder, hesaplaGruplar } = require('../services/emailService');
+const { raporGonder, davetGonder, hesaplaGruplar } = require('../services/emailService');
 
 const router = Router();
 function getClient() { return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }); }
@@ -130,16 +130,19 @@ KURALLAR:
     try {
       const stream = getClient().messages.stream({
         model: 'claude-opus-4-7',
-        max_tokens: 8000,
+        max_tokens: 6000,
+        output_config: { effort: 'low' }, // Daha hızlı çıktı — soru üretimi derin düşünme gerektirmez
         messages: [{ role: 'user', content: prompt }],
       });
 
       let tamMetin = '';
+      let sonIlerleme = 0;
       for await (const event of stream) {
         if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
           tamMetin += event.delta.text;
-          // İlerleme bildirimi (her 200 karakterde)
-          if (tamMetin.length % 200 < 10) {
+          // İlerleme bildirimi (her 150 karakterde — daha sık ping)
+          if (tamMetin.length - sonIlerleme >= 150) {
+            sonIlerleme = tamMetin.length;
             res?.write(`data: ${JSON.stringify({ tip: 'ilerleme', karakter: tamMetin.length })}\n\n`);
           }
         }
@@ -278,26 +281,46 @@ router.post('/proje/:id/uret', optionalAuth, async (req, res, next) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // NGINX proxy buffer'ı devre dışı
     res.write(`data: ${JSON.stringify({ tip: 'basladi', projeId: proje.id })}\n\n`);
 
-    const sorular = await soruUret({
-      projeId: proje.id,
-      belgeMetin:  proje.belge_metin,
-      pozisyon:    proje.pozisyon_adi,
-      sektor:      proje.sektor_adi,
-      yetkinlikler: proje.yetkinlik_adlari || [],
-      soru_sayisi: proje.soru_sayisi,
-      zorluk:      proje.zorluk,
-      kaynak_modu: proje.kaynak_modu,
-      dokuman_oran:proje.dokuman_oran,
-      havuz_oran:  proje.havuz_oran,
-      ai_oran:     proje.ai_oran,
-    }, res);
+    // Keepalive: her 20 saniyede bir SSE comment yaz — Cloud Run/proxy timeout'unu önler
+    const keepalive = setInterval(() => {
+      try { res.write(': ping\n\n'); } catch (_) {}
+    }, 20000);
+
+    let sorular = [];
+    try {
+      sorular = await soruUret({
+        projeId: proje.id,
+        belgeMetin:  proje.belge_metin,
+        pozisyon:    proje.pozisyon_adi,
+        sektor:      proje.sektor_adi,
+        yetkinlikler: proje.yetkinlik_adlari || [],
+        soru_sayisi: proje.soru_sayisi,
+        zorluk:      proje.zorluk,
+        kaynak_modu: proje.kaynak_modu,
+        dokuman_oran:proje.dokuman_oran,
+        havuz_oran:  proje.havuz_oran,
+        ai_oran:     proje.ai_oran,
+      }, res);
+    } finally {
+      clearInterval(keepalive);
+    }
+
+    // DB'de tamamlandı olarak işaretle (soruUret içinde zaten yapılıyor ama garantilemek için)
+    if (sorular.length === 0) {
+      await pool.query(`UPDATE test_projeleri SET durum='taslak' WHERE id=$1 AND durum='uretiliyor'`, [proje.id]);
+    }
 
     res.write(`data: ${JSON.stringify({ tip: 'bitti', sayi: sorular.length, sorular })}\n\n`);
     res.write('data: [DONE]\n\n');
     res.end();
-  } catch (err) { next(err); }
+  } catch (err) {
+    // Proje stuck durumunu kurtarmaya çalış
+    try { await pool.query(`UPDATE test_projeleri SET durum='taslak' WHERE id=$1 AND durum='uretiliyor'`, [req.params.id]); } catch (_) {}
+    next(err);
+  }
 });
 
 // GET /api/testler/proje/:id/indir
@@ -605,6 +628,41 @@ router.get('/proje/:id/raporlar', optionalAuth, async (req, res, next) => {
     );
     res.json(rows);
   } catch (err) { next(err); }
+});
+
+/* ═══════════════════════════════════════════════════════════
+   TEST DAVETİ — Aday Kıyasla sayfasından test ata
+═══════════════════════════════════════════════════════════ */
+
+// POST /api/testler/davet — adaya test daveti e-postası gönder
+router.post('/davet', optionalAuth, async (req, res, next) => {
+  try {
+    const { proje_id, aday_ad, aday_eposta, pozisyon, test_linki, davet_eden } = req.body;
+    if (!aday_ad || !aday_eposta)
+      return res.status(400).json({ hata: 'aday_ad ve aday_eposta zorunlu' });
+
+    let proje_adi = null;
+    if (proje_id) {
+      const { rows } = await pool.query('SELECT ad FROM test_projeleri WHERE id=$1', [proje_id]);
+      proje_adi = rows[0]?.ad || null;
+    }
+
+    await davetGonder({
+      alici:      aday_eposta,
+      aliciAd:    aday_ad,
+      testLinki:  test_linki || '',
+      proje_adi,
+      pozisyon,
+      davet_eden,
+    });
+
+    res.json({ mesaj: 'Davet e-postası gönderildi', alici: aday_eposta });
+  } catch (err) {
+    if (err.message?.includes('SMTP') || err.message?.includes('yapılandırılmamış')) {
+      return res.status(503).json({ hata: err.message });
+    }
+    next(err);
+  }
 });
 
 module.exports = router;
