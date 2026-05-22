@@ -30,7 +30,7 @@ function getClient() {
 /* ═══════════════════════════════════════════════════════════
    YARDIMCI: Soru üretim motoru
 ═══════════════════════════════════════════════════════════ */
-async function soruUret({ projeId, belgeMetin, pozisyon, sektor, yetkinlikler, soru_sayisi, zorluk, kaynak_modu, dokuman_oran, havuz_oran, ai_oran }, res) {
+async function soruUret({ projeId, belgeMetin, pozisyon, sektor, yetkinlikler, yetkinlik_ids, soru_sayisi, zorluk, kaynak_modu, dokuman_oran, havuz_oran, ai_oran }, res) {
 
   const zorlukMap = { kolay: 1, orta: 2, zor: 3, karisik: null };
   const zorlukNum = zorlukMap[zorluk];
@@ -41,19 +41,19 @@ async function soruUret({ projeId, belgeMetin, pozisyon, sektor, yetkinlikler, s
     ? Math.round(soru_sayisi * havuz_oran / 100)
     : kaynak_modu === 'havuz' ? soru_sayisi : 0;
 
-  if (havuzHedef > 0 && yetkinlikler?.length) {
+  const havuzIds = yetkinlik_ids?.length ? yetkinlik_ids : [];
+  if (havuzHedef > 0 && havuzIds.length) {
     res?.write(`data: ${JSON.stringify({ tip: 'durum', mesaj: `Soru havuzundan ${havuzHedef} soru alınıyor...` })}\n\n`);
     const { rows: havuzSorular } = await pool.query(
       `SELECT sh.id, sh.soru_metni, sh.secenekler, sh.dogru_cevap, sh.zorluk,
               sh.puan_degeri, 'havuz' AS kaynak
        FROM soru_havuzu sh
-       JOIN yetkinlikler y ON y.id = sh.yetkinlik_id
-       WHERE sh.yetkinlik_id = ANY($1)
+       WHERE sh.yetkinlik_id = ANY($1::int[])
          AND sh.aktif = true
          ${zorlukNum ? 'AND sh.zorluk = $2' : ''}
        ORDER BY RANDOM()
        LIMIT ${havuzHedef}`,
-      zorlukNum ? [yetkinlikler, zorlukNum] : [yetkinlikler]
+      zorlukNum ? [havuzIds, zorlukNum] : [havuzIds]
     );
 
     sorular.push(...havuzSorular.map((s, i) => ({
@@ -295,17 +295,18 @@ router.post('/proje/:id/uret', optionalAuth, async (req, res, next) => {
     let sorular = [];
     try {
       sorular = await soruUret({
-        projeId: proje.id,
-        belgeMetin:  proje.belge_metin,
-        pozisyon:    proje.pozisyon_adi,
-        sektor:      proje.sektor_adi,
+        projeId:      proje.id,
+        belgeMetin:   proje.belge_metin,
+        pozisyon:     proje.pozisyon_adi,
+        sektor:       proje.sektor_adi,
         yetkinlikler: proje.yetkinlik_adlari || [],
-        soru_sayisi: proje.soru_sayisi,
-        zorluk:      proje.zorluk,
-        kaynak_modu: proje.kaynak_modu,
-        dokuman_oran:proje.dokuman_oran,
-        havuz_oran:  proje.havuz_oran,
-        ai_oran:     proje.ai_oran,
+        yetkinlik_ids: proje.yetkinlik_ids || [],
+        soru_sayisi:  proje.soru_sayisi,
+        zorluk:       proje.zorluk,
+        kaynak_modu:  proje.kaynak_modu,
+        dokuman_oran: proje.dokuman_oran,
+        havuz_oran:   proje.havuz_oran,
+        ai_oran:      proje.ai_oran,
       }, res);
     } finally {
       clearInterval(keepalive);
