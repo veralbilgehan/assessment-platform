@@ -1,7 +1,6 @@
 const { Router } = require('express');
 const multer = require('multer');
-const _pdfParse = require('pdf-parse');
-const pdfParse = _pdfParse.default || _pdfParse;
+const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 const Anthropic = require('@anthropic-ai/sdk');
 const pool = require('../db/pool');

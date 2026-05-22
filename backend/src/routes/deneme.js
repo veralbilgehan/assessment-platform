@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Ücretsiz Deneme Testi
  *
  * POST /api/deneme/yukle    — Excel/CSV/PDF yükle → AI ile parse → rapor üret
@@ -8,8 +8,7 @@
 const { Router }   = require('express');
 const multer       = require('multer');
 const XLSX         = require('xlsx');
-const _pdfParse    = require('pdf-parse');
-const pdfParse     = _pdfParse.default || _pdfParse;
+const pdfParse     = require('pdf-parse');
 const mammoth      = require('mammoth');
 const Anthropic    = require('@anthropic-ai/sdk');
 const pool         = require('../db/pool');
@@ -40,23 +39,23 @@ async function metinCikar(buffer, mime, originalName) {
       satirlar.push(`=== Sayfa: ${sheetName} ===`);
       satirlar.push(...json.map(row => row.join('\t')));
     }
-    return satirlar.join('\n').slice(0, 12000);
+    return satirlar.join('\n').slice(0, 7500);
   }
 
   // PDF
   if (mime === 'application/pdf' || ext === 'pdf') {
     const r = await pdfParse(buffer);
-    return r.text.slice(0, 12000);
+    return r.text.slice(0, 7500);
   }
 
   // DOCX
   if (mime.includes('wordprocessingml') || ext === 'docx') {
     const r = await mammoth.extractRawText({ buffer });
-    return r.value.slice(0, 12000);
+    return r.value.slice(0, 7500);
   }
 
   // TXT / Diğer
-  return buffer.toString('utf-8').slice(0, 12000);
+  return buffer.toString('utf-8').slice(0, 7500);
 }
 
 /* ─── Pozisyon Yetkinliklerini Getir ─────────────────── */
@@ -271,7 +270,7 @@ router.post('/yukle', optionalAuth, upload.single('dosya'), async (req, res, nex
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
       [ip, kulId, req.file.originalname,
        req.file.mimetype.includes('pdf') ? 'pdf' : req.file.mimetype.includes('sheet') ? 'excel' : 'csv',
-       hamMetin.slice(0, 3000), raporJson, parsed.aday_ad, parsed.basari_yuzdesi]
+       hamMetin.slice(0, 7500), raporJson, parsed.aday_ad, parsed.basari_yuzdesi]
     );
 
     res.json({ id: kayit.id, rapor: raporJson });
