@@ -2,7 +2,7 @@
 FROM node:20-alpine AS frontend-build
 WORKDIR /app/frontend-react
 COPY frontend-react/package*.json ./
-RUN npm ci --prefer-offline
+RUN npm install --prefer-offline
 COPY frontend-react/ ./
 # Boş VITE_API_URL → relative /api paths (backend aynı origin'de)
 RUN npm run build
@@ -11,7 +11,7 @@ RUN npm run build
 FROM node:20-alpine AS production
 WORKDIR /app/backend
 COPY backend/package*.json ./
-RUN npm ci --only=production --prefer-offline
+RUN npm install --only=production --prefer-offline
 COPY backend/ ./
 # Frontend dist'ini backend'in yanına kopyala
 COPY --from=frontend-build /app/frontend-react/dist /app/frontend-react/dist
