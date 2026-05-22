@@ -547,6 +547,12 @@ export default function TestModulu() {
     setProjeler(Array.isArray(data) ? data : []);
   }
 
+  async function projeSil(proje) {
+    if (!confirm(`"${proje.ad}" testini silmek istediğinize emin misiniz?`)) return;
+    await fetch(`${API}/api/testler/proje/${proje.id}`, { method: 'DELETE', headers: authH() });
+    await yukleProjeListesi();
+  }
+
   async function yukleBelgeler() {
     setBelgelerYuk(true);
     try {
@@ -996,6 +1002,10 @@ export default function TestModulu() {
                         background:'var(--accent)', color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer',
                       }}>▶</button>
                     )}
+                    <button onClick={() => projeSil(p)} title="Sil" style={{
+                      padding:'0.3rem 0.6rem', borderRadius:6, border:'1px solid #ef4444',
+                      background:'transparent', color:'#ef4444', fontSize:11, fontWeight:700, cursor:'pointer',
+                    }}>🗑</button>
                   </div>
                 ))}
               </div>

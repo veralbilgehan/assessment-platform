@@ -33,7 +33,7 @@ pool.query(`ALTER TABLE test_projeleri ADD COLUMN IF NOT EXISTS soru_tipi VARCHA
 /* ═══════════════════════════════════════════════════════════
    YARDIMCI: Soru üretim motoru
 ═══════════════════════════════════════════════════════════ */
-async function soruUret({ projeId, belgeMetin, pozisyon, sektor, yetkinlikler, yetkinlik_ids, soru_sayisi, zorluk, kaynak_modu, dokuman_oran, havuz_oran, ai_oran, soru_tipi = 'karma' }, res) {
+async function soruUret({ projeId, belgeMetin, pozisyon, sektor, soru_sayisi, zorluk, kaynak_modu, dokuman_oran, havuz_oran, ai_oran, soru_tipi = 'karma' }, res) {
 
   const zorlukMap = { kolay: 1, orta: 2, zor: 3, karisik: null };
   const zorlukNum = zorlukMap[zorluk];
@@ -44,7 +44,7 @@ async function soruUret({ projeId, belgeMetin, pozisyon, sektor, yetkinlikler, y
     ? Math.round(soru_sayisi * havuz_oran / 100)
     : kaynak_modu === 'havuz' ? soru_sayisi : 0;
 
-  const havuzIds = yetkinlik_ids?.length ? yetkinlik_ids : [];
+  const havuzIds = [];
   if (havuzHedef > 0 && havuzIds.length) {
     res?.write(`data: ${JSON.stringify({ tip: 'durum', mesaj: `Soru havuzundan ${havuzHedef} soru alınıyor...` })}\n\n`);
     const { rows: havuzSorular } = await pool.query(
@@ -86,11 +86,6 @@ async function soruUret({ projeId, belgeMetin, pozisyon, sektor, yetkinlikler, y
   if (toplamAIHedef > 0) {
     res?.write(`data: ${JSON.stringify({ tip: 'durum', mesaj: `AI ${toplamAIHedef} soru üretiyor...` })}\n\n`);
 
-    // Seçili yetkinlikler varsa ZORUNLU kısıt, yoksa genel pozisyon bilgisi
-    const yetkinlikSecili = yetkinlikler?.length > 0;
-    const yetStr = yetkinlikSecili
-      ? `\n\n⚠️ ZORUNLU YETKİNLİK KISITI: Sorular YALNIZCA şu yetkinlikler hakkında olmalı:\n${yetkinlikler.map((y, i) => `  ${i+1}. ${y}`).join('\n')}\nBu listede olmayan hiçbir konuda soru üretme.`
-      : '';
     const dokStr = belgeMetin
       ? `\n\nReferans döküman (ilk 6000 karakter):\n${belgeMetin.slice(0, 6000)}`
       : '';
@@ -111,7 +106,7 @@ BAĞLAM:
 - Pozisyon: ${pozisyon || 'Genel'}
 - Zorluk Seviyesi: ${zorlukTurk}
 - Döküman Kaynaklı: ${belgeMetin ? `${dokHedef} soru (döküman içeriğinden)` : 'Yok'}
-- AI Üretimi: ${aiHedef + (belgeMetin ? 0 : dokHedef)} soru (pozisyona özgü teknik konulara göre)${yetStr}${dokStr}
+- AI Üretimi: ${aiHedef + (belgeMetin ? 0 : dokHedef)} soru (pozisyona özgü teknik konulara göre)${dokStr}
 
 ÇIKTI FORMAT (sadece JSON, başka hiçbir şey yazma):
 {
@@ -279,14 +274,11 @@ router.delete('/proje/:id', optionalAuth, async (req, res, next) => {
 router.post('/proje/:id/uret', optionalAuth, async (req, res, next) => {
   try {
     const { rows: [proje] } = await pool.query(
-      `SELECT tp.*, s.ad AS sektor_adi, p.ad AS pozisyon_adi,
-              array_agg(y.ad) FILTER (WHERE y.ad IS NOT NULL) AS yetkinlik_adlari
+      `SELECT tp.*, s.ad AS sektor_adi, p.ad AS pozisyon_adi
        FROM test_projeleri tp
        LEFT JOIN sektorler s ON s.id = tp.sektor_id
        LEFT JOIN pozisyonlar p ON p.id = tp.pozisyon_id
-       LEFT JOIN LATERAL unnest(tp.yetkinlik_ids) AS yid ON true
-       LEFT JOIN yetkinlikler y ON y.id = yid
-       WHERE tp.id=$1 GROUP BY tp.id, s.ad, p.ad`, [req.params.id]
+       WHERE tp.id=$1`, [req.params.id]
     );
     if (!proje) return res.status(404).json({ hata: 'Proje bulunamadı' });
 
@@ -312,8 +304,6 @@ router.post('/proje/:id/uret', optionalAuth, async (req, res, next) => {
         belgeMetin:   proje.belge_metin,
         pozisyon:     proje.pozisyon_adi,
         sektor:       proje.sektor_adi,
-        yetkinlikler: proje.yetkinlik_adlari || [],
-        yetkinlik_ids: proje.yetkinlik_ids || [],
         soru_sayisi:  proje.soru_sayisi,
         zorluk:       proje.zorluk,
         kaynak_modu:  proje.kaynak_modu,

@@ -18,7 +18,6 @@ const NAV_GRUPLARI = [
       { tab: 'belge',   simge: '📄', etiket: 'Belge & Profil' },
       { tab: 'test',    simge: '🧪', etiket: 'Test Modülü'    },
       { tab: 'kiyasla', simge: '⚖️', etiket: 'Aday Kıyasla'  },
-      { tab: 'akis',    simge: '🔄', etiket: 'Görev Akışı'   },
       { tab: 'rapor',   simge: '📊', etiket: 'Perf. Raporu'  },
     ],
   },
