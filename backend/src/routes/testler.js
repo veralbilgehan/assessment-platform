@@ -519,7 +519,7 @@ router.post('/oturum/:id/bitir', async (req, res, next) => {
          COUNT(*) FILTER (WHERE tc.verilen_cevap IS NULL OR tc.verilen_cevap='') AS bos,
          COALESCE(SUM(ts.puan_degeri) FILTER (WHERE tc.dogru_mu=true), 0) AS kazanilan_puan,
          COALESCE(SUM(ts.puan_degeri), 0) AS toplam_puan,
-         EXTRACT(EPOCH FROM (NOW() - o.baslangic))::int AS sure_saniye
+         EXTRACT(EPOCH FROM (NOW() - MAX(o.baslangic)))::int AS sure_saniye
        FROM test_cevaplari tc
        JOIN test_sorulari ts ON ts.id=tc.soru_id
        JOIN test_oturumlari o ON o.id=tc.oturum_id
