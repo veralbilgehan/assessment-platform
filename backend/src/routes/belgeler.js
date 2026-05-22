@@ -119,6 +119,18 @@ router.get('/', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// GET /api/belgeler/:id — Tek belge (icerik dahil)
+router.get('/:id', async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, orijinal_ad, mime_type, icerik, ai_konu, ai_bilgi, ai_makale, izin_durumu, benim_icin_sakla, olusturma
+       FROM belgeler WHERE id=$1`, [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ hata: 'Belge bulunamadı' });
+    res.json(rows[0]);
+  } catch (err) { next(err); }
+});
+
 // DELETE /api/belgeler/:id
 router.delete('/:id', async (req, res, next) => {
   try {

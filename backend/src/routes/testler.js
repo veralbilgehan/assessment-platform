@@ -27,10 +27,13 @@ function getClient() {
   return new Anthropic({ apiKey });
 }
 
+// Soru tipi kolonu yoksa ekle
+pool.query(`ALTER TABLE test_projeleri ADD COLUMN IF NOT EXISTS soru_tipi VARCHAR(30) DEFAULT 'karma'`).catch(() => {});
+
 /* ═══════════════════════════════════════════════════════════
    YARDIMCI: Soru üretim motoru
 ═══════════════════════════════════════════════════════════ */
-async function soruUret({ projeId, belgeMetin, pozisyon, sektor, yetkinlikler, yetkinlik_ids, soru_sayisi, zorluk, kaynak_modu, dokuman_oran, havuz_oran, ai_oran }, res) {
+async function soruUret({ projeId, belgeMetin, pozisyon, sektor, yetkinlikler, yetkinlik_ids, soru_sayisi, zorluk, kaynak_modu, dokuman_oran, havuz_oran, ai_oran, soru_tipi = 'karma' }, res) {
 
   const zorlukMap = { kolay: 1, orta: 2, zor: 3, karisik: null };
   const zorlukNum = zorlukMap[zorluk];
@@ -92,6 +95,13 @@ async function soruUret({ projeId, belgeMetin, pozisyon, sektor, yetkinlikler, y
 
     const zorlukTurk = { kolay: 'kolay (temel kavramlar)', orta: 'orta (uygulama)', zor: 'zor (analiz/sentez)', karisik: 'karma zorluk' }[zorluk] || 'orta';
 
+    const tipiTalimat = {
+      cok_secmeli: 'TÜMÜ çok seçmeli (A/B/C/D) olmalı — "dogru_yanlis" veya "acik_uclu" kullanma.',
+      dogru_yanlis: 'TÜMÜ Doğru/Yanlış olmalı — "soru_tipi":"dogru_yanlis", secenekler:[{"harf":"A","metin":"Doğru"},{"harf":"B","metin":"Yanlış"}], dogru_cevap "A" veya "B".',
+      acik_uclu: 'TÜMÜ açık uçlu (kısa yazılı cevap) olmalı — "soru_tipi":"acik_uclu", secenekler:[], dogru_cevap anahtar kavramları içersin.',
+      karma: '~%55 çok seçmeli, ~%30 doğru/yanlış, ~%15 açık uçlu karışık. Her biri için uygun soru_tipi kullan.',
+    }[soru_tipi] || 'Çeşitlendir: çok seçmeli, doğru/yanlış, açık uçlu.';
+
     const prompt = `Sen bir eğitim uzmanı ve soru bankası hazırlayıcısısın. Aşağıdaki kriterlere göre TAM OLARAK ${toplamAIHedef} adet test sorusu üret.
 
 BAĞLAM:
@@ -124,7 +134,7 @@ BAĞLAM:
 }
 
 KURALLAR:
-- "soru_tipi" değerleri: "cok_secmeli" (4 seçenek), "dogru_yanlis" (Doğru/Yanlış), "acik_uclu" (seçenek yok)
+- Soru Tipi Tercihi: ${tipiTalimat}
 - "kaynak": döküman içeriğinden üretilen için "dokuman", yetkinlik/pozisyon bilgisinden için "ai"
 - ${belgeMetin ? `İlk ${dokHedef} soruyu döküman içeriğine dayandır` : 'Tüm soruları yetkinlik/pozisyon profiline göre üret'}
 - Soruları gerçekçi, iş dünyasına özgü ve ölçülebilir yetkinliklere dayandır
@@ -202,17 +212,18 @@ router.post('/proje', optionalAuth, async (req, res, next) => {
       sektor_id, departman_id, pozisyon_id, yetkinlik_ids,
       soru_sayisi = 20, zorluk = 'orta', sure_dakika = 45,
       kaynak_modu = 'hibrit', dokuman_oran = 40, havuz_oran = 30, ai_oran = 30,
+      soru_tipi = 'karma',
     } = req.body;
     if (!ad) return res.status(400).json({ hata: 'Proje adı gerekli' });
 
     const { rows } = await pool.query(
       `INSERT INTO test_projeleri
          (ad, belge_id, belge_metin, sektor_id, departman_id, pozisyon_id, yetkinlik_ids,
-          soru_sayisi, zorluk, sure_dakika, kaynak_modu, dokuman_oran, havuz_oran, ai_oran, olusturan_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING id`,
+          soru_sayisi, zorluk, sure_dakika, kaynak_modu, dokuman_oran, havuz_oran, ai_oran, soru_tipi, olusturan_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING id`,
       [ad, belge_id||null, belge_metin||null, sektor_id||null, departman_id||null,
        pozisyon_id||null, yetkinlik_ids||null, soru_sayisi, zorluk, sure_dakika,
-       kaynak_modu, dokuman_oran, havuz_oran, ai_oran, req.user?.id||null]
+       kaynak_modu, dokuman_oran, havuz_oran, ai_oran, soru_tipi, req.user?.id||null]
     );
     res.status(201).json({ id: rows[0].id, mesaj: 'Proje oluşturuldu' });
   } catch (err) { next(err); }
@@ -307,6 +318,7 @@ router.post('/proje/:id/uret', optionalAuth, async (req, res, next) => {
         dokuman_oran: proje.dokuman_oran,
         havuz_oran:   proje.havuz_oran,
         ai_oran:      proje.ai_oran,
+        soru_tipi:    proje.soru_tipi || 'karma',
       }, res);
     } finally {
       clearInterval(keepalive);

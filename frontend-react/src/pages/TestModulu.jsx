@@ -485,6 +485,12 @@ export default function TestModulu() {
   const [pozId, setPozId]         = useState('');
   const [secYetkinlikler, setSecYetkinlikler] = useState([]);
 
+  // Belge seçim sekmesi
+  const [belgeSecTab, setBelgeSecTab] = useState('dosya'); // 'dosya' | 'belgeler'
+  const [belgeler, setBelgeler]       = useState([]);
+  const [belgelerYuk, setBelgelerYuk] = useState(false);
+  const [secilenBelge, setSecilenBelge] = useState(null);
+
   // Adım 3 — Parametreler
   const [projeAd, setProjeAd]   = useState('');
   const [soruSayisi, setSoruSayisi] = useState(20);
@@ -494,6 +500,7 @@ export default function TestModulu() {
   const [dokOran, setDokOran]   = useState(40);
   const [havuzOran, setHavuzOran] = useState(30);
   const [aiOran, setAiOran]     = useState(30);
+  const [soruTipi, setSoruTipi] = useState('karma');
 
   // Adım 4 — Üretim / Test
   const [projeler, setProjeler]   = useState([]);
@@ -531,6 +538,27 @@ export default function TestModulu() {
     setProjeler(Array.isArray(data) ? data : []);
   }
 
+  async function yukleBelgeler() {
+    setBelgelerYuk(true);
+    try {
+      const res = await fetch(`${API}/api/belgeler`, { headers: authH() });
+      const data = await res.json();
+      setBelgeler(Array.isArray(data) ? data : []);
+    } catch(e) {}
+    finally { setBelgelerYuk(false); }
+  }
+
+  async function secBelgeIcerik(belge) {
+    setSecilenBelge(belge);
+    try {
+      const res = await fetch(`${API}/api/belgeler/${belge.id}`, { headers: authH() });
+      const data = await res.json();
+      const icerik = data.icerik || data.ai_makale || '';
+      setBelgeMetin(icerik);
+      setProjeAd(((data.ai_konu || data.orijinal_ad || '').slice(0, 55)) + ' Testi');
+    } catch(e) {}
+  }
+
   async function handleDosya(file) {
     if (!file) return;
     setDosya(file); setAnalizYukleniyor(true); setBelgeMetin('');
@@ -551,20 +579,24 @@ export default function TestModulu() {
     finally { setAnalizYukleniyor(false); }
   }
 
-  async function projeOlusturVeUret() {
+  async function projeOlusturVeUret({ _belgeMetin, _projeAd, _soruTipi } = {}) {
     setUretimDurum('Proje oluşturuluyor...'); setUretildi(false); setSorularOnizle([]);
     const yetIds = yetenekler.filter(y => secYetkinlikler.includes(y.yetenek_id)).map(y => y.yetenek_id);
+    const kullanBelgeMetin = _belgeMetin ?? belgeMetin;
+    const kullanProjeAd   = _projeAd   ?? projeAd;
+    const kullanSoruTipi  = _soruTipi  ?? soruTipi;
 
     let projeId;
     try {
       const projeRes = await fetch(`${API}/api/testler/proje`, {
         method:'POST', headers:{ 'Content-Type':'application/json', ...authH() },
         body: JSON.stringify({
-          ad: projeAd || 'Yeni Test', belge_metin: belgeMetin || null,
+          ad: kullanProjeAd || 'Yeni Test', belge_metin: kullanBelgeMetin || null,
           sektor_id: sektorId || null, departman_id: deptId || null,
           pozisyon_id: pozId || null, yetkinlik_ids: yetIds.length ? yetIds : null,
           soru_sayisi: soruSayisi, zorluk, sure_dakika: sureDakika,
           kaynak_modu: kaynakModu, dokuman_oran: dokOran, havuz_oran: havuzOran, ai_oran: aiOran,
+          soru_tipi: kullanSoruTipi,
         }),
       });
       const data = await projeRes.json();
@@ -783,39 +815,114 @@ export default function TestModulu() {
       {adim === 0 && (
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
           <Kart>
-            <div style={{ fontSize:13, fontWeight:600, marginBottom:'1rem' }}>📄 Kaynak Döküman Yükle</div>
-            <div
-              onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={e => { e.preventDefault(); setDragOver(false); handleDosya(e.dataTransfer.files[0]); }}
-              onClick={() => inputRef.current?.click()}
-              style={{
-                border:`2px dashed ${dragOver ? 'var(--accent)' : 'var(--border)'}`,
-                borderRadius:8, padding:'2rem', textAlign:'center', cursor:'pointer',
-                background: dragOver ? 'var(--accent-dim)' : 'var(--surface2)', transition:'all 0.2s',
-              }}
-            >
-              <input ref={inputRef} type="file" accept=".pdf,.docx,.txt" style={{ display:'none' }} onChange={e => handleDosya(e.target.files[0])} />
-              <div style={{ fontSize:32, marginBottom:8 }}>{analizYukleniyor ? '⚙️' : '📄'}</div>
-              {analizYukleniyor ? (
-                <div style={{ fontSize:13, color:'var(--accent)' }}>Döküman analiz ediliyor...</div>
-              ) : dosya ? (
-                <div>
-                  <div style={{ fontWeight:600, fontSize:13 }}>{dosya.name}</div>
-                  <div style={{ fontSize:11, color:'var(--muted)', marginTop:3 }}>
-                    {belgeMetin ? `✓ ${belgeMetin.length} karakter çıkarıldı` : 'İşleniyor...'}
+            {/* Sekme Barı */}
+            <div style={{ display:'flex', borderRadius:8, overflow:'hidden', border:'1px solid var(--border)', marginBottom:'1rem' }}>
+              {[['dosya','📄 Dosya Yükle'],['belgeler','📚 Belgelerimden Seç']].map(([k,l]) => (
+                <button key={k} onClick={() => { setBelgeSecTab(k); if(k==='belgeler') yukleBelgeler(); }} style={{
+                  flex:1, padding:'0.5rem', border:'none', cursor:'pointer', fontSize:12, fontWeight:600,
+                  background: belgeSecTab===k ? 'var(--accent)' : 'var(--surface2)',
+                  color: belgeSecTab===k ? '#fff' : 'var(--muted)', transition:'all 0.15s',
+                }}>{l}</button>
+              ))}
+            </div>
+
+            {/* Dosya Yükle sekmesi */}
+            {belgeSecTab === 'dosya' && (<>
+              <div
+                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={e => { e.preventDefault(); setDragOver(false); handleDosya(e.dataTransfer.files[0]); }}
+                onClick={() => inputRef.current?.click()}
+                style={{
+                  border:`2px dashed ${dragOver ? 'var(--accent)' : 'var(--border)'}`,
+                  borderRadius:8, padding:'2rem', textAlign:'center', cursor:'pointer',
+                  background: dragOver ? 'var(--accent-dim)' : 'var(--surface2)', transition:'all 0.2s',
+                }}
+              >
+                <input ref={inputRef} type="file" accept=".pdf,.docx,.txt" style={{ display:'none' }} onChange={e => handleDosya(e.target.files[0])} />
+                <div style={{ fontSize:32, marginBottom:8 }}>{analizYukleniyor ? '⚙️' : '📄'}</div>
+                {analizYukleniyor ? (
+                  <div style={{ fontSize:13, color:'var(--accent)' }}>Döküman analiz ediliyor...</div>
+                ) : dosya ? (
+                  <div>
+                    <div style={{ fontWeight:600, fontSize:13 }}>{dosya.name}</div>
+                    <div style={{ fontSize:11, color:'var(--muted)', marginTop:3 }}>
+                      {belgeMetin ? `✓ ${belgeMetin.length} karakter çıkarıldı` : 'İşleniyor...'}
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div>
-                  <div style={{ fontWeight:600, fontSize:13, marginBottom:3 }}>Sürükle & Bırak veya Tıkla</div>
-                  <div style={{ fontSize:12, color:'var(--muted)' }}>PDF, DOCX, TXT · Opsiyonel</div>
+                ) : (
+                  <div>
+                    <div style={{ fontWeight:600, fontSize:13, marginBottom:3 }}>Sürükle & Bırak veya Tıkla</div>
+                    <div style={{ fontSize:12, color:'var(--muted)' }}>PDF, DOCX, TXT · Opsiyonel</div>
+                  </div>
+                )}
+              </div>
+              {belgeMetin && !secilenBelge && (
+                <div style={{ marginTop:8, padding:'0.5rem 0.75rem', background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', borderRadius:6, fontSize:12, color:'#22c55e' }}>
+                  ✓ Döküman metni RAG için hazır
                 </div>
               )}
-            </div>
-            {belgeMetin && (
-              <div style={{ marginTop:8, padding:'0.5rem 0.75rem', background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', borderRadius:6, fontSize:12, color:'#22c55e' }}>
-                ✓ Döküman metni RAG için hazır
+            </>)}
+
+            {/* Belgelerimden Seç sekmesi */}
+            {belgeSecTab === 'belgeler' && (
+              <div>
+                {belgelerYuk ? (
+                  <div style={{ textAlign:'center', padding:'2rem', color:'var(--muted)', fontSize:13 }}>Yükleniyor...</div>
+                ) : belgeler.length === 0 ? (
+                  <div style={{ textAlign:'center', padding:'2rem', color:'var(--muted)', fontSize:13 }}>
+                    Henüz kayıtlı belge yok.<br/>
+                    <span style={{ fontSize:11 }}>Belge Analiz sayfasından belge ekleyin.</span>
+                  </div>
+                ) : (
+                  <div style={{ maxHeight:280, overflowY:'auto', display:'flex', flexDirection:'column', gap:6 }}>
+                    {belgeler.map(b => (
+                      <div key={b.id} style={{
+                        padding:'0.65rem 0.85rem', borderRadius:8,
+                        background: secilenBelge?.id === b.id ? 'var(--accent-dim)' : 'var(--surface2)',
+                        border:`1px solid ${secilenBelge?.id === b.id ? 'var(--accent)' : 'var(--border)'}`,
+                        display:'flex', alignItems:'center', gap:8,
+                      }}>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:12, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                            {b.ai_konu || b.orijinal_ad || 'Belge'}
+                          </div>
+                          <div style={{ fontSize:10, color:'var(--muted)', marginTop:2 }}>
+                            {b.orijinal_ad} · {new Date(b.olusturma).toLocaleDateString('tr-TR')}
+                          </div>
+                        </div>
+                        <button onClick={() => secBelgeIcerik(b)} style={{
+                          padding:'0.3rem 0.6rem', borderRadius:6, border:`1px solid ${secilenBelge?.id===b.id ? 'var(--accent)' : 'var(--border)'}`,
+                          background: secilenBelge?.id===b.id ? 'var(--accent)' : 'transparent',
+                          color: secilenBelge?.id===b.id ? '#fff' : 'var(--muted)',
+                          fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap',
+                        }}>{secilenBelge?.id===b.id ? '✓ Seçildi' : 'Seç'}</button>
+                        <button onClick={async () => {
+                          // Hızlı Test Hazırla — belgeyi seç ve direkt üret
+                          setAdim(3);
+                          let icerik = '';
+                          try {
+                            const r = await fetch(`${API}/api/belgeler/${b.id}`, { headers: authH() });
+                            const d = await r.json();
+                            icerik = d.icerik || d.ai_makale || '';
+                          } catch(e) {}
+                          const ad = ((b.ai_konu || b.orijinal_ad || '').slice(0, 55)) + ' Testi';
+                          setBelgeMetin(icerik); setProjeAd(ad);
+                          projeOlusturVeUret({ _belgeMetin: icerik, _projeAd: ad, _soruTipi: soruTipi });
+                        }} style={{
+                          padding:'0.3rem 0.65rem', borderRadius:6, border:'none',
+                          background:'linear-gradient(135deg,#6366f1,#8b5cf6)',
+                          color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap',
+                        }}>⚡ Test Hazırla</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {secilenBelge && (
+                  <div style={{ marginTop:8, padding:'0.5rem 0.75rem', background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', borderRadius:6, fontSize:12, color:'#22c55e' }}>
+                    ✓ <strong>{secilenBelge.ai_konu || secilenBelge.orijinal_ad}</strong> seçildi
+                  </div>
+                )}
               </div>
             )}
           </Kart>
@@ -992,6 +1099,26 @@ export default function TestModulu() {
                 </div>
               </div>
               <div>
+                <Lbl>Soru Türü</Lbl>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
+                  {[
+                    ['karma','🎲 Karma','Karışık türler (önerilen)','#8b5cf6'],
+                    ['cok_secmeli','📝 Çok Seçmeli','A, B, C, D seçenekli','#6366f1'],
+                    ['dogru_yanlis','✅ Doğru / Yanlış','İki seçenekli ifade','#f59e0b'],
+                    ['acik_uclu','✍️ Açık Uçlu','Yazılı kısa cevap','#22c55e'],
+                  ].map(([v,l,desc,c]) => (
+                    <button key={v} onClick={() => setSoruTipi(v)} style={{
+                      padding:'0.55rem 0.75rem', borderRadius:8, border:`1px solid ${soruTipi===v ? c : 'var(--border)'}`,
+                      background: soruTipi===v ? `${c}18` : 'var(--surface2)',
+                      cursor:'pointer', textAlign:'left', transition:'all 0.15s',
+                    }}>
+                      <div style={{ fontSize:12, fontWeight:700, color: soruTipi===v ? c : 'var(--text)' }}>{l}</div>
+                      <div style={{ fontSize:10, color:'var(--muted)', marginTop:2 }}>{desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
                 <Lbl>Zorluk Derecesi</Lbl>
                 <div style={{ display:'flex', gap:6 }}>
                   {[['kolay','#22c55e'],['orta','#f59e0b'],['zor','#ef4444'],['karisik','#8b5cf6']].map(([z,c]) => (
@@ -1053,7 +1180,7 @@ export default function TestModulu() {
 
           <div style={{ gridColumn:'1/-1', display:'flex', justifyContent:'space-between' }}>
             <button onClick={() => setAdim(1)} style={{ padding:'0.65rem 1.5rem', borderRadius:8, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:13, cursor:'pointer' }}>← Geri</button>
-            <button onClick={() => { setAdim(3); projeOlusturVeUret(); }} disabled={!projeAd} style={{
+            <button onClick={() => { setAdim(3); projeOlusturVeUret({}); }} disabled={!projeAd} style={{
               padding:'0.65rem 2rem', borderRadius:8, border:'none',
               background: projeAd ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : 'var(--muted)',
               color:'#fff', fontSize:13, fontWeight:700,
