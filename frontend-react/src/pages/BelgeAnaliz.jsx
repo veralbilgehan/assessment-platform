@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   getHiyerarsiSektorler, getHiyerarsiDeptlar,
   getHiyerarsiPozisyonlar, getHiyerarsiYetenekler,
-  BELGE_ANALIZ_SSE, BELGE_PROFIL_SSE, BELGE_KARS_SSE,
+  BELGE_ANALIZ_SSE, BELGE_KONU_SSE, BELGE_PROFIL_SSE, BELGE_KARS_SSE,
 } from '../api/index.js';
 
 /* ─── Ortak UI bileşenleri ─────────────────────────────────── */
@@ -90,10 +90,21 @@ function renderMd(text) {
 
 /* ─── BÖLÜM 1: Döküman Analizi ─────────────────────────────── */
 function BolumDokumanAnaliz({ onBilgiSakla, onMetinHazir }) {
+  const [sekme, setSekme] = useState('dosya'); // 'dosya' | 'konu'
+
+  // Dosya yükleme state
   const [dragOver, setDragOver] = useState(false);
   const [dosya, setDosya] = useState(null);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [rawMetin, setRawMetin] = useState('');
+
+  // Konudan oluştur state
+  const [konuGirdi, setKonuGirdi] = useState('');
+  const [sektorGirdi, setSektorGirdi] = useState('');
+  const [pozisyonGirdi, setPozisyonGirdi] = useState('');
+  const [turGirdi, setTurGirdi] = useState('makale');
+
+  // Ortak çıktı state
   const [makale, setMakale] = useState('');
   const [konu, setKonu] = useState('');
   const [bilgi, setBilgi] = useState([]);
@@ -103,6 +114,17 @@ function BolumDokumanAnaliz({ onBilgiSakla, onMetinHazir }) {
   const [izin, setIzin] = useState('beklemede');
   const [sakla, setSakla] = useState(false);
   const inputRef = useRef();
+
+  const konuOrnekleri = [
+    'Yapay Zeka & İş Dünyası', 'Liderlik Stilleri', 'Dijital Pazarlama',
+    'Sürdürülebilirlik', 'Çevik Metodolojiler', 'Duygusal Zeka', 'Veri Analitiği',
+  ];
+  const turler = [
+    { value: 'makale', label: '📝 Makale' },
+    { value: 'rapor',  label: '📊 Rapor' },
+    { value: 'rehber', label: '🗺 Rehber' },
+    { value: 'ozet',   label: '📌 Özet' },
+  ];
 
   const handleDosya = useCallback((file) => {
     if (!file) return;
@@ -157,15 +179,56 @@ function BolumDokumanAnaliz({ onBilgiSakla, onMetinHazir }) {
   async function kaydet() {
     try {
       const token = localStorage.getItem('token');
+      const orijinalAd = sekme === 'konu'
+        ? `${konu?.slice(0, 60) || konuGirdi} [AI Belge]`
+        : dosya?.name;
+      const mimeType = sekme === 'konu' ? 'text/ai-belge' : dosya?.type;
       const res = await fetch('/api/belgeler', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ orijinal_ad: dosya?.name, mime_type: dosya?.type, icerik: rawMetin, ai_makale: makale, ai_konu: konu, ai_bilgi: bilgi }),
+        body: JSON.stringify({ orijinal_ad: orijinalAd, mime_type: mimeType, icerik: rawMetin || makale, ai_makale: makale, ai_konu: konu, ai_bilgi: bilgi }),
       });
       const data = await res.json();
       setBelgeId(data.id); setKaydedildi(true);
-      onMetinHazir(rawMetin, data.id);
+      onMetinHazir(rawMetin || makale, data.id);
     } catch (e) { alert(e.message); }
+  }
+
+  async function konudanOlustur() {
+    if (!konuGirdi.trim()) return;
+    setStreaming(true); setMakale(''); setKonu(''); setBilgi([]);
+    setKaydedildi(false); setBelgeId(null); setIzin('beklemede'); setSakla(false);
+    onMetinHazir(null, null);
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(BELGE_KONU_SSE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ konu: konuGirdi, sektor: sektorGirdi, pozisyon: pozisyonGirdi, tur: turGirdi }),
+      });
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        for (const line of decoder.decode(value, { stream: true }).split('\n')) {
+          if (line.startsWith(':')) continue; // keepalive ping
+          if (!line.startsWith('data: ')) continue;
+          const payload = line.slice(6).trim();
+          if (payload === '[DONE]') break;
+          try {
+            const obj = JSON.parse(payload);
+            if (obj.tip === 'sonuc') {
+              setKonu(obj.veri.konu || '');
+              setBilgi(obj.veri.bilgi || []);
+              setMakale(obj.veri.makale || '');
+              onMetinHazir(obj.veri.makale || '', null);
+            }
+          } catch {}
+        }
+      }
+    } catch (e) { alert('Oluşturma hatası: ' + e.message); }
+    finally { setStreaming(false); }
   }
 
   async function sil() {
@@ -214,41 +277,124 @@ function BolumDokumanAnaliz({ onBilgiSakla, onMetinHazir }) {
         <h2 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Döküman Analizi & İçerik Üretimi</h2>
       </div>
 
-      <Kart style={{ marginBottom: 14 }}>
-        <div
-          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={e => { e.preventDefault(); setDragOver(false); handleDosya(e.dataTransfer.files[0]); }}
-          onClick={() => inputRef.current?.click()}
-          style={{
-            border: `2px dashed ${dragOver ? 'var(--accent)' : 'var(--border)'}`,
-            borderRadius: 8, padding: '1.75rem', textAlign: 'center', cursor: 'pointer',
-            background: dragOver ? 'var(--accent-dim)' : 'var(--surface2)', transition: 'all 0.2s',
-          }}
-        >
-          <input ref={inputRef} type="file" accept=".pdf,.docx,.txt" style={{ display: 'none' }} onChange={e => handleDosya(e.target.files[0])} />
-          <div style={{ fontSize: 28, marginBottom: 6 }}>📄</div>
-          {dosya ? (
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 13 }}>{dosya.name}</div>
-              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 3 }}>{(dosya.size / 1024).toFixed(0)} KB</div>
-            </div>
-          ) : (
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 3 }}>Dosyayı sürükle & bırak veya tıkla</div>
-              <div style={{ fontSize: 12, color: 'var(--muted)' }}>PDF, DOCX, TXT · Maks 10 MB</div>
-            </div>
-          )}
-        </div>
-      </Kart>
+      {/* ── SEKME BARI ── */}
+      <div style={{ display: 'flex', gap: 0, marginBottom: 14, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)' }}>
+        {[
+          { key: 'dosya', icon: '📄', label: 'Dosya Yükle & Analiz Et' },
+          { key: 'konu',  icon: '✍️', label: 'Konudan Belge Oluştur' },
+        ].map(s => (
+          <button key={s.key} onClick={() => { setSekme(s.key); setMakale(''); setKonu(''); setBilgi([]); setKaydedildi(false); setBelgeId(null); onMetinHazir(null, null); }} style={{
+            flex: 1, padding: '0.65rem 1rem', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+            background: sekme === s.key ? 'var(--accent)' : 'var(--surface2)',
+            color: sekme === s.key ? '#fff' : 'var(--muted)',
+            transition: 'all 0.15s',
+          }}>
+            {s.icon} {s.label}
+          </button>
+        ))}
+      </div>
 
-      {(yukleniyor || analizVar) && (
+      {/* ── DOSYA YÜKLE SEKMESİ ── */}
+      {sekme === 'dosya' && (
+        <Kart style={{ marginBottom: 14 }}>
+          <div
+            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={e => { e.preventDefault(); setDragOver(false); handleDosya(e.dataTransfer.files[0]); }}
+            onClick={() => inputRef.current?.click()}
+            style={{
+              border: `2px dashed ${dragOver ? 'var(--accent)' : 'var(--border)'}`,
+              borderRadius: 8, padding: '1.75rem', textAlign: 'center', cursor: 'pointer',
+              background: dragOver ? 'var(--accent-dim)' : 'var(--surface2)', transition: 'all 0.2s',
+            }}
+          >
+            <input ref={inputRef} type="file" accept=".pdf,.docx,.txt" style={{ display: 'none' }} onChange={e => handleDosya(e.target.files[0])} />
+            <div style={{ fontSize: 28, marginBottom: 6 }}>📄</div>
+            {dosya ? (
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>{dosya.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 3 }}>{(dosya.size / 1024).toFixed(0)} KB</div>
+              </div>
+            ) : (
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 3 }}>Dosyayı sürükle & bırak veya tıkla</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)' }}>PDF, DOCX, TXT · Maks 10 MB</div>
+              </div>
+            )}
+          </div>
+        </Kart>
+      )}
+
+      {/* ── KONUDAN OLUŞTUR SEKMESİ ── */}
+      {sekme === 'konu' && (
+        <Kart style={{ marginBottom: 14 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+            {/* Konu girişi */}
+            <Sec label="Konu / Başlık *">
+              <input
+                value={konuGirdi}
+                onChange={e => setKonuGirdi(e.target.value)}
+                placeholder="Örn: Yapay Zeka ve İş Gücü Dönüşümü"
+                style={{ width: '100%' }}
+              />
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+                {konuOrnekleri.map(k => (
+                  <span key={k} onClick={() => setKonuGirdi(k)} style={{
+                    padding: '2px 9px', fontSize: 11, borderRadius: 20, cursor: 'pointer',
+                    background: konuGirdi === k ? 'var(--accent-dim)' : 'var(--surface2)',
+                    border: `1px solid ${konuGirdi === k ? 'var(--accent)' : 'var(--border)'}`,
+                    color: konuGirdi === k ? 'var(--accent)' : 'var(--muted)',
+                    transition: 'all 0.15s',
+                  }}>{k}</span>
+                ))}
+              </div>
+            </Sec>
+
+            {/* Tür seçimi */}
+            <Sec label="Belge Türü">
+              <div style={{ display: 'flex', gap: 6 }}>
+                {turler.map(t => (
+                  <button key={t.value} onClick={() => setTurGirdi(t.value)} style={{
+                    flex: 1, padding: '0.45rem 0.5rem', border: `1px solid ${turGirdi === t.value ? 'var(--accent)' : 'var(--border)'}`,
+                    borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    background: turGirdi === t.value ? 'var(--accent-dim)' : 'var(--surface2)',
+                    color: turGirdi === t.value ? 'var(--accent)' : 'var(--muted)',
+                    transition: 'all 0.15s',
+                  }}>{t.label}</button>
+                ))}
+              </div>
+            </Sec>
+
+            {/* Opsiyonel bağlam */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <Sec label="Sektör (isteğe bağlı)">
+                <input value={sektorGirdi} onChange={e => setSektorGirdi(e.target.value)} placeholder="Örn: Finans, Sağlık..." style={{ width: '100%' }} />
+              </Sec>
+              <Sec label="Pozisyon (isteğe bağlı)">
+                <input value={pozisyonGirdi} onChange={e => setPozisyonGirdi(e.target.value)} placeholder="Örn: İK Direktörü..." style={{ width: '100%' }} />
+              </Sec>
+            </div>
+
+            {/* Oluştur butonu */}
+            <Btn
+              onClick={konudanOlustur}
+              disabled={!konuGirdi.trim() || streaming}
+              style={{ width: '100%', padding: '0.65rem' }}
+            >
+              {streaming ? '✦ Oluşturuluyor...' : '✦ Belge Oluştur'}
+            </Btn>
+          </div>
+        </Kart>
+      )}
+
+      {(yukleniyor || streaming || analizVar) && (
         <Kart style={{ marginBottom: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1.25rem' }}>
             <span style={{ fontWeight: 700, background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               ✦ AI Çıktı Paneli
             </span>
-            {streaming && <span style={{ fontSize: 12, color: 'var(--accent)' }}>Analiz ediliyor...</span>}
+            {streaming && <span style={{ fontSize: 12, color: 'var(--accent)' }}>{sekme === 'konu' ? 'Oluşturuluyor...' : 'Analiz ediliyor...'}</span>}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>

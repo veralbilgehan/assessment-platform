@@ -145,6 +145,67 @@ router.patch('/:id/sakla', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// POST /api/belgeler/konu/olustur — Konudan belge üret (SSE)
+router.post('/konu/olustur', async (req, res, next) => {
+  try {
+    const { konu, sektor, pozisyon, tur } = req.body;
+    if (!konu) return res.status(400).json({ hata: 'Konu zorunlu' });
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    const keepalive = setInterval(() => {
+      try { res.write(': ping\n\n'); } catch (_) {}
+    }, 20000);
+
+    const turMetin = { makale: 'derinlemesine analiz makalesi', rapor: 'yapılandırılmış rapor', rehber: 'pratik rehber ve uygulama kılavuzu', ozet: 'kapsamlı özet ve değerlendirme' }[tur] || 'derinlemesine analiz makalesi';
+    const baglamStr = [sektor && `Sektör: ${sektor}`, pozisyon && `Pozisyon: ${pozisyon}`].filter(Boolean).join(' | ');
+
+    const prompt = `Aşağıdaki konuda profesyonel bir belge oluştur ve SADECE JSON formatında yanıt ver.
+${baglamStr ? `\nBağlam: ${baglamStr}` : ''}
+
+Konu: ${konu}
+Belge Türü: ${turMetin}
+
+Şu yapıda JSON döndür (başka açıklama ekleme):
+{
+  "konu": "Belgenin ana başlığı ve özeti (2-3 cümle)",
+  "bilgi": ["Kritik bilgi 1", "Kritik bilgi 2", "Kritik bilgi 3", "Kritik bilgi 4", "Kritik bilgi 5"],
+  "makale": "${turMetin.charAt(0).toUpperCase() + turMetin.slice(1)} (500-700 kelime, Türkçe, profesyonel ton, başlıklar ve madde işaretleri kullan)"
+}`;
+
+    let tamMetin = '';
+    try {
+      const stream = getClient().messages.stream({
+        model: 'claude-opus-4-7',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      for await (const event of stream) {
+        if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+          tamMetin += event.delta.text;
+          res.write(`data: ${JSON.stringify({ tip: 'delta', veri: event.delta.text })}\n\n`);
+        }
+      }
+    } finally {
+      clearInterval(keepalive);
+    }
+
+    try {
+      const parsed = JSON.parse(tamMetin.replace(/```json\n?|\n?```/g, '').trim());
+      res.write(`data: ${JSON.stringify({ tip: 'sonuc', veri: parsed })}\n\n`);
+    } catch {
+      res.write(`data: ${JSON.stringify({ tip: 'ham', veri: tamMetin })}\n\n`);
+    }
+
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch (err) { next(err); }
+});
+
 // POST /api/belgeler/profil/olustur  — Problem & Profil Kartı üret
 router.post('/profil/olustur', async (req, res, next) => {
   try {

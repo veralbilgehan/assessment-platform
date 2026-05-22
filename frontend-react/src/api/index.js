@@ -25,6 +25,7 @@ export const AI_STREAM_URL     = (id)    => `${BASE}/api/degerlendirmeler/${id}/
 
 // ── Belgeler SSE URL'leri ────────────────────────────────────────────
 export const BELGE_ANALIZ_SSE = `${BASE}/api/belgeler/analiz/stream`;
+export const BELGE_KONU_SSE   = `${BASE}/api/belgeler/konu/olustur`;
 export const BELGE_PROFIL_SSE = `${BASE}/api/belgeler/profil/olustur`;
 export const BELGE_KARS_SSE   = `${BASE}/api/belgeler/karsilastir`;
 
