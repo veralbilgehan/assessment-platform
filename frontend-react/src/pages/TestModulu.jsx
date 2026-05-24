@@ -522,6 +522,17 @@ export default function TestModulu() {
   const [ataKopyalandi, setAtaKopyalandi]     = useState(false);
   const [ataAlicilar, setAtaAlicilar]         = useState([]); // [{ad, eposta, durum:'bekliyor'|'gonderildi'|'hata'}]
   const [yeniTestModal, setYeniTestModal]     = useState(false);
+  const [sakliIds, setSakliIds] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('sakli_testler') || '[]'); } catch { return []; }
+  });
+
+  function saklaToggle(id) {
+    setSakliIds(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+      localStorage.setItem('sakli_testler', JSON.stringify(next));
+      return next;
+    });
+  }
 
   // Cascading queries
   const { data: sektorler = [] } = useQuery({ queryKey:['h-sektorler'], queryFn: getHiyerarsiSektorler });
@@ -1061,6 +1072,13 @@ export default function TestModulu() {
                     {p.durum === 'hazir' && (
                       <button onClick={() => { setSecilenProje(p); setMod('aday_giris'); }} style={{ padding:'0.3rem 0.7rem', borderRadius:6, border:'none', background:'var(--accent)', color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>▶</button>
                     )}
+                    <button onClick={() => saklaToggle(p.id)} style={{
+                      padding:'0.3rem 0.6rem', borderRadius:6,
+                      border:`1px solid ${sakliIds.includes(p.id) ? '#f59e0b' : 'var(--border)'}`,
+                      background: sakliIds.includes(p.id) ? 'rgba(245,158,11,0.15)' : 'transparent',
+                      color: sakliIds.includes(p.id) ? '#f59e0b' : 'var(--muted)',
+                      fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap',
+                    }}>{sakliIds.includes(p.id) ? '★ Saklı' : '☆ Sakla'}</button>
                     <button onClick={() => projeSil(p)} style={{ padding:'0.3rem 0.6rem', borderRadius:6, border:'1px solid #ef4444', background:'transparent', color:'#ef4444', fontSize:11, fontWeight:700, cursor:'pointer' }}>🗑</button>
                   </div>
                 ))}
