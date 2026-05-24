@@ -564,6 +564,13 @@ export default function TestModulu() {
     finally { setBelgelerYuk(false); }
   }
 
+  async function belgeSil(belge) {
+    if (!confirm(`"${belge.ai_konu || belge.orijinal_ad}" belgesini silmek istediğinize emin misiniz?`)) return;
+    await fetch(`${API}/api/belgeler/${belge.id}`, { method: 'DELETE', headers: authH() });
+    if (secilenBelge?.id === belge.id) { setSecilenBelge(null); setBelgeMetin(''); }
+    await yukleBelgeler();
+  }
+
   async function secBelgeIcerik(belge) {
     setSecilenBelge(belge);
     try {
@@ -1166,6 +1173,10 @@ export default function TestModulu() {
                           background:'linear-gradient(135deg,#6366f1,#8b5cf6)',
                           color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap',
                         }}>⚡ Test Hazırla</button>
+                        <button onClick={() => belgeSil(b)} style={{
+                          padding:'0.3rem 0.55rem', borderRadius:6, border:'1px solid #ef4444',
+                          background:'transparent', color:'#ef4444', fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap',
+                        }}>🗑</button>
                       </div>
                     ))}
                   </div>
