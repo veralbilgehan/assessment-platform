@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   getHiyerarsiSektorler, getHiyerarsiDeptlar,
@@ -38,7 +38,7 @@ function Pbar({ value, color='var(--accent)' }) {
 
 /* ─── ADIM GÖSTERGESİ ──────────────────────────────────── */
 function Adimlar({ aktif }) {
-  const adimlar = ['Döküman & Proje', 'Filtrele & Hedef', 'Parametreler', 'Üret & Önizle'];
+  const adimlar = ['Ayarla & Seç', 'Üret & Önizle'];
   return (
     <div style={{ display:'flex', alignItems:'center', marginBottom:'2rem', gap:0 }}>
       {adimlar.map((a, i) => (
@@ -387,7 +387,6 @@ function SonucRaporu({ sonuc, proje }) {
 
   return (
     <div style={{ maxWidth:800, margin:'0 auto' }}>
-      {/* Başlık */}
       <Kart style={{ marginBottom:12, textAlign:'center' }}>
         <div style={{ fontSize:60, marginBottom:8 }}>
           {basari >= 70 ? '🏆' : basari >= 50 ? '📊' : '📉'}
@@ -397,7 +396,6 @@ function SonucRaporu({ sonuc, proje }) {
         <div style={{ fontSize:13, color:'var(--muted)', marginTop:4 }}>Başarı Oranı</div>
       </Kart>
 
-      {/* Metrikler */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8, marginBottom:12 }}>
         {[
           { label:'Doğru', value:skor.dogru_sayisi, renk:'#22c55e' },
@@ -412,36 +410,17 @@ function SonucRaporu({ sonuc, proje }) {
         ))}
       </div>
 
-      {/* İmza Alanı (Footer) */}
       <Kart style={{ marginBottom:12, borderTop:'3px solid var(--accent)' }}>
         <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--accent)', marginBottom:'1rem' }}>
           📋 Test Tamamlama Kaydı
         </div>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, fontSize:13 }}>
-          <div>
-            <span style={{ color:'var(--muted)' }}>Ad Soyad: </span>
-            <strong>{aday?.aday_ad || ''} {aday?.aday_soyad || ''}</strong>
-          </div>
-          <div>
-            <span style={{ color:'var(--muted)' }}>Pozisyon: </span>
-            <strong>{aday?.aday_pozisyon || '-'}</strong>
-          </div>
-          <div>
-            <span style={{ color:'var(--muted)' }}>Kurum: </span>
-            <strong>{aday?.aday_sirket || '-'}</strong>
-          </div>
-          <div>
-            <span style={{ color:'var(--muted)' }}>Test: </span>
-            <strong>{proje?.ad}</strong>
-          </div>
-          <div>
-            <span style={{ color:'var(--muted)' }}>Tamamlama Tarihi: </span>
-            <strong>{tarih}</strong>
-          </div>
-          <div>
-            <span style={{ color:'var(--muted)' }}>Süre: </span>
-            <strong>{skor.sure_saniye ? `${Math.floor(skor.sure_saniye/60)} dk ${skor.sure_saniye%60} sn` : '-'}</strong>
-          </div>
+          <div><span style={{ color:'var(--muted)' }}>Ad Soyad: </span><strong>{aday?.aday_ad || ''} {aday?.aday_soyad || ''}</strong></div>
+          <div><span style={{ color:'var(--muted)' }}>Pozisyon: </span><strong>{aday?.aday_pozisyon || '-'}</strong></div>
+          <div><span style={{ color:'var(--muted)' }}>Kurum: </span><strong>{aday?.aday_sirket || '-'}</strong></div>
+          <div><span style={{ color:'var(--muted)' }}>Test: </span><strong>{proje?.ad}</strong></div>
+          <div><span style={{ color:'var(--muted)' }}>Tamamlama Tarihi: </span><strong>{tarih}</strong></div>
+          <div><span style={{ color:'var(--muted)' }}>Süre: </span><strong>{skor.sure_saniye ? `${Math.floor(skor.sure_saniye/60)} dk ${skor.sure_saniye%60} sn` : '-'}</strong></div>
         </div>
         <div style={{ marginTop:'1rem', padding:'0.6rem 1rem', background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', borderRadius:6, fontSize:12, color:'#22c55e' }}>
           ✓ Bu kayıt, {aday?.aday_ad || ''} {aday?.aday_soyad || ''} tarafından {tarih} tarihinde dijital olarak onaylanmıştır.
@@ -472,63 +451,58 @@ function SonucRaporu({ sonuc, proje }) {
 export default function TestModulu() {
   const [adim, setAdim] = useState(0);
 
-  // Adım 1 — Döküman
-  const [dosya, setDosya]         = useState(null);
-  const [dragOver, setDragOver]   = useState(false);
+  // Belge
   const [belgeMetin, setBelgeMetin] = useState('');
-  const [analizYukleniyor, setAnalizYukleniyor] = useState(false);
-  const inputRef = useRef();
-
-  // Adım 2 — Filtreler
-  const [sektorId, setSektorId]   = useState('');
-  const [deptId, setDeptId]       = useState('');
-  const [pozId, setPozId]         = useState('');
-
-  // Belge seçim sekmesi
-  const [belgeSecTab, setBelgeSecTab] = useState('dosya'); // 'dosya' | 'belgeler'
-  const [belgeler, setBelgeler]       = useState([]);
+  const [belgeler, setBelgeler]     = useState([]);
   const [belgelerYuk, setBelgelerYuk] = useState(false);
   const [secilenBelge, setSecilenBelge] = useState(null);
 
-  // Adım 3 — Parametreler
-  const [projeAd, setProjeAd]   = useState('');
+  // Filtreler
+  const [sektorId, setSektorId] = useState('');
+  const [deptId, setDeptId]     = useState('');
+  const [pozId, setPozId]       = useState('');
+
+  // Parametreler
+  const [projeAd, setProjeAd]       = useState('');
   const [soruSayisi, setSoruSayisi] = useState(20);
-  const [zorluk, setZorluk]     = useState('karisik');
+  const [zorluk, setZorluk]         = useState('karisik');
   const [sureDakika, setSureDakika] = useState(45);
   const [kaynakModu, setKaynakModu] = useState('ai');
-  const [dokOran, setDokOran]   = useState(40);
-  const [havuzOran, setHavuzOran] = useState(30);
-  const [aiOran, setAiOran]     = useState(30);
-  const [soruTipi, setSoruTipi] = useState('karma');
+  const [dokOran, setDokOran]       = useState(40);
+  const [havuzOran, setHavuzOran]   = useState(30);
+  const [aiOran, setAiOran]         = useState(30);
+  const [soruTipi, setSoruTipi]     = useState('karma');
 
-  // Adım 4 — Üretim / Test
-  const [projeler, setProjeler]   = useState([]);
-  const [aktifProje, setAktifProje] = useState(null);
-  const [uretimDurum, setUretimDurum] = useState('');
-  const [uretildi, setUretildi]   = useState(false);
+  // Üretim / Test
+  const [projeler, setProjeler]         = useState([]);
+  const [uretimDurum, setUretimDurum]   = useState('');
+  const [uretildi, setUretildi]         = useState(false);
   const [sorularOnizle, setSorularOnizle] = useState([]);
 
   // Test Çözme
-  const [mod, setMod] = useState('yonetim'); // 'yonetim' | 'aday_giris' | 'cozuyor' | 'sonuc'
+  const [mod, setMod]               = useState('yonetim');
   const [oturumData, setOturumData] = useState(null);
   const [sonuc, setSonuc]           = useState(null);
   const [secilenProje, setSecilenProje] = useState(null);
 
   // Test Ata modal
-  const [testAtaProje, setTestAtaProje]       = useState(null);
-  const [ataEmail, setAtaEmail]               = useState('');
-  const [ataAd, setAtaAd]                     = useState('');
-  const [ataGonderildi, setAtaGonderildi]     = useState(false);
+  const [testAtaProje, setTestAtaProje]     = useState(null);
+  const [ataEmail, setAtaEmail]             = useState('');
+  const [ataAd, setAtaAd]                   = useState('');
+  const [ataGonderildi, setAtaGonderildi]   = useState(false);
   const [ataGonderiliyor, setAtaGonderiliyor] = useState(false);
-  const [ataKopyalandi, setAtaKopyalandi]     = useState(false);
+  const [ataKopyalandi, setAtaKopyalandi]   = useState(false);
 
   // Cascading queries
   const { data: sektorler = [] } = useQuery({ queryKey:['h-sektorler'], queryFn: getHiyerarsiSektorler });
   const sektorObj = sektorler.find(s => s.id === +sektorId);
   const { data: deptlar = [] } = useQuery({ queryKey:['h-deptlar', sektorId], queryFn: () => getHiyerarsiDeptlar(sektorId), enabled:!!sektorId });
-  const { data: pozlar = [] } = useQuery({ queryKey:['h-pozlar', deptId], queryFn: () => getHiyerarsiPozisyonlar(deptId), enabled:!!deptId });
+  const { data: pozlar = [] }  = useQuery({ queryKey:['h-pozlar', deptId],   queryFn: () => getHiyerarsiPozisyonlar(deptId), enabled:!!deptId });
 
-  useEffect(() => { yukleProjeListesi(); }, []);
+  useEffect(() => {
+    yukleProjeListesi();
+    yukleBelgeler();
+  }, []);
 
   // Pozisyon seçilince otomatik proje adı üret
   useEffect(() => {
@@ -578,27 +552,8 @@ export default function TestModulu() {
       const icerik = data.icerik || data.ai_makale || '';
       setBelgeMetin(icerik);
       setProjeAd(((data.ai_konu || data.orijinal_ad || '').slice(0, 55)) + ' Testi');
+      if (icerik) setKaynakModu('hibrit');
     } catch(e) {}
-  }
-
-  async function handleDosya(file) {
-    if (!file) return;
-    setDosya(file); setAnalizYukleniyor(true); setBelgeMetin('');
-    const form = new FormData(); form.append('dosya', file);
-    try {
-      const res = await fetch(`${API}/api/belgeler/analiz/stream`, { method:'POST', body:form });
-      const reader = res.body.getReader(); const dec = new TextDecoder();
-      while (true) {
-        const { done, value } = await reader.read(); if (done) break;
-        for (const line of dec.decode(value, { stream:true }).split('\n')) {
-          if (!line.startsWith('data: ')) continue;
-          const p = line.slice(6).trim(); if (p === '[DONE]') break;
-          try { const obj = JSON.parse(p); if (obj.tip === 'metin') setBelgeMetin(obj.veri); } catch {}
-        }
-      }
-      setProjeAd(file.name.replace(/\.[^.]+$/, '') + ' Testi');
-    } catch(e) { alert(e.message); }
-    finally { setAnalizYukleniyor(false); }
   }
 
   async function projeOlusturVeUret({ _belgeMetin, _projeAd, _soruTipi } = {}) {
@@ -638,7 +593,7 @@ export default function TestModulu() {
       while (true) {
         const { done, value } = await reader.read(); if (done) break;
         for (const line of dec.decode(value, { stream:true }).split('\n')) {
-          if (line.startsWith(':')) continue; // keepalive ping — yoksay
+          if (line.startsWith(':')) continue;
           if (!line.startsWith('data: ')) continue;
           const p = line.slice(6).trim(); if (p === '[DONE]') { tamamlandi = true; break; }
           try {
@@ -659,14 +614,13 @@ export default function TestModulu() {
       if (!tamamlandi) {
         setUretimDurum('⚠️ Bağlantı kesildi — proje kaydedildi, listeden açabilirsiniz.');
         await yukleProjeListesi();
-        setTimeout(() => setAdim(0), 3000); // 3 saniye sonra listeye dön
+        setTimeout(() => setAdim(0), 3000);
       }
     } catch(e) {
       setUretimDurum('❌ Soru üretimi başarısız: ' + e.message);
       await yukleProjeListesi();
       setTimeout(() => setAdim(0), 3000);
     } finally {
-      // Başarılı tamamlanmışsa listeyi yenile ama adımı değiştirme
       await yukleProjeListesi();
     }
   }
@@ -741,7 +695,6 @@ export default function TestModulu() {
             maxWidth:480, width:'92%', boxShadow:'0 20px 60px rgba(0,0,0,0.4)' }}
             onClick={e => e.stopPropagation()}>
 
-            {/* Başlık */}
             <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'1rem' }}>
               <div>
                 <div style={{ fontSize:'1rem', fontWeight:800, marginBottom:4 }}>🧪 Test Ata</div>
@@ -756,18 +709,11 @@ export default function TestModulu() {
               }}>✕</button>
             </div>
 
-            {/* Aday Adı */}
             <div style={{ marginBottom:'0.85rem' }}>
               <div style={{ fontSize:11, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--muted)', marginBottom:6 }}>Aday Adı (Opsiyonel)</div>
-              <input
-                placeholder="Ad Soyad..."
-                value={ataAd}
-                onChange={e => setAtaAd(e.target.value)}
-                style={{ width:'100%' }}
-              />
+              <input placeholder="Ad Soyad..." value={ataAd} onChange={e => setAtaAd(e.target.value)} style={{ width:'100%' }} />
             </div>
 
-            {/* Test Linki */}
             <div style={{ marginBottom:'1rem' }}>
               <div style={{ fontSize:11, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--muted)', marginBottom:6 }}>Test Bağlantısı</div>
               <div style={{ display:'flex', gap:8, alignItems:'center' }}>
@@ -784,19 +730,14 @@ export default function TestModulu() {
 
             <div style={{ borderTop:'1px dashed var(--border)', margin:'1rem 0' }} />
 
-            {/* E-posta Gönder */}
             {!ataGonderildi ? (
               <div>
                 <div style={{ fontSize:11, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--muted)', marginBottom:6 }}>Davet E-postası Gönder</div>
                 <div style={{ display:'flex', gap:8 }}>
-                  <input
-                    type="email"
-                    placeholder="aday@email.com"
-                    value={ataEmail}
+                  <input type="email" placeholder="aday@email.com" value={ataEmail}
                     onChange={e => setAtaEmail(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && ataDavetGonder()}
-                    style={{ flex:1 }}
-                  />
+                    style={{ flex:1 }} />
                   <button onClick={ataDavetGonder} disabled={!ataEmail.trim() || ataGonderiliyor} style={{
                     padding:'0.4rem 0.85rem', borderRadius:6, border:'none', flexShrink:0,
                     background: (!ataEmail.trim() || ataGonderiliyor) ? 'var(--muted)' : 'var(--accent)',
@@ -804,25 +745,19 @@ export default function TestModulu() {
                     cursor:(!ataEmail.trim() || ataGonderiliyor) ? 'not-allowed' : 'pointer',
                   }}>{ataGonderiliyor ? '⚙️...' : '📧 Gönder'}</button>
                 </div>
-                <div style={{ fontSize:11, color:'var(--muted)', marginTop:6 }}>
-                  Adaya test daveti ve bağlantı e-posta ile gönderilir.
-                </div>
+                <div style={{ fontSize:11, color:'var(--muted)', marginTop:6 }}>Adaya test daveti ve bağlantı e-posta ile gönderilir.</div>
               </div>
             ) : (
-              <div style={{
-                background:'rgba(34,197,94,0.12)', border:'1px solid rgba(34,197,94,0.3)',
-                borderRadius:10, padding:'0.85rem 1rem', textAlign:'center',
-              }}>
+              <div style={{ background:'rgba(34,197,94,0.12)', border:'1px solid rgba(34,197,94,0.3)', borderRadius:10, padding:'0.85rem 1rem', textAlign:'center' }}>
                 <div style={{ fontSize:16, marginBottom:4 }}>✅</div>
                 <div style={{ fontSize:13, fontWeight:700, color:'#22c55e' }}>Davet gönderildi!</div>
-                <div style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>
-                  <strong>{ataEmail}</strong> adresine test daveti iletildi.
-                </div>
+                <div style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}><strong>{ataEmail}</strong> adresine test daveti iletildi.</div>
               </div>
             )}
           </div>
         </div>
       )}
+
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.5rem' }}>
         <div>
           <h1 style={{ fontSize:'1.2rem', fontWeight:800, margin:0 }}>Test Hazırlama & Değerlendirme</h1>
@@ -832,162 +767,262 @@ export default function TestModulu() {
 
       <Adimlar aktif={adim} />
 
-      {/* ── ADIM 0: Döküman & Proje ── */}
+      {/* ── ADIM 0: Tüm Ayarlar ── */}
       {adim === 0 && (
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-          <Kart>
-            {/* Sekme Barı */}
-            <div style={{ display:'flex', borderRadius:8, overflow:'hidden', border:'1px solid var(--border)', marginBottom:'1rem' }}>
-              {[['dosya','📄 Dosya Yükle'],['belgeler','📚 Belgelerimden Seç']].map(([k,l]) => (
-                <button key={k} onClick={() => { setBelgeSecTab(k); if(k==='belgeler') yukleBelgeler(); }} style={{
-                  flex:1, padding:'0.5rem', border:'none', cursor:'pointer', fontSize:12, fontWeight:600,
-                  background: belgeSecTab===k ? 'var(--accent)' : 'var(--surface2)',
-                  color: belgeSecTab===k ? '#fff' : 'var(--muted)', transition:'all 0.15s',
-                }}>{l}</button>
-              ))}
-            </div>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 300px', gap:16, alignItems:'start' }}>
 
-            {/* Dosya Yükle sekmesi */}
-            {belgeSecTab === 'dosya' && (<>
-              <div
-                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={e => { e.preventDefault(); setDragOver(false); handleDosya(e.dataTransfer.files[0]); }}
-                onClick={() => inputRef.current?.click()}
-                style={{
-                  border:`2px dashed ${dragOver ? 'var(--accent)' : 'var(--border)'}`,
-                  borderRadius:8, padding:'2rem', textAlign:'center', cursor:'pointer',
-                  background: dragOver ? 'var(--accent-dim)' : 'var(--surface2)', transition:'all 0.2s',
-                }}
-              >
-                <input ref={inputRef} type="file" accept=".pdf,.docx,.txt" style={{ display:'none' }} onChange={e => handleDosya(e.target.files[0])} />
-                <div style={{ fontSize:32, marginBottom:8 }}>{analizYukleniyor ? '⚙️' : '📄'}</div>
-                {analizYukleniyor ? (
-                  <div style={{ fontSize:13, color:'var(--accent)' }}>Döküman analiz ediliyor...</div>
-                ) : dosya ? (
+          {/* SOL: Ayar Paneli */}
+          <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+
+            {/* Belgelerimden Seç */}
+            <Kart>
+              <div style={{ fontSize:13, fontWeight:600, marginBottom:'0.85rem' }}>📚 Belgelerimden Seç <span style={{ fontSize:11, color:'var(--muted)', fontWeight:400 }}>(opsiyonel)</span></div>
+              {belgelerYuk ? (
+                <div style={{ textAlign:'center', padding:'1.5rem', color:'var(--muted)', fontSize:13 }}>Yükleniyor...</div>
+              ) : belgeler.length === 0 ? (
+                <div style={{ textAlign:'center', padding:'1.5rem', color:'var(--muted)', fontSize:13 }}>
+                  Henüz kayıtlı belge yok.<br/>
+                  <span style={{ fontSize:11 }}>Belge Analiz sayfasından belge ekleyin.</span>
+                </div>
+              ) : (
+                <div style={{ maxHeight:200, overflowY:'auto', display:'flex', flexDirection:'column', gap:6 }}>
+                  {belgeler.map(b => (
+                    <div key={b.id} style={{
+                      padding:'0.55rem 0.75rem', borderRadius:8,
+                      background: secilenBelge?.id === b.id ? 'var(--accent-dim)' : 'var(--surface2)',
+                      border:`1px solid ${secilenBelge?.id === b.id ? 'var(--accent)' : 'var(--border)'}`,
+                      display:'flex', alignItems:'center', gap:8,
+                    }}>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize:12, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                          {b.ai_konu || b.orijinal_ad || 'Belge'}
+                        </div>
+                        <div style={{ fontSize:10, color:'var(--muted)', marginTop:2 }}>
+                          {b.orijinal_ad} · {new Date(b.olusturma).toLocaleDateString('tr-TR')}
+                        </div>
+                      </div>
+                      <button onClick={() => {
+                        if (secilenBelge?.id === b.id) {
+                          setSecilenBelge(null); setBelgeMetin('');
+                        } else {
+                          secBelgeIcerik(b);
+                        }
+                      }} style={{
+                        padding:'0.3rem 0.6rem', borderRadius:6,
+                        border:`1px solid ${secilenBelge?.id===b.id ? 'var(--accent)' : 'var(--border)'}`,
+                        background: secilenBelge?.id===b.id ? 'var(--accent)' : 'transparent',
+                        color: secilenBelge?.id===b.id ? '#fff' : 'var(--muted)',
+                        fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap',
+                      }}>{secilenBelge?.id===b.id ? '✓ Seçildi' : 'Seç'}</button>
+                      <button onClick={async () => {
+                        let icerik = '';
+                        try {
+                          const r = await fetch(`${API}/api/belgeler/${b.id}`, { headers: authH() });
+                          const d = await r.json();
+                          icerik = d.icerik || d.ai_makale || '';
+                        } catch(e) {}
+                        const ad = ((b.ai_konu || b.orijinal_ad || '').slice(0, 55)) + ' Testi';
+                        setBelgeMetin(icerik); setProjeAd(ad);
+                        if (icerik) setKaynakModu('hibrit');
+                        setAdim(1);
+                        projeOlusturVeUret({ _belgeMetin: icerik, _projeAd: ad, _soruTipi: soruTipi });
+                      }} style={{
+                        padding:'0.3rem 0.65rem', borderRadius:6, border:'none',
+                        background:'linear-gradient(135deg,#6366f1,#8b5cf6)',
+                        color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap',
+                      }}>⚡ Hızlı Üret</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {secilenBelge && (
+                <div style={{ marginTop:8, padding:'0.45rem 0.75rem', background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', borderRadius:6, fontSize:12, color:'#22c55e' }}>
+                  ✓ <strong>{secilenBelge.ai_konu || secilenBelge.orijinal_ad}</strong> seçildi — sorular bu belgeden üretilecek
+                </div>
+              )}
+            </Kart>
+
+            {/* Hedef Kitle + Parametreler */}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+
+              {/* Hedef Kitle */}
+              <Kart>
+                <div style={{ fontSize:13, fontWeight:600, marginBottom:'0.85rem' }}>🎯 Hedef Kitle</div>
+                <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
                   <div>
-                    <div style={{ fontWeight:600, fontSize:13 }}>{dosya.name}</div>
-                    <div style={{ fontSize:11, color:'var(--muted)', marginTop:3 }}>
-                      {belgeMetin ? `✓ ${belgeMetin.length} karakter çıkarıldı` : 'İşleniyor...'}
+                    <Lbl>Sektör</Lbl>
+                    <select value={sektorId} onChange={e => { setSektorId(e.target.value); setDeptId(''); setPozId(''); }} style={{ width:'100%' }}>
+                      <option value="">Sektör seçin...</option>
+                      {sektorler.map(s => <option key={s.id} value={s.id}>{s.nace_kodu ? `[${s.nace_kodu}] ` : ''}{s.ad}</option>)}
+                    </select>
+                    {sektorObj?.aciklama && <div style={{ marginTop:4, fontSize:11, color:'var(--muted)', lineHeight:1.5 }}>{sektorObj.aciklama}</div>}
+                  </div>
+                  <div>
+                    <Lbl>Departman</Lbl>
+                    <select value={deptId} onChange={e => { setDeptId(e.target.value); setPozId(''); }} style={{ width:'100%' }} disabled={!sektorId}>
+                      <option value="">{sektorId ? 'Departman seçin...' : 'Önce sektör'}</option>
+                      {deptlar.map(d => <option key={d.id} value={d.id}>{d.ad}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <Lbl>Pozisyon</Lbl>
+                    <select value={pozId} onChange={e => setPozId(e.target.value)} style={{ width:'100%' }} disabled={!deptId}>
+                      <option value="">{deptId ? 'Pozisyon seçin...' : 'Önce departman'}</option>
+                      {pozlar.map(p => <option key={p.id} value={p.id}>{p.ad}{p.seviye ? ` (${p.seviye})` : ''}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </Kart>
+
+              {/* Test Parametreleri */}
+              <Kart>
+                <div style={{ fontSize:13, fontWeight:600, marginBottom:'0.85rem' }}>⚙️ Test Parametreleri</div>
+                <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                  <div>
+                    <Lbl>Proje Adı</Lbl>
+                    <input value={projeAd} onChange={e => setProjeAd(e.target.value)} placeholder="Örn: Q3 2025 Yazılım Geliştirici Testi" style={{ width:'100%' }} />
+                  </div>
+                  <div>
+                    <Lbl>Soru Sayısı</Lbl>
+                    <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
+                      {[10,15,20,25,30].map(n => (
+                        <Chip key={n} label={String(n)} active={soruSayisi===n} onClick={() => setSoruSayisi(n)} />
+                      ))}
+                      <input type="number" min={5} max={50} value={soruSayisi} onChange={e => setSoruSayisi(+e.target.value)}
+                        style={{ width:56, textAlign:'center' }} />
                     </div>
                   </div>
-                ) : (
                   <div>
-                    <div style={{ fontWeight:600, fontSize:13, marginBottom:3 }}>Sürükle & Bırak veya Tıkla</div>
-                    <div style={{ fontSize:12, color:'var(--muted)' }}>PDF, DOCX, TXT · Opsiyonel</div>
+                    <Lbl>Soru Türü</Lbl>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:5 }}>
+                      {[
+                        ['karma','🎲 Karma','Karışık','#8b5cf6'],
+                        ['cok_secmeli','📝 Çok Seçmeli','A/B/C/D','#6366f1'],
+                        ['dogru_yanlis','✅ D/Y','Doğru/Yanlış','#f59e0b'],
+                        ['acik_uclu','✍️ Açık','Yazılı cevap','#22c55e'],
+                      ].map(([v,l,desc,c]) => (
+                        <button key={v} onClick={() => setSoruTipi(v)} style={{
+                          padding:'0.45rem 0.6rem', borderRadius:7, border:`1px solid ${soruTipi===v ? c : 'var(--border)'}`,
+                          background: soruTipi===v ? `${c}18` : 'var(--surface2)',
+                          cursor:'pointer', textAlign:'left', transition:'all 0.15s',
+                        }}>
+                          <div style={{ fontSize:11, fontWeight:700, color: soruTipi===v ? c : 'var(--text)' }}>{l}</div>
+                          <div style={{ fontSize:10, color:'var(--muted)' }}>{desc}</div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                )}
-              </div>
-              {belgeMetin && !secilenBelge && (
-                <div style={{ marginTop:8, padding:'0.5rem 0.75rem', background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', borderRadius:6, fontSize:12, color:'#22c55e' }}>
-                  ✓ Döküman metni RAG için hazır
+                  <div>
+                    <Lbl>Zorluk</Lbl>
+                    <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
+                      {[['kolay','#22c55e'],['orta','#f59e0b'],['zor','#ef4444'],['karisik','#8b5cf6']].map(([z,c]) => (
+                        <Chip key={z} label={z} active={zorluk===z} onClick={() => setZorluk(z)} color={c} />
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <Lbl>Süre (dakika)</Lbl>
+                    <div style={{ display:'flex', gap:5, flexWrap:'wrap', alignItems:'center' }}>
+                      {[30,45,60,90].map(n => (
+                        <Chip key={n} label={`${n}`} active={sureDakika===n} onClick={() => setSureDakika(n)} />
+                      ))}
+                      <input type="number" min={10} max={180} value={sureDakika} onChange={e => setSureDakika(+e.target.value)}
+                        style={{ width:56, textAlign:'center' }} />
+                    </div>
+                  </div>
                 </div>
-              )}
-              {!belgeMetin && !analizYukleniyor && (
-                <div style={{ marginTop:10, padding:'0.65rem 0.85rem', background:'var(--surface2)', border:'1px dashed var(--border)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                  <span style={{ fontSize:12, color:'var(--muted)' }}>Döküman olmadan da test oluşturabilirsiniz</span>
-                  <button onClick={() => setAdim(1)} style={{
-                    padding:'0.35rem 0.85rem', borderRadius:6, border:'none',
-                    background:'var(--accent)', color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap',
-                  }}>Belgesiz Devam →</button>
-                </div>
-              )}
-            </>)}
+              </Kart>
+            </div>
 
-            {/* Belgelerimden Seç sekmesi */}
-            {belgeSecTab === 'belgeler' && (
-              <div>
-                {belgelerYuk ? (
-                  <div style={{ textAlign:'center', padding:'2rem', color:'var(--muted)', fontSize:13 }}>Yükleniyor...</div>
-                ) : belgeler.length === 0 ? (
-                  <div style={{ textAlign:'center', padding:'2rem', color:'var(--muted)', fontSize:13 }}>
-                    Henüz kayıtlı belge yok.<br/>
-                    <span style={{ fontSize:11 }}>Belge Analiz sayfasından belge ekleyin.</span>
-                  </div>
-                ) : (
-                  <div style={{ maxHeight:280, overflowY:'auto', display:'flex', flexDirection:'column', gap:6 }}>
-                    {belgeler.map(b => (
-                      <div key={b.id} style={{
-                        padding:'0.65rem 0.85rem', borderRadius:8,
-                        background: secilenBelge?.id === b.id ? 'var(--accent-dim)' : 'var(--surface2)',
-                        border:`1px solid ${secilenBelge?.id === b.id ? 'var(--accent)' : 'var(--border)'}`,
-                        display:'flex', alignItems:'center', gap:8,
-                      }}>
-                        <div style={{ flex:1, minWidth:0 }}>
-                          <div style={{ fontSize:12, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                            {b.ai_konu || b.orijinal_ad || 'Belge'}
-                          </div>
-                          <div style={{ fontSize:10, color:'var(--muted)', marginTop:2 }}>
-                            {b.orijinal_ad} · {new Date(b.olusturma).toLocaleDateString('tr-TR')}
-                          </div>
-                        </div>
-                        <button onClick={() => secBelgeIcerik(b)} style={{
-                          padding:'0.3rem 0.6rem', borderRadius:6, border:`1px solid ${secilenBelge?.id===b.id ? 'var(--accent)' : 'var(--border)'}`,
-                          background: secilenBelge?.id===b.id ? 'var(--accent)' : 'transparent',
-                          color: secilenBelge?.id===b.id ? '#fff' : 'var(--muted)',
-                          fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap',
-                        }}>{secilenBelge?.id===b.id ? '✓ Seçildi' : 'Seç'}</button>
-                        <button onClick={async () => {
-                          // Hızlı Test Hazırla — belgeyi seç ve direkt üret
-                          setAdim(3);
-                          let icerik = '';
-                          try {
-                            const r = await fetch(`${API}/api/belgeler/${b.id}`, { headers: authH() });
-                            const d = await r.json();
-                            icerik = d.icerik || d.ai_makale || '';
-                          } catch(e) {}
-                          const ad = ((b.ai_konu || b.orijinal_ad || '').slice(0, 55)) + ' Testi';
-                          setBelgeMetin(icerik); setProjeAd(ad);
-                          projeOlusturVeUret({ _belgeMetin: icerik, _projeAd: ad, _soruTipi: soruTipi });
-                        }} style={{
-                          padding:'0.3rem 0.65rem', borderRadius:6, border:'none',
-                          background:'linear-gradient(135deg,#6366f1,#8b5cf6)',
-                          color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap',
-                        }}>⚡ Test Hazırla</button>
+            {/* Soru Kaynağı */}
+            <Kart>
+              <div style={{ fontSize:13, fontWeight:600, marginBottom:'0.5rem' }}>🔀 Soru Kaynağı</div>
+              {!belgeMetin && (
+                <div style={{ marginBottom:'0.85rem', padding:'0.45rem 0.7rem', background:'rgba(251,191,36,0.1)', border:'1px solid rgba(251,191,36,0.3)', borderRadius:6, fontSize:11, color:'#f59e0b' }}>
+                  ⚠ Döküman seçilmedi — sadece AI ve Soru Havuzu kullanılabilir
+                </div>
+              )}
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:12 }}>
+                {[['dokuman','📄 Döküman'],['havuz','🗃️ Havuz'],['ai','🤖 AI'],['hibrit','🔀 Hibrit']].map(([k,l]) => {
+                  const belgeGerekli = k === 'dokuman' || k === 'hibrit';
+                  const disabled = belgeGerekli && !belgeMetin;
+                  return (
+                    <button key={k} disabled={disabled} onClick={() => !disabled && setKaynakModu(k)} style={{
+                      padding:'0.4rem 0.9rem', borderRadius:8, fontSize:12, fontWeight:600,
+                      border:`1px solid ${kaynakModu===k ? 'var(--accent)' : 'var(--border)'}`,
+                      background: kaynakModu===k ? 'var(--accent-dim)' : 'transparent',
+                      color: disabled ? 'var(--muted)' : kaynakModu===k ? 'var(--accent)' : 'var(--text)',
+                      cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.45 : 1,
+                      transition:'all 0.15s',
+                    }}>{l}</button>
+                  );
+                })}
+              </div>
+
+              {kaynakModu === 'hibrit' && (
+                <div style={{ background:'var(--surface2)', borderRadius:8, padding:'0.85rem' }}>
+                  <Lbl>Hibrit Oran Ayarı</Lbl>
+                  {[
+                    ['📄 Döküman', dokOran, setDokOran, '#6366f1'],
+                    ['🗃️ Soru Havuzu', havuzOran, setHavuzOran, '#f59e0b'],
+                    ['🤖 AI Üretimi', aiOran, setAiOran, '#22c55e'],
+                  ].map(([label, val, setter, color]) => (
+                    <div key={label} style={{ marginBottom:10 }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, marginBottom:4 }}>
+                        <span>{label}</span><span style={{ fontWeight:700, color }}>{val}%</span>
                       </div>
-                    ))}
+                      <input type="range" min={0} max={100} value={val} onChange={e => setter(+e.target.value)}
+                        style={{ width:'100%', accentColor:color }} />
+                    </div>
+                  ))}
+                  <div style={{ fontSize:11, color: Math.abs(dokOran+havuzOran+aiOran-100) < 1 ? '#22c55e' : '#ef4444' }}>
+                    Toplam: {dokOran+havuzOran+aiOran}% {Math.abs(dokOran+havuzOran+aiOran-100) < 1 ? '✓' : '⚠ 100 olmalı'}
                   </div>
-                )}
-                {secilenBelge && (
-                  <div style={{ marginTop:8, padding:'0.5rem 0.75rem', background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', borderRadius:6, fontSize:12, color:'#22c55e' }}>
-                    ✓ <strong>{secilenBelge.ai_konu || secilenBelge.orijinal_ad}</strong> seçildi
-                  </div>
-                )}
-              </div>
-            )}
-          </Kart>
+                </div>
+              )}
+            </Kart>
 
-          <Kart>
-            <div style={{ fontSize:13, fontWeight:600, marginBottom:'1rem' }}>📋 Mevcut Testler</div>
+            {/* Üret Butonu */}
+            <div style={{ display:'flex', justifyContent:'flex-end' }}>
+              <button onClick={() => { setAdim(1); projeOlusturVeUret({}); }} style={{
+                padding:'0.75rem 2.5rem', borderRadius:8, border:'none',
+                background:'linear-gradient(135deg,#6366f1,#8b5cf6)',
+                color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer',
+              }}>✦ Testi Üret →</button>
+            </div>
+          </div>
+
+          {/* SAĞ: Mevcut Testler */}
+          <Kart style={{ position:'sticky', top:0 }}>
+            <div style={{ fontSize:13, fontWeight:600, marginBottom:'0.85rem' }}>📋 Mevcut Testler</div>
             {projeler.length === 0 ? (
               <div style={{ textAlign:'center', padding:'2rem', color:'var(--muted)', fontSize:13 }}>
-                Henüz test yok.<br/>Sol taraftan döküman yükleyip devam edin.
+                Henüz test yok.<br/><span style={{ fontSize:11 }}>Ayarları yapıp "Testi Üret" butonuna basın.</span>
               </div>
             ) : (
-              <div style={{ maxHeight:300, overflowY:'auto' }}>
+              <div style={{ maxHeight:'calc(100vh - 200px)', overflowY:'auto', display:'flex', flexDirection:'column', gap:6 }}>
                 {projeler.map(p => (
                   <div key={p.id} style={{
                     display:'flex', alignItems:'center', gap:8,
-                    padding:'0.6rem 0.75rem', borderRadius:8, marginBottom:6,
+                    padding:'0.6rem 0.75rem', borderRadius:8,
                     background:'var(--surface2)', border:'1px solid var(--border)',
                   }}>
                     <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontSize:13, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.ad}</div>
+                      <div style={{ fontSize:12, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.ad}</div>
                       <div style={{ fontSize:11, color:'var(--muted)' }}>
                         {p.soru_uretilen}/{p.soru_sayisi} soru · {p.katilimci_sayisi} katılımcı · {p.zorluk}
                       </div>
                     </div>
                     <span style={{
-                      fontSize:10, padding:'2px 6px', borderRadius:10,
+                      fontSize:10, padding:'2px 6px', borderRadius:10, flexShrink:0,
                       background: p.durum==='hazir' ? 'rgba(34,197,94,0.15)' : p.durum==='uretiliyor' ? 'rgba(99,102,241,0.15)' : 'rgba(251,191,36,0.15)',
                       color: p.durum==='hazir' ? '#22c55e' : p.durum==='uretiliyor' ? '#6366f1' : '#f59e0b',
                     }}>
-                      {p.durum === 'uretiliyor' ? '⚙️ üretiliyor' : p.durum}
+                      {p.durum === 'uretiliyor' ? '⚙️' : p.durum}
                     </span>
-                    {/* Takılı kalan "uretiliyor" projeleri için Yeniden Dene */}
                     {p.durum === 'uretiliyor' && (
                       <button onClick={async () => {
-                        setAdim(3); setUretimDurum('⚙️ Yeniden üretiliyor...');
+                        setAdim(1); setUretimDurum('⚙️ Yeniden üretiliyor...');
                         const uretRes = await fetch(`${API}/api/testler/proje/${p.id}/uret`, { method:'POST', headers: authH() });
                         const reader2 = uretRes.body.getReader(); const dec2 = new TextDecoder();
                         let ok = false;
@@ -1001,205 +1036,37 @@ export default function TestModulu() {
                           }
                         }
                         await yukleProjeListesi();
-                        if (ok) setAdim(3); else setAdim(0);
-                      }} style={{ padding:'0.3rem 0.6rem', borderRadius:6, border:'1px solid #6366f1', background:'transparent', color:'#6366f1', fontSize:11, fontWeight:700, cursor:'pointer' }}>
-                        🔄 Tekrar
+                        if (!ok) setAdim(0);
+                      }} style={{ padding:'0.25rem 0.5rem', borderRadius:5, border:'1px solid #6366f1', background:'transparent', color:'#6366f1', fontSize:10, fontWeight:700, cursor:'pointer', flexShrink:0 }}>
+                        🔄
                       </button>
                     )}
                     {p.durum !== 'uretiliyor' && (
                       <button onClick={() => openAtaModal(p)} title="Test Ata" style={{
-                        padding:'0.3rem 0.6rem', borderRadius:6, border:'1px solid var(--accent)',
-                        background:'transparent', color:'var(--accent)', fontSize:11, fontWeight:700, cursor:'pointer',
-                      }}>🧪 Ata</button>
+                        padding:'0.25rem 0.5rem', borderRadius:5, border:'1px solid var(--accent)',
+                        background:'transparent', color:'var(--accent)', fontSize:10, fontWeight:700, cursor:'pointer', flexShrink:0,
+                      }}>🧪</button>
                     )}
                     {p.durum === 'hazir' && (
                       <button onClick={() => { setSecilenProje(p); setMod('aday_giris'); }} style={{
-                        padding:'0.3rem 0.7rem', borderRadius:6, border:'none',
-                        background:'var(--accent)', color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer',
+                        padding:'0.25rem 0.5rem', borderRadius:5, border:'none',
+                        background:'var(--accent)', color:'#fff', fontSize:10, fontWeight:700, cursor:'pointer', flexShrink:0,
                       }}>▶</button>
                     )}
                     <button onClick={() => projeSil(p)} title="Sil" style={{
-                      padding:'0.3rem 0.6rem', borderRadius:6, border:'1px solid #ef4444',
-                      background:'transparent', color:'#ef4444', fontSize:11, fontWeight:700, cursor:'pointer',
+                      padding:'0.25rem 0.5rem', borderRadius:5, border:'1px solid #ef4444',
+                      background:'transparent', color:'#ef4444', fontSize:10, fontWeight:700, cursor:'pointer', flexShrink:0,
                     }}>🗑</button>
                   </div>
                 ))}
               </div>
             )}
           </Kart>
-
-          <div style={{ gridColumn:'1/-1', display:'flex', justifyContent:'flex-end' }}>
-            <button onClick={() => setAdim(1)} style={{
-              padding:'0.65rem 2rem', borderRadius:8, border:'none',
-              background:'var(--accent)', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer',
-            }}>Devam Et →</button>
-          </div>
         </div>
       )}
 
-      {/* ── ADIM 1: Filtrele & Hedef ── */}
+      {/* ── ADIM 1: Üretim & Önizleme ── */}
       {adim === 1 && (
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-          <Kart>
-            <div style={{ fontSize:13, fontWeight:600, marginBottom:'1rem' }}>🎯 Hedef Kitle Seçimi</div>
-            <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-              <div>
-                <Lbl>Sektör</Lbl>
-                <select value={sektorId} onChange={e => { setSektorId(e.target.value); setDeptId(''); setPozId(''); }} style={{ width:'100%' }}>
-                  <option value="">Sektör seçin...</option>
-                  {sektorler.map(s => <option key={s.id} value={s.id}>{s.nace_kodu ? `[${s.nace_kodu}] ` : ''}{s.ad}</option>)}
-                </select>
-                {sektorObj?.aciklama && <div style={{ marginTop:4, fontSize:11, color:'var(--muted)', lineHeight:1.5 }}>{sektorObj.aciklama}</div>}
-              </div>
-              <div>
-                <Lbl>Departman / Birim</Lbl>
-                <select value={deptId} onChange={e => { setDeptId(e.target.value); setPozId(''); }} style={{ width:'100%' }} disabled={!sektorId}>
-                  <option value="">{sektorId ? 'Departman seçin...' : 'Önce sektör'}</option>
-                  {deptlar.map(d => <option key={d.id} value={d.id}>{d.ad}</option>)}
-                </select>
-              </div>
-              <div>
-                <Lbl>Pozisyon</Lbl>
-                <select value={pozId} onChange={e => setPozId(e.target.value)} style={{ width:'100%' }} disabled={!deptId}>
-                  <option value="">{deptId ? 'Pozisyon seçin...' : 'Önce departman'}</option>
-                  {pozlar.map(p => <option key={p.id} value={p.id}>{p.ad}{p.seviye ? ` (${p.seviye})` : ''}</option>)}
-                </select>
-              </div>
-            </div>
-          </Kart>
-
-          <div style={{ gridColumn:'1/-1', display:'flex', justifyContent:'space-between' }}>
-            <button onClick={() => setAdim(0)} style={{ padding:'0.65rem 1.5rem', borderRadius:8, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:13, cursor:'pointer' }}>← Geri</button>
-            <button onClick={() => setAdim(2)} style={{ padding:'0.65rem 2rem', borderRadius:8, border:'none', background:'var(--accent)', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Devam Et →</button>
-          </div>
-        </div>
-      )}
-
-      {/* ── ADIM 2: Parametreler ── */}
-      {adim === 2 && (
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-          <Kart>
-            <div style={{ fontSize:13, fontWeight:600, marginBottom:'1rem' }}>⚙️ Test Parametreleri</div>
-            <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-              <div>
-                <Lbl>Proje Adı</Lbl>
-                <input value={projeAd} onChange={e => setProjeAd(e.target.value)} placeholder="Örn: Q3 2025 Yazılım Geliştirici Testi" style={{ width:'100%' }} />
-              </div>
-              <div>
-                <Lbl>Soru Sayısı</Lbl>
-                <div style={{ display:'flex', gap:6 }}>
-                  {[10,15,20,25,30].map(n => (
-                    <Chip key={n} label={String(n)} active={soruSayisi===n} onClick={() => setSoruSayisi(n)} />
-                  ))}
-                  <input type="number" min={5} max={50} value={soruSayisi} onChange={e => setSoruSayisi(+e.target.value)}
-                    style={{ width:60, textAlign:'center' }} />
-                </div>
-              </div>
-              <div>
-                <Lbl>Soru Türü</Lbl>
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
-                  {[
-                    ['karma','🎲 Karma','Karışık türler (önerilen)','#8b5cf6'],
-                    ['cok_secmeli','📝 Çok Seçmeli','A, B, C, D seçenekli','#6366f1'],
-                    ['dogru_yanlis','✅ Doğru / Yanlış','İki seçenekli ifade','#f59e0b'],
-                    ['acik_uclu','✍️ Açık Uçlu','Yazılı kısa cevap','#22c55e'],
-                  ].map(([v,l,desc,c]) => (
-                    <button key={v} onClick={() => setSoruTipi(v)} style={{
-                      padding:'0.55rem 0.75rem', borderRadius:8, border:`1px solid ${soruTipi===v ? c : 'var(--border)'}`,
-                      background: soruTipi===v ? `${c}18` : 'var(--surface2)',
-                      cursor:'pointer', textAlign:'left', transition:'all 0.15s',
-                    }}>
-                      <div style={{ fontSize:12, fontWeight:700, color: soruTipi===v ? c : 'var(--text)' }}>{l}</div>
-                      <div style={{ fontSize:10, color:'var(--muted)', marginTop:2 }}>{desc}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <Lbl>Zorluk Derecesi</Lbl>
-                <div style={{ display:'flex', gap:6 }}>
-                  {[['kolay','#22c55e'],['orta','#f59e0b'],['zor','#ef4444'],['karisik','#8b5cf6']].map(([z,c]) => (
-                    <Chip key={z} label={z} active={zorluk===z} onClick={() => setZorluk(z)} color={c} />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <Lbl>Süre Limiti (dakika)</Lbl>
-                <div style={{ display:'flex', gap:6, alignItems:'center' }}>
-                  {[30,45,60,90].map(n => (
-                    <Chip key={n} label={`${n} dk`} active={sureDakika===n} onClick={() => setSureDakika(n)} />
-                  ))}
-                  <input type="number" min={10} max={180} value={sureDakika} onChange={e => setSureDakika(+e.target.value)}
-                    style={{ width:60, textAlign:'center' }} />
-                </div>
-              </div>
-            </div>
-          </Kart>
-
-          <Kart>
-            <div style={{ fontSize:13, fontWeight:600, marginBottom:'0.5rem' }}>🔀 Soru Kaynağı Dağılımı</div>
-            {!belgeMetin && (
-              <div style={{ marginBottom:'0.85rem', padding:'0.45rem 0.7rem', background:'rgba(251,191,36,0.1)', border:'1px solid rgba(251,191,36,0.3)', borderRadius:6, fontSize:11, color:'#f59e0b' }}>
-                ⚠ Döküman seçilmedi — sadece AI ve Soru Havuzu kullanılabilir
-              </div>
-            )}
-            <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:16 }}>
-              {[['dokuman','Sadece Döküman'],['havuz','Sadece Havuz'],['ai','Sadece AI'],['hibrit','Hibrit (Hepsi)']].map(([k,l]) => {
-                const belgeGerekli = k === 'dokuman' || k === 'hibrit';
-                const disabled = belgeGerekli && !belgeMetin;
-                return (
-                  <label key={k} style={{
-                    display:'flex', alignItems:'center', gap:10, padding:'0.55rem 0.8rem',
-                    borderRadius:6, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.45 : 1,
-                    background: kaynakModu===k ? 'var(--accent-dim)' : 'var(--surface2)',
-                    border:`1px solid ${kaynakModu===k ? 'var(--accent)' : 'var(--border)'}`,
-                  }}>
-                    <input type="radio" value={k} checked={kaynakModu===k} disabled={disabled}
-                      onChange={() => !disabled && setKaynakModu(k)} style={{ accentColor:'var(--accent)' }} />
-                    <span style={{ fontSize:13, fontWeight: kaynakModu===k ? 600 : 400 }}>
-                      {l}{disabled ? <span style={{ fontSize:10, marginLeft:6, color:'var(--muted)' }}>(döküman gerekli)</span> : ''}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-
-            {kaynakModu === 'hibrit' && (
-              <div style={{ background:'var(--surface2)', borderRadius:8, padding:'1rem' }}>
-                <Lbl>Hibrit Oran Ayarı</Lbl>
-                {[
-                  ['📄 Döküman', dokOran, setDokOran, '#6366f1'],
-                  ['🗃️ Soru Havuzu', havuzOran, setHavuzOran, '#f59e0b'],
-                  ['🤖 AI Üretimi', aiOran, setAiOran, '#22c55e'],
-                ].map(([label, val, setter, color]) => (
-                  <div key={label} style={{ marginBottom:10 }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, marginBottom:4 }}>
-                      <span>{label}</span><span style={{ fontWeight:700, color }}>{val}%</span>
-                    </div>
-                    <input type="range" min={0} max={100} value={val} onChange={e => setter(+e.target.value)}
-                      style={{ width:'100%', accentColor:color }} />
-                  </div>
-                ))}
-                <div style={{ fontSize:11, color: Math.abs(dokOran+havuzOran+aiOran-100) < 1 ? '#22c55e' : '#ef4444' }}>
-                  Toplam: {dokOran+havuzOran+aiOran}% {Math.abs(dokOran+havuzOran+aiOran-100) < 1 ? '✓' : '⚠ 100 olmalı'}
-                </div>
-              </div>
-            )}
-          </Kart>
-
-          <div style={{ gridColumn:'1/-1', display:'flex', justifyContent:'space-between' }}>
-            <button onClick={() => setAdim(1)} style={{ padding:'0.65rem 1.5rem', borderRadius:8, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:13, cursor:'pointer' }}>← Geri</button>
-            <button onClick={() => { setAdim(3); projeOlusturVeUret({}); }} style={{
-              padding:'0.65rem 2rem', borderRadius:8, border:'none',
-              background:'linear-gradient(135deg,#6366f1,#8b5cf6)',
-              color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer',
-            }}>✦ Testi Üret →</button>
-          </div>
-        </div>
-      )}
-
-      {/* ── ADIM 3: Üretim & Önizleme ── */}
-      {adim === 3 && (
         <div>
           {!uretildi ? (
             <Kart style={{ textAlign:'center', padding:'3rem' }}>
@@ -1215,16 +1082,14 @@ export default function TestModulu() {
                   <div style={{ height:6, background:'var(--surface2)', borderRadius:3, overflow:'hidden' }}>
                     <div style={{ height:'100%', background:'var(--accent)', borderRadius:3, animation:'progressAnim 2s ease-in-out infinite' }} />
                   </div>
-                  <div style={{ fontSize:11, color:'var(--muted)', marginTop:8 }}>
-                    Bu işlem soru sayısına göre 1-3 dakika sürebilir ☕
-                  </div>
+                  <div style={{ fontSize:11, color:'var(--muted)', marginTop:8 }}>Bu işlem soru sayısına göre 1-3 dakika sürebilir ☕</div>
                 </div>
               )}
               <button onClick={() => { setAdim(0); yukleProjeListesi(); }} style={{
                 marginTop:12, padding:'0.5rem 1.5rem', borderRadius:8,
                 border:'1px solid var(--border)', background:'var(--surface2)',
                 color:'var(--text)', fontSize:12, cursor:'pointer',
-              }}>← Listeye Dön</button>
+              }}>← Ayarlara Dön</button>
               <style>{`@keyframes progressAnim { 0%{width:0%} 50%{width:80%} 100%{width:95%} }`}</style>
             </Kart>
           ) : (
@@ -1242,7 +1107,7 @@ export default function TestModulu() {
                   </div>
                 </div>
                 <div style={{ display:'flex', gap:8 }}>
-                  <button onClick={() => setAdim(0)} style={{ padding:'0.45rem 1rem', borderRadius:6, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:12, cursor:'pointer' }}>← Başa Dön</button>
+                  <button onClick={() => setAdim(0)} style={{ padding:'0.45rem 1rem', borderRadius:6, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:12, cursor:'pointer' }}>← Ayarlara Dön</button>
                   <button onClick={async () => {
                     const projeler2 = await fetch(`${API}/api/testler/proje`, { headers: authH() }).then(r=>r.json());
                     const son = projeler2[0];
