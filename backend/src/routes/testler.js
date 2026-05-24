@@ -77,11 +77,13 @@ async function soruUret({ projeId, belgeMetin, pozisyon, sektor, soru_sayisi, zo
   const dokHedef = kaynak_modu === 'hibrit'
     ? Math.round(soru_sayisi * dokuman_oran / 100)
     : kaynak_modu === 'dokuman' ? soru_sayisi : 0;
-  const aiHedef  = kaynak_modu === 'hibrit'
-    ? Math.max(0, soru_sayisi - sorular.length - dokHedef)
-    : kaynak_modu === 'ai' ? soru_sayisi : 0;
+  // Belge yoksa dokuman payı AI'ya devredilir — gerçek erişilebilir hedef
+  const efektivDokHedef = belgeMetin ? dokHedef : 0;
+  const aiHedef = kaynak_modu === 'hibrit'
+    ? Math.max(0, soru_sayisi - sorular.length - efektivDokHedef)
+    : (kaynak_modu === 'ai' || (!belgeMetin && kaynak_modu === 'dokuman')) ? soru_sayisi : 0;
 
-  const toplamAIHedef = (belgeMetin ? dokHedef : 0) + aiHedef + Math.max(0, soru_sayisi - sorular.length - dokHedef - aiHedef);
+  const toplamAIHedef = efektivDokHedef + aiHedef + Math.max(0, soru_sayisi - sorular.length - efektivDokHedef - aiHedef);
 
   if (toplamAIHedef > 0) {
     res?.write(`data: ${JSON.stringify({ tip: 'durum', mesaj: `AI ${toplamAIHedef} soru üretiyor...` })}\n\n`);
