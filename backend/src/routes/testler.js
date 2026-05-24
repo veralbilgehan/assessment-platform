@@ -99,43 +99,7 @@ async function soruUret({ projeId, belgeMetin, pozisyon, sektor, soru_sayisi, zo
       karma: '~%55 çok seçmeli, ~%30 doğru/yanlış, ~%15 açık uçlu karışık. Her biri için uygun soru_tipi kullan.',
     }[soru_tipi] || 'Çeşitlendir: çok seçmeli, doğru/yanlış, açık uçlu.';
 
-    const prompt = `Sen bir eğitim uzmanı ve soru bankası hazırlayıcısısın. Aşağıdaki kriterlere göre TAM OLARAK ${toplamAIHedef} adet test sorusu üret.
-
-BAĞLAM:
-- Sektör: ${sektor || 'Genel'}
-- Pozisyon: ${pozisyon || 'Genel'}
-- Zorluk Seviyesi: ${zorlukTurk}
-- Döküman Kaynaklı: ${belgeMetin ? `${dokHedef} soru (döküman içeriğinden)` : 'Yok'}
-- AI Üretimi: ${aiHedef + (belgeMetin ? 0 : dokHedef)} soru (pozisyona özgü teknik konulara göre)${dokStr}
-
-ÇIKTI FORMAT (sadece JSON, başka hiçbir şey yazma):
-{
-  "sorular": [
-    {
-      "soru_no": 1,
-      "soru_metni": "Soru metni burada",
-      "soru_tipi": "cok_secmeli",
-      "secenekler": [
-        {"harf": "A", "metin": "Seçenek A"},
-        {"harf": "B", "metin": "Seçenek B"},
-        {"harf": "C", "metin": "Seçenek C"},
-        {"harf": "D", "metin": "Seçenek D"}
-      ],
-      "dogru_cevap": "A",
-      "aciklama": "Bu cevap doğru çünkü...",
-      "kaynak": "dokuman",
-      "zorluk": "orta",
-      "puan_degeri": 1
-    }
-  ]
-}
-
-KURALLAR:
-- Soru Tipi Tercihi: ${tipiTalimat}
-- "kaynak": döküman içeriğinden üretilen için "dokuman", yetkinlik/pozisyon bilgisinden için "ai"
-- ${belgeMetin ? `İlk ${dokHedef} soruyu döküman içeriğine dayandır` : 'Tüm soruları pozisyon için gereken teknik bilgi, araç ve metodolojilere dayandır'}
-- Soruları pozisyona özgü teknik konulara odakla: kullanılan teknolojiler, metodolojiler, araçlar, sektörel uygulamalar
-- Türkçe yaz`;
+    const prompt = `Sen bir eğitim uzmanı ve soru bankası hazırlayıcısısın. Aşağıdaki kriterlere göre TAM OLARAK ${toplamAIHedef} adet test sorusu üret.\n\nBAĞLAM:\n- Sektör: ${sektor || 'Genel'}\n- Pozisyon: ${pozisyon || 'Genel'}\n- Zorluk Seviyesi: ${zorlukTurk}\n- Döküman Kaynaklı: ${belgeMetin ? `${dokHedef} soru (döküman içeriğinden)` : 'Yok'}\n- AI Üretimi: ${aiHedef + (belgeMetin ? 0 : dokHedef)} soru (pozisyona özgü teknik konulara göre)${dokStr}\n\nÇIKTI FORMAT (sadece JSON, başka hiçbir şey yazma):\n{\n  "sorular": [\n    {\n      "soru_no": 1,\n      "soru_metni": "Soru metni burada",\n      "soru_tipi": "cok_secmeli",\n      "secenekler": [\n        {"harf": "A", "metin": "Seçenek A"},\n        {"harf": "B", "metin": "Seçenek B"},\n        {"harf": "C", "metin": "Seçenek C"},\n        {"harf": "D", "metin": "Seçenek D"}\n      ],\n      "dogru_cevap": "A",\n      "aciklama": "Bu cevap doğru çünkü...",\n      "kaynak": "dokuman",\n      "zorluk": "orta",\n      "puan_degeri": 1\n    }\n  ]\n}\n\nKURALLAR:\n- Soru Tipi Tercihi: ${tipiTalimat}\n- "kaynak": döküman içeriğinden üretilen için "dokuman", yetkinlik/pozisyon bilgisinden için "ai"\n- ${belgeMetin ? `İlk ${dokHedef} soruyu döküman içeriğine dayandır` : 'Tüm soruları pozisyon için gereken teknik bilgi, araç ve metodolojilere dayandır'}\n- Soruları pozisyona özgü teknik konulara odakla: kullanılan teknolojiler, metodolojiler, araçlar, sektörel uygulamalar\n- Türkçe yaz`;
 
     try {
       const stream = getClient().messages.stream({
@@ -411,22 +375,7 @@ router.post('/oturum/:id/ai-analiz', async (req, res, next) => {
       `Araç ${i + 1}: ${g.oran}% başarı (${g.dogru}/${g.toplam} doğru)`
     ).join('\n');
 
-    const prompt = `Sen kıdemli bir İK ve yetkinlik değerlendirme uzmanısın.
-
-Aday: ${aday_ad || 'Aday'} ${aday_soyad || ''}
-Pozisyon: ${pozisyon || 'Belirtilmemiş'}
-Genel Başarı: %${basari_yuzdesi}
-
-Araç bazlı performans analizi:
-${grupStr}
-
-Aşağıdaki yapıya göre kısa, açık ve profesyonel Türkçe bir performans değerlendirmesi yaz:
-
-1. GENEL DEĞERLENDİRME (2-3 cümle): Adayın güçlü ve gelişim gerektiren alanlarını özetle.
-2. ARAÇ ANALİZİ: Her araç için 1 cümlelik spesifik yorum yaz (Araç 1'den 5'e).
-3. AKSİYON PLANI (3 madde): Adayın performansını artırmak için somut, uygulanabilir öneriler.
-
-Profesyonel, yapıcı ve motive edici bir dil kullan. Toplam 250-350 kelime.`;
+    const prompt = `Sen kıdemli bir İK ve yetkinlik değerlendirme uzmanısın.\n\nAday: ${aday_ad || 'Aday'} ${aday_soyad || ''}\nPozisyon: ${pozisyon || 'Belirtilmemiş'}\nGenel Başarı: %${basari_yuzdesi}\n\nAraç bazlı performans analizi:\n${grupStr}\n\nAşağıdaki yapıya göre kısa, açık ve profesyonel Türkçe bir performans değerlendirmesi yaz:\n\n1. GENEL DEĞERLENDİRME (2-3 cümle): Adayın güçlü ve gelişim gerektiren alanlarını özetle.\n2. ARAÇ ANALİZİ: Her araç için 1 cümlelik spesifik yorum yaz (Araç 1'den 5'e).\n3. AKSİYON PLANI (3 madde): Adayın performansını artırmak için somut, uygulanabilir öneriler.\n\nProfesyonel, yapıcı ve motive edici bir dil kullan. Toplam 250-350 kelime.`;
 
     const stream = getClient().messages.stream({
       model: 'claude-opus-4-7',
@@ -665,6 +614,48 @@ router.post('/davet', optionalAuth, async (req, res, next) => {
     });
 
     res.json({ mesaj: 'Davet e-postası gönderildi', alici: aday_eposta });
+  } catch (err) {
+    if (err.message?.includes('SMTP') || err.message?.includes('yapılandırılmamış')) {
+      return res.status(503).json({ hata: err.message });
+    }
+    next(err);
+  }
+});
+
+// POST /api/testler/oturum/:id/bildir — test tamamlandığında proje yaratıcısına otomatik rapor gönder
+router.post('/oturum/:id/bildir', async (req, res, next) => {
+  try {
+    const { rows: [oturum] } = await pool.query(
+      `SELECT o.*, tp.ad AS proje_adi, tp.olusturan_id, tp.sure_dakika, tp.zorluk, tp.soru_sayisi,
+              s.ad AS sektor_adi, p.ad AS pozisyon_adi
+       FROM test_oturumlari o
+       JOIN test_projeleri tp ON tp.id=o.proje_id
+       LEFT JOIN sektorler s ON s.id=tp.sektor_id
+       LEFT JOIN pozisyonlar p ON p.id=tp.pozisyon_id
+       WHERE o.id=$1`, [req.params.id]
+    );
+    if (!oturum) return res.status(404).json({ hata: 'Oturum bulunamadı' });
+
+    if (!oturum.olusturan_id)
+      return res.json({ mesaj: 'Proje yaratıcısı bulunamadı, bildirim atlandı' });
+
+    const { rows: [kullanici] } = await pool.query(
+      'SELECT eposta, ad FROM kullanicilar WHERE id=$1', [oturum.olusturan_id]
+    );
+    if (!kullanici?.eposta)
+      return res.json({ mesaj: 'Yaratıcı e-postası bulunamadı' });
+
+    const { rows: detay } = await pool.query(
+      `SELECT ts.sira_no, ts.soru_metni, ts.dogru_cevap, ts.puan_degeri,
+              tc.verilen_cevap, tc.dogru_mu
+       FROM test_sorulari ts
+       LEFT JOIN test_cevaplari tc ON tc.soru_id=ts.id AND tc.oturum_id=$1
+       WHERE ts.proje_id=(SELECT proje_id FROM test_oturumlari WHERE id=$1)
+       ORDER BY ts.sira_no`, [req.params.id]
+    );
+
+    await raporGonder({ alici: kullanici.eposta, aliciAd: kullanici.ad, oturum, detay });
+    res.json({ mesaj: 'Yaratıcıya bildirim gönderildi', alici: kullanici.eposta });
   } catch (err) {
     if (err.message?.includes('SMTP') || err.message?.includes('yapılandırılmamış')) {
       return res.status(503).json({ hata: err.message });
