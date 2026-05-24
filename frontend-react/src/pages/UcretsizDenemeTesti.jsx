@@ -454,6 +454,86 @@ function RaporGoster({ rapor, dosyaAdi }) {
   );
 }
 
+/* ─── Parametre Modalı ───────────────────────────────── */
+function ParamModal({ onTamam }) {
+  const [soruSayisi, setSoruSayisi] = useState(null);
+  const [zorluk, setZorluk]         = useState('');
+  const [sureDakika, setSureDakika] = useState(null);
+  const tamam = soruSayisi && zorluk && sureDakika;
+
+  function Chip({ label, active, onClick, color }) {
+    return (
+      <button type="button" onClick={onClick} style={{
+        padding:'0.35rem 0.85rem', borderRadius:20, fontSize:12, fontWeight:600, cursor:'pointer',
+        border:`1px solid ${active ? (color||'var(--accent)') : 'var(--border)'}`,
+        background: active ? `${color||'var(--accent)'}22` : 'transparent',
+        color: active ? (color||'var(--accent)') : 'var(--muted)', transition:'all 0.15s',
+      }}>{label}</button>
+    );
+  }
+
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', zIndex:1000,
+      display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem' }}>
+      <div style={{ background:'var(--surface)', borderRadius:14, padding:'1.75rem',
+        maxWidth:460, width:'100%', boxShadow:'0 20px 60px rgba(0,0,0,0.4)', maxHeight:'90vh', overflowY:'auto' }}>
+
+        <div style={{ fontSize:'1rem', fontWeight:800, marginBottom:'1.5rem', textAlign:'center' }}>
+          🆓 Deneme Testi Parametreleri
+        </div>
+
+        <div style={{ display:'flex', flexDirection:'column', gap:18 }}>
+          <div>
+            <div style={{ fontSize:11, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--muted)', marginBottom:6 }}>Soru Sayısı</div>
+            <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
+              {[10,15,20,25,30].map(n => (
+                <Chip key={n} label={String(n)} active={soruSayisi===n} onClick={() => setSoruSayisi(n)} />
+              ))}
+              <input type="number" min={5} max={50} value={soruSayisi||''}
+                onChange={e => setSoruSayisi(+e.target.value || null)}
+                placeholder="Özel" style={{ width:60, textAlign:'center' }} />
+            </div>
+          </div>
+
+          <div>
+            <div style={{ fontSize:11, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--muted)', marginBottom:6 }}>Zorluk Derecesi</div>
+            <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+              {[['kolay','#22c55e'],['orta','#f59e0b'],['zor','#ef4444'],['karisik','#8b5cf6']].map(([z,c]) => (
+                <Chip key={z} label={z} active={zorluk===z} onClick={() => setZorluk(z)} color={c} />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div style={{ fontSize:11, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--muted)', marginBottom:6 }}>Süre Limiti (dakika)</div>
+            <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
+              {[30,45,60,90].map(n => (
+                <Chip key={n} label={`${n} dk`} active={sureDakika===n} onClick={() => setSureDakika(n)} />
+              ))}
+              <input type="number" min={10} max={180} value={sureDakika||''}
+                onChange={e => setSureDakika(+e.target.value || null)}
+                placeholder="Özel" style={{ width:60, textAlign:'center' }} />
+            </div>
+          </div>
+        </div>
+
+        {!tamam && (
+          <div style={{ marginTop:'1rem', padding:'0.55rem 0.9rem', background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.25)', borderRadius:8, fontSize:12, color:'#ef4444', textAlign:'center' }}>
+            ⚠ Devam etmek için tüm alanları seçin.
+          </div>
+        )}
+
+        <button disabled={!tamam} onClick={() => tamam && onTamam({ soruSayisi, zorluk, sureDakika })} style={{
+          marginTop:'1rem', width:'100%', padding:'0.7rem', borderRadius:8, border:'none',
+          background: tamam ? 'var(--accent)' : 'var(--muted)',
+          color:'#fff', fontSize:13, fontWeight:700,
+          cursor: tamam ? 'pointer' : 'not-allowed',
+        }}>Devam Et →</button>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Ana Sayfa ──────────────────────────────────────── */
 export default function UcretsizDenemeTesti() {
   const [adim, setAdim]           = useState('yukle');
@@ -467,6 +547,7 @@ export default function UcretsizDenemeTesti() {
   const [seciliPozId, setSeciliPozId] = useState(null);
   const [yetkinlikler, setYetkinlikler] = useState([]);
   const ref = useRef();
+  const [params, setParams] = useState(null); // {soruSayisi, zorluk, sureDakika}
 
   const KABUL_TIPLER = '.xlsx,.xls,.csv,.pdf,.docx,.txt';
 
@@ -529,6 +610,8 @@ export default function UcretsizDenemeTesti() {
     setRapor(null); setHata('');
     // Pozisyon seçimini koru (kullanışlı olabilir)
   }
+
+  if (!params) return <ParamModal onTamam={setParams} />;
 
   return (
     <div style={{ animation: 'fadeIn 0.2s', maxWidth: 900, margin: '0 auto' }}>

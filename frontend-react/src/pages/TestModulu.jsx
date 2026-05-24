@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+﻿import { useState, useRef, useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   getHiyerarsiSektorler, getHiyerarsiDeptlar,
@@ -492,9 +492,9 @@ export default function TestModulu() {
 
   // Adım 3 — Parametreler
   const [projeAd, setProjeAd]   = useState('');
-  const [soruSayisi, setSoruSayisi] = useState(20);
-  const [zorluk, setZorluk]     = useState('karisik');
-  const [sureDakika, setSureDakika] = useState(45);
+  const [soruSayisi, setSoruSayisi] = useState(null);
+  const [zorluk, setZorluk]     = useState('');
+  const [sureDakika, setSureDakika] = useState(null);
   const [kaynakModu, setKaynakModu] = useState('hibrit');
   const [dokOran, setDokOran]   = useState(40);
   const [havuzOran, setHavuzOran] = useState(30);
@@ -1018,24 +1018,34 @@ export default function TestModulu() {
               </div>
             </div>
 
-            <div style={{ display:'flex', gap:8, marginTop:'1.5rem' }}>
+            {(!soruSayisi || !zorluk || !sureDakika) && (
+              <div style={{ marginTop:'1rem', padding:'0.6rem 0.9rem', background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.25)', borderRadius:8, fontSize:12, color:'#ef4444', textAlign:'center' }}>
+                ⚠ Devam etmek için soru sayısı, zorluk derecesi ve süreyi seçin.
+              </div>
+            )}
+            <div style={{ display:'flex', gap:8, marginTop:'0.75rem' }}>
               <button onClick={() => { setYeniTestModal(false); setHizliTestBelge(null); }} style={{
                 flex:1, padding:'0.65rem', borderRadius:8, border:'1px solid var(--border)',
                 background:'var(--surface2)', color:'var(--text)', fontSize:13, cursor:'pointer',
               }}>İptal</button>
-              <button onClick={() => {
-                setYeniTestModal(false);
-                if (hizliTestBelge) {
-                  setAdim(3);
-                  projeOlusturVeUret({ _belgeMetin: hizliTestBelge.icerik, _projeAd: projeAd || hizliTestBelge.ad, _soruTipi: soruTipi });
-                  setHizliTestBelge(null);
-                } else {
-                  setAdim(1);
-                }
-              }} style={{
-                flex:2, padding:'0.65rem', borderRadius:8, border:'none',
-                background:'var(--accent)', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer',
-              }}>Devam Et →</button>
+              <button
+                disabled={!soruSayisi || !zorluk || !sureDakika}
+                onClick={() => {
+                  if (!soruSayisi || !zorluk || !sureDakika) return;
+                  setYeniTestModal(false);
+                  if (hizliTestBelge) {
+                    setAdim(3);
+                    projeOlusturVeUret({ _belgeMetin: hizliTestBelge.icerik, _projeAd: projeAd || hizliTestBelge.ad, _soruTipi: soruTipi });
+                    setHizliTestBelge(null);
+                  } else {
+                    setAdim(1);
+                  }
+                }} style={{
+                  flex:2, padding:'0.65rem', borderRadius:8, border:'none',
+                  background: (!soruSayisi || !zorluk || !sureDakika) ? 'var(--muted)' : 'var(--accent)',
+                  color:'#fff', fontSize:13, fontWeight:700,
+                  cursor: (!soruSayisi || !zorluk || !sureDakika) ? 'not-allowed' : 'pointer',
+                }}>Devam Et →</button>
             </div>
           </div>
         </div>
@@ -1058,7 +1068,7 @@ export default function TestModulu() {
               <div style={{ fontSize:52, marginBottom:12 }}>📋</div>
               <div style={{ fontSize:16, fontWeight:700, marginBottom:6 }}>Henüz test yok</div>
               <div style={{ fontSize:13, color:'var(--muted)', marginBottom:'1.75rem' }}>İlk testinizi oluşturmak için aşağıdaki butona tıklayın.</div>
-              <button onClick={() => setYeniTestModal(true)} style={{
+              <button onClick={() => { setSoruSayisi(null); setZorluk(''); setSureDakika(null); setYeniTestModal(true); }} style={{
                 padding:'0.8rem 2.5rem', borderRadius:10, border:'none',
                 background:'var(--accent)', color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer',
               }}>+ Yeni Test Oluştur</button>
@@ -1067,7 +1077,7 @@ export default function TestModulu() {
             <Kart>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1rem' }}>
                 <div style={{ fontSize:13, fontWeight:700 }}>📋 Testler ({projeler.length})</div>
-                <button onClick={() => setYeniTestModal(true)} style={{
+                <button onClick={() => { setSoruSayisi(null); setZorluk(''); setSureDakika(null); setYeniTestModal(true); }} style={{
                   padding:'0.45rem 1.25rem', borderRadius:8, border:'none',
                   background:'var(--accent)', color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer',
                 }}>+ Yeni Test Oluştur</button>
