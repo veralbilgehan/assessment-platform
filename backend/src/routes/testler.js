@@ -135,6 +135,7 @@ KURALLAR:
 - "kaynak": döküman içeriğinden üretilen için "dokuman", yetkinlik/pozisyon bilgisinden için "ai"
 - ${belgeMetin ? `İlk ${dokHedef} soruyu döküman içeriğine dayandır` : 'Tüm soruları pozisyon için gereken teknik bilgi, araç ve metodolojilere dayandır'}
 - Soruları pozisyona özgü teknik konulara odakla: kullanılan teknolojiler, metodolojiler, araçlar, sektörel uygulamalar
+- Her soru BENZERSİZ olmalı — aynı konuyu veya soruyu farklı ifadeyle tekrar etme, her soru farklı bir kavramı veya beceriyi ölçmeli
 - Türkçe yaz`;
 
     try {
@@ -163,17 +164,23 @@ KURALLAR:
       const parsed = JSON.parse(cleaned);
 
       if (parsed.sorular?.length) {
-        sorular.push(...parsed.sorular.map((s, i) => ({
-          sira_no:     sorular.length + i + 1,
-          soru_metni:  s.soru_metni,
-          soru_tipi:   s.soru_tipi || 'cok_secmeli',
-          secenekler:  s.secenekler,
-          dogru_cevap: s.dogru_cevap,
-          aciklama:    s.aciklama,
-          kaynak:      s.kaynak || 'ai',
-          zorluk:      s.zorluk || zorluk,
-          puan_degeri: s.puan_degeri || 1,
-        })));
+        const mevcutMetinler = new Set(sorular.map(s => s.soru_metni.trim().toLowerCase().slice(0, 80)));
+        for (const s of parsed.sorular) {
+          const anahtar = (s.soru_metni || '').trim().toLowerCase().slice(0, 80);
+          if (!anahtar || mevcutMetinler.has(anahtar)) continue;
+          mevcutMetinler.add(anahtar);
+          sorular.push({
+            sira_no:     sorular.length + 1,
+            soru_metni:  s.soru_metni,
+            soru_tipi:   s.soru_tipi || 'cok_secmeli',
+            secenekler:  s.secenekler,
+            dogru_cevap: s.dogru_cevap,
+            aciklama:    s.aciklama,
+            kaynak:      s.kaynak || 'ai',
+            zorluk:      s.zorluk || zorluk,
+            puan_degeri: s.puan_degeri || 1,
+          });
+        }
       }
     } catch (e) {
       res?.write(`data: ${JSON.stringify({ tip: 'uyari', mesaj: 'AI soru üretiminde hata: ' + e.message })}\n\n`);
