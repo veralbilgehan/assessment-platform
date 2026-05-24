@@ -13,6 +13,7 @@ import AdayKiyasla from './pages/AdayKiyasla.jsx';
 import PerformansRaporu from './pages/PerformansRaporu.jsx';
 import UcretsizDenemeTesti from './pages/UcretsizDenemeTesti.jsx';
 import EvrakKutusu from './pages/EvrakKutusu.jsx';
+import Ayarlar from './pages/Ayarlar.jsx';
 import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
 import TestCoz from './pages/TestCoz.jsx';
@@ -61,6 +62,7 @@ function MainApp() {
           {tab === 'rapor'           && <PerformansRaporu />}
           {tab === 'deneme'          && <UcretsizDenemeTesti />}
           {tab === 'evrak'           && <EvrakKutusu />}
+          {tab === 'ayarlar'         && <Ayarlar />}
         </main>
       </div>
     </div>
