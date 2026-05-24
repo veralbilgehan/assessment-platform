@@ -495,7 +495,7 @@ export default function TestModulu() {
   const [soruSayisi, setSoruSayisi] = useState(20);
   const [zorluk, setZorluk]     = useState('karisik');
   const [sureDakika, setSureDakika] = useState(45);
-  const [kaynakModu, setKaynakModu] = useState('hibrit');
+  const [kaynakModu, setKaynakModu] = useState('ai');
   const [dokOran, setDokOran]   = useState(40);
   const [havuzOran, setHavuzOran] = useState(30);
   const [aiOran, setAiOran]     = useState(30);
@@ -540,6 +540,13 @@ export default function TestModulu() {
       }
     }
   }, [pozId, pozlar]);
+
+  // Belge kaldırılınca döküman gerektiren modu otomatik AI'ya geçir
+  useEffect(() => {
+    if (!belgeMetin && (kaynakModu === 'dokuman' || kaynakModu === 'hibrit')) {
+      setKaynakModu('ai');
+    }
+  }, [belgeMetin]);
 
   async function yukleProjeListesi() {
     const res = await fetch(`${API}/api/testler/proje`, { headers: authH() });
@@ -876,6 +883,15 @@ export default function TestModulu() {
                   ✓ Döküman metni RAG için hazır
                 </div>
               )}
+              {!belgeMetin && !analizYukleniyor && (
+                <div style={{ marginTop:10, padding:'0.65rem 0.85rem', background:'var(--surface2)', border:'1px dashed var(--border)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                  <span style={{ fontSize:12, color:'var(--muted)' }}>Döküman olmadan da test oluşturabilirsiniz</span>
+                  <button onClick={() => setAdim(1)} style={{
+                    padding:'0.35rem 0.85rem', borderRadius:6, border:'none',
+                    background:'var(--accent)', color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap',
+                  }}>Belgesiz Devam →</button>
+                </div>
+              )}
             </>)}
 
             {/* Belgelerimden Seç sekmesi */}
@@ -1121,19 +1137,31 @@ export default function TestModulu() {
           </Kart>
 
           <Kart>
-            <div style={{ fontSize:13, fontWeight:600, marginBottom:'1rem' }}>🔀 Soru Kaynağı Dağılımı</div>
+            <div style={{ fontSize:13, fontWeight:600, marginBottom:'0.5rem' }}>🔀 Soru Kaynağı Dağılımı</div>
+            {!belgeMetin && (
+              <div style={{ marginBottom:'0.85rem', padding:'0.45rem 0.7rem', background:'rgba(251,191,36,0.1)', border:'1px solid rgba(251,191,36,0.3)', borderRadius:6, fontSize:11, color:'#f59e0b' }}>
+                ⚠ Döküman seçilmedi — sadece AI ve Soru Havuzu kullanılabilir
+              </div>
+            )}
             <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:16 }}>
-              {[['dokuman','Sadece Döküman'],['havuz','Sadece Havuz'],['ai','Sadece AI'],['hibrit','Hibrit (Hepsi)']].map(([k,l]) => (
-                <label key={k} style={{
-                  display:'flex', alignItems:'center', gap:10, padding:'0.55rem 0.8rem',
-                  borderRadius:6, cursor:'pointer',
-                  background: kaynakModu===k ? 'var(--accent-dim)' : 'var(--surface2)',
-                  border:`1px solid ${kaynakModu===k ? 'var(--accent)' : 'var(--border)'}`,
-                }}>
-                  <input type="radio" value={k} checked={kaynakModu===k} onChange={() => setKaynakModu(k)} style={{ accentColor:'var(--accent)' }} />
-                  <span style={{ fontSize:13, fontWeight: kaynakModu===k ? 600 : 400 }}>{l}</span>
-                </label>
-              ))}
+              {[['dokuman','Sadece Döküman'],['havuz','Sadece Havuz'],['ai','Sadece AI'],['hibrit','Hibrit (Hepsi)']].map(([k,l]) => {
+                const belgeGerekli = k === 'dokuman' || k === 'hibrit';
+                const disabled = belgeGerekli && !belgeMetin;
+                return (
+                  <label key={k} style={{
+                    display:'flex', alignItems:'center', gap:10, padding:'0.55rem 0.8rem',
+                    borderRadius:6, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.45 : 1,
+                    background: kaynakModu===k ? 'var(--accent-dim)' : 'var(--surface2)',
+                    border:`1px solid ${kaynakModu===k ? 'var(--accent)' : 'var(--border)'}`,
+                  }}>
+                    <input type="radio" value={k} checked={kaynakModu===k} disabled={disabled}
+                      onChange={() => !disabled && setKaynakModu(k)} style={{ accentColor:'var(--accent)' }} />
+                    <span style={{ fontSize:13, fontWeight: kaynakModu===k ? 600 : 400 }}>
+                      {l}{disabled ? <span style={{ fontSize:10, marginLeft:6, color:'var(--muted)' }}>(döküman gerekli)</span> : ''}
+                    </span>
+                  </label>
+                );
+              })}
             </div>
 
             {kaynakModu === 'hibrit' && (
