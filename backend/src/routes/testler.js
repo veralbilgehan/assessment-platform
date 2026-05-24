@@ -134,9 +134,10 @@ BAĞLAM:
 
 KURALLAR:
 - Soru Tipi Tercihi: ${tipiTalimat}
-- "kaynak": döküman içeriğinden üretilen için "dokuman", yetkinlik/pozisyon bilgisinden için "ai"
+- "kaynak": döküman içeriğinden üretilen için "dokuman", teknik/mesleki bilgiden üretilen için "ai"
 - ${belgeMetin ? `İlk ${dokHedef} soruyu döküman içeriğine dayandır` : 'Tüm soruları pozisyon için gereken teknik bilgi, araç ve metodolojilere dayandır'}
-- Soruları pozisyona özgü teknik konulara odakla: kullanılan teknolojiler, metodolojiler, araçlar, sektörel uygulamalar
+- Soruları YALNIZCA pozisyona özgü teknik ve mesleki konulara odakla: kullanılan yazılım/donanım/araçlar, sektöre özgü prosedürler, mevzuat, standartlar, metodolojiler, hesaplama/analiz teknikleri
+- YASAK: "takım çalışması", "iletişim becerileri", "liderlik", "motivasyon", "zaman yönetimi" gibi genel yetkinlik veya kişisel özellik soruları sorma — bunlar yerine somut teknik bilgi ölç
 - Her soru BENZERSİZ olmalı — aynı konuyu veya soruyu farklı ifadeyle tekrar etme, her soru farklı bir kavramı veya beceriyi ölçmeli
 - Türkçe yaz`;
 
