@@ -522,6 +522,7 @@ export default function TestModulu() {
   const [ataKopyalandi, setAtaKopyalandi]     = useState(false);
   const [ataAlicilar, setAtaAlicilar]         = useState([]); // [{ad, eposta, durum:'bekliyor'|'gonderildi'|'hata'}]
   const [yeniTestModal, setYeniTestModal]     = useState(false);
+  const [hizliTestBelge, setHizliTestBelge] = useState(null); // { icerik, ad }
   const [sakliIds, setSakliIds] = useState(() => {
     try { return JSON.parse(localStorage.getItem('sakli_testler') || '[]'); } catch { return []; }
   });
@@ -916,7 +917,7 @@ export default function TestModulu() {
       {yeniTestModal && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.65)', zIndex:1000,
           display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem' }}
-          onClick={() => setYeniTestModal(false)}>
+          onClick={() => { setYeniTestModal(false); setHizliTestBelge(null); }}>
           <div style={{ background:'var(--surface)', borderRadius:14, padding:'1.75rem',
             maxWidth:500, width:'100%', boxShadow:'0 20px 60px rgba(0,0,0,0.4)',
             maxHeight:'90vh', overflowY:'auto' }}
@@ -924,7 +925,7 @@ export default function TestModulu() {
 
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.5rem' }}>
               <div style={{ fontSize:'1rem', fontWeight:800 }}>📝 Yeni Test Oluştur</div>
-              <button onClick={() => setYeniTestModal(false)} style={{ background:'transparent', border:'none', color:'var(--muted)', cursor:'pointer', fontSize:20, lineHeight:1 }}>✕</button>
+              <button onClick={() => { setYeniTestModal(false); setHizliTestBelge(null); }} style={{ background:'transparent', border:'none', color:'var(--muted)', cursor:'pointer', fontSize:20, lineHeight:1 }}>✕</button>
             </div>
 
             <div style={{ display:'flex', flexDirection:'column', gap:18 }}>
@@ -993,11 +994,20 @@ export default function TestModulu() {
             </div>
 
             <div style={{ display:'flex', gap:8, marginTop:'1.5rem' }}>
-              <button onClick={() => setYeniTestModal(false)} style={{
+              <button onClick={() => { setYeniTestModal(false); setHizliTestBelge(null); }} style={{
                 flex:1, padding:'0.65rem', borderRadius:8, border:'1px solid var(--border)',
                 background:'var(--surface2)', color:'var(--text)', fontSize:13, cursor:'pointer',
               }}>İptal</button>
-              <button onClick={() => { setYeniTestModal(false); setAdim(1); }} style={{
+              <button onClick={() => {
+                setYeniTestModal(false);
+                if (hizliTestBelge) {
+                  setAdim(3);
+                  projeOlusturVeUret({ _belgeMetin: hizliTestBelge.icerik, _projeAd: projeAd || hizliTestBelge.ad, _soruTipi: soruTipi });
+                  setHizliTestBelge(null);
+                } else {
+                  setAdim(1);
+                }
+              }} style={{
                 flex:2, padding:'0.65rem', borderRadius:8, border:'none',
                 background:'var(--accent)', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer',
               }}>Devam Et →</button>
@@ -1175,8 +1185,6 @@ export default function TestModulu() {
                           fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap',
                         }}>{secilenBelge?.id===b.id ? '✓ Seçildi' : 'Seç'}</button>
                         <button onClick={async () => {
-                          // Hızlı Test Hazırla — belgeyi seç ve direkt üret
-                          setAdim(3);
                           let icerik = '';
                           try {
                             const r = await fetch(`${API}/api/belgeler/${b.id}`, { headers: authH() });
@@ -1184,8 +1192,10 @@ export default function TestModulu() {
                             icerik = d.icerik || d.ai_makale || '';
                           } catch(e) {}
                           const ad = ((b.ai_konu || b.orijinal_ad || '').slice(0, 55)) + ' Testi';
-                          setBelgeMetin(icerik); setProjeAd(ad);
-                          projeOlusturVeUret({ _belgeMetin: icerik, _projeAd: ad, _soruTipi: soruTipi });
+                          setBelgeMetin(icerik);
+                          setProjeAd(ad);
+                          setHizliTestBelge({ icerik, ad });
+                          setYeniTestModal(true);
                         }} style={{
                           padding:'0.3rem 0.65rem', borderRadius:6, border:'none',
                           background:'linear-gradient(135deg,#6366f1,#8b5cf6)',
