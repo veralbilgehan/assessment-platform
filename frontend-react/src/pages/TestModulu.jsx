@@ -518,9 +518,9 @@ export default function TestModulu() {
   const [testAtaProje, setTestAtaProje]       = useState(null);
   const [ataEmail, setAtaEmail]               = useState('');
   const [ataAd, setAtaAd]                     = useState('');
-  const [ataGonderildi, setAtaGonderildi]     = useState(false);
   const [ataGonderiliyor, setAtaGonderiliyor] = useState(false);
   const [ataKopyalandi, setAtaKopyalandi]     = useState(false);
+  const [ataAlicilar, setAtaAlicilar]         = useState([]); // [{ad, eposta, durum:'bekliyor'|'gonderildi'|'hata'}]
 
   // Cascading queries
   const { data: sektorler = [] } = useQuery({ queryKey:['h-sektorler'], queryFn: getHiyerarsiSektorler });
@@ -667,12 +667,13 @@ export default function TestModulu() {
   /* ── Test Ata yardımcıları ─────────────────────────── */
   function openAtaModal(proje) {
     setTestAtaProje(proje);
-    setAtaEmail(''); setAtaAd(''); setAtaGonderildi(false);
+    setAtaEmail(''); setAtaAd('');
     setAtaGonderiliyor(false); setAtaKopyalandi(false);
+    setAtaAlicilar([]);
   }
 
   function getAtaLink(projeId) {
-    return `${window.location.origin}/test?proje=${projeId}&aday=${encodeURIComponent(ataAd)}`;
+    return `${window.location.origin}/test?proje=${projeId}`;
   }
 
   async function kopyalaAtaLink() {
@@ -681,9 +682,21 @@ export default function TestModulu() {
     setTimeout(() => setAtaKopyalandi(false), 2000);
   }
 
-  async function ataDavetGonder() {
-    if (!ataEmail.trim()) { alert('E-posta adresi zorunlu'); return; }
-    setAtaGonderiliyor(true);
+  function aliciEkle() {
+    const eposta = ataEmail.trim();
+    const ad     = ataAd.trim() || 'Aday';
+    if (!eposta) { alert('E-posta adresi zorunlu'); return; }
+    if (ataAlicilar.some(a => a.eposta === eposta)) { alert('Bu e-posta zaten listede'); return; }
+    setAtaAlicilar(prev => [...prev, { ad, eposta, durum: 'bekliyor' }]);
+    setAtaEmail(''); setAtaAd('');
+  }
+
+  function aliciSil(eposta) {
+    setAtaAlicilar(prev => prev.filter(a => a.eposta !== eposta));
+  }
+
+  async function tekGonder(alici) {
+    setAtaAlicilar(prev => prev.map(a => a.eposta === alici.eposta ? { ...a, durum: 'gonderiyor' } : a));
     try {
       const t = localStorage.getItem('token');
       const r = await fetch(`${API}/api/testler/davet`, {
@@ -691,16 +704,24 @@ export default function TestModulu() {
         headers: { 'Content-Type': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) },
         body: JSON.stringify({
           proje_id:    testAtaProje?.id,
-          aday_ad:     ataAd || 'Aday',
-          aday_eposta: ataEmail,
+          aday_ad:     alici.ad,
+          aday_eposta: alici.eposta,
           pozisyon:    testAtaProje?.pozisyon_adi || '',
           test_linki:  getAtaLink(testAtaProje?.id),
         }),
       });
       if (!r.ok) { const e = await r.json(); throw new Error(e.hata || 'Gönderilemedi'); }
-      setAtaGonderildi(true);
-    } catch(e) { alert(e.message); }
-    finally { setAtaGonderiliyor(false); }
+      setAtaAlicilar(prev => prev.map(a => a.eposta === alici.eposta ? { ...a, durum: 'gonderildi' } : a));
+    } catch(e) {
+      setAtaAlicilar(prev => prev.map(a => a.eposta === alici.eposta ? { ...a, durum: 'hata', hataMsg: e.message } : a));
+    }
+  }
+
+  async function tumunuGonder() {
+    const bekleyenler = ataAlicilar.filter(a => a.durum === 'bekliyor' || a.durum === 'hata');
+    for (const alici of bekleyenler) {
+      await tekGonder(alici);
+    }
   }
 
   /* ── Test Çözüm Akışı ── */
@@ -728,14 +749,15 @@ export default function TestModulu() {
       {/* ── MODAL: Test Ata ── */}
       {testAtaProje && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.65)', zIndex:1000,
-          display:'flex', alignItems:'center', justifyContent:'center' }}
+          display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem' }}
           onClick={() => setTestAtaProje(null)}>
           <div style={{ background:'var(--surface)', borderRadius:14, padding:'1.75rem',
-            maxWidth:480, width:'92%', boxShadow:'0 20px 60px rgba(0,0,0,0.4)' }}
+            maxWidth:560, width:'100%', boxShadow:'0 20px 60px rgba(0,0,0,0.4)',
+            maxHeight:'90vh', overflowY:'auto' }}
             onClick={e => e.stopPropagation()}>
 
             {/* Başlık */}
-            <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'1rem' }}>
+            <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'1.25rem' }}>
               <div>
                 <div style={{ fontSize:'1rem', fontWeight:800, marginBottom:4 }}>🧪 Test Ata</div>
                 <div style={{ fontSize:12, color:'var(--muted)' }}>
@@ -749,68 +771,123 @@ export default function TestModulu() {
               }}>✕</button>
             </div>
 
-            {/* Aday Adı */}
-            <div style={{ marginBottom:'0.85rem' }}>
-              <div style={{ fontSize:11, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--muted)', marginBottom:6 }}>Aday Adı (Opsiyonel)</div>
-              <input
-                placeholder="Ad Soyad..."
-                value={ataAd}
-                onChange={e => setAtaAd(e.target.value)}
-                style={{ width:'100%' }}
-              />
-            </div>
+            {/* QR Kod + Link yan yana */}
+            <div style={{ display:'grid', gridTemplateColumns:'auto 1fr', gap:16, alignItems:'center', marginBottom:'1.25rem' }}>
+              {/* QR */}
+              <div style={{ textAlign:'center' }}>
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(getAtaLink(testAtaProje.id))}`}
+                  alt="QR Kod"
+                  style={{ width:130, height:130, borderRadius:8, border:'1px solid var(--border)' }}
+                />
+                <div style={{ fontSize:10, color:'var(--muted)', marginTop:4 }}>QR Kod</div>
+              </div>
 
-            {/* Test Linki */}
-            <div style={{ marginBottom:'1rem' }}>
-              <div style={{ fontSize:11, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--muted)', marginBottom:6 }}>Test Bağlantısı</div>
-              <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-                <input readOnly value={getAtaLink(testAtaProje.id)}
-                  style={{ flex:1, fontSize:11, color:'var(--muted)', background:'var(--surface2)' }} />
-                <button onClick={kopyalaAtaLink} style={{
-                  padding:'0.4rem 0.85rem', borderRadius:6, border:'none', flexShrink:0,
-                  background: ataKopyalandi ? '#22c55e' : 'var(--surface2)',
-                  color: ataKopyalandi ? '#fff' : 'var(--text)',
-                  fontSize:12, fontWeight:600, cursor:'pointer',
-                }}>{ataKopyalandi ? '✓ Kopyalandı' : '📋 Kopyala'}</button>
+              {/* Link + kopyala */}
+              <div>
+                <div style={{ fontSize:11, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--muted)', marginBottom:6 }}>Test Bağlantısı</div>
+                <div style={{ display:'flex', gap:6, marginBottom:8 }}>
+                  <input readOnly value={getAtaLink(testAtaProje.id)}
+                    style={{ flex:1, fontSize:11, color:'var(--muted)', background:'var(--surface2)' }}
+                    onClick={e => e.target.select()}
+                  />
+                  <button onClick={kopyalaAtaLink} style={{
+                    padding:'0.4rem 0.75rem', borderRadius:6, border:'none', flexShrink:0,
+                    background: ataKopyalandi ? '#22c55e' : 'var(--surface2)',
+                    color: ataKopyalandi ? '#fff' : 'var(--text)',
+                    fontSize:12, fontWeight:600, cursor:'pointer',
+                  }}>{ataKopyalandi ? '✓' : '📋'}</button>
+                </div>
+                <div style={{ fontSize:11, color:'var(--muted)', lineHeight:1.5 }}>
+                  Adaylar bu linki açarak veya QR kodu tarayarak teste başlayabilir.
+                  Test sonuçları otomatik olarak size iletilir.
+                </div>
               </div>
             </div>
 
             <div style={{ borderTop:'1px dashed var(--border)', margin:'1rem 0' }} />
 
-            {/* E-posta Gönder */}
-            {!ataGonderildi ? (
-              <div>
-                <div style={{ fontSize:11, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--muted)', marginBottom:6 }}>Davet E-postası Gönder</div>
-                <div style={{ display:'flex', gap:8 }}>
-                  <input
-                    type="email"
-                    placeholder="aday@email.com"
-                    value={ataEmail}
-                    onChange={e => setAtaEmail(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && ataDavetGonder()}
-                    style={{ flex:1 }}
-                  />
-                  <button onClick={ataDavetGonder} disabled={!ataEmail.trim() || ataGonderiliyor} style={{
-                    padding:'0.4rem 0.85rem', borderRadius:6, border:'none', flexShrink:0,
-                    background: (!ataEmail.trim() || ataGonderiliyor) ? 'var(--muted)' : 'var(--accent)',
-                    color:'#fff', fontSize:12, fontWeight:600,
-                    cursor:(!ataEmail.trim() || ataGonderiliyor) ? 'not-allowed' : 'pointer',
-                  }}>{ataGonderiliyor ? '⚙️...' : '📧 Gönder'}</button>
+            {/* Alıcı ekle formu */}
+            <div style={{ fontSize:12, fontWeight:700, marginBottom:8 }}>📧 Davetiye Gönder</div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr auto', gap:6, marginBottom:10 }}>
+              <input
+                placeholder="Ad Soyad"
+                value={ataAd}
+                onChange={e => setAtaAd(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && aliciEkle()}
+                style={{ fontSize:12 }}
+              />
+              <input
+                type="email"
+                placeholder="eposta@sirket.com"
+                value={ataEmail}
+                onChange={e => setAtaEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && aliciEkle()}
+                style={{ fontSize:12 }}
+              />
+              <button onClick={aliciEkle} style={{
+                padding:'0.4rem 0.8rem', borderRadius:6, border:'none',
+                background:'var(--accent)', color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap',
+              }}>+ Ekle</button>
+            </div>
+
+            {/* Alıcı listesi */}
+            {ataAlicilar.length > 0 && (
+              <div style={{ marginBottom:12 }}>
+                <div style={{ display:'flex', flexDirection:'column', gap:5, maxHeight:200, overflowY:'auto' }}>
+                  {ataAlicilar.map(a => (
+                    <div key={a.eposta} style={{
+                      display:'flex', alignItems:'center', gap:8, padding:'0.45rem 0.75rem',
+                      borderRadius:7, background:'var(--surface2)', border:'1px solid var(--border)',
+                    }}>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize:12, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.ad}</div>
+                        <div style={{ fontSize:11, color:'var(--muted)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.eposta}</div>
+                      </div>
+                      {/* Durum */}
+                      {a.durum === 'gonderildi' && (
+                        <span style={{ fontSize:11, color:'#22c55e', fontWeight:700, flexShrink:0 }}>✓ Gönderildi</span>
+                      )}
+                      {a.durum === 'gonderiyor' && (
+                        <span style={{ fontSize:11, color:'var(--accent)', flexShrink:0 }}>⚙️...</span>
+                      )}
+                      {a.durum === 'hata' && (
+                        <span title={a.hataMsg} style={{ fontSize:11, color:'#ef4444', fontWeight:700, flexShrink:0, cursor:'help' }}>✗ Hata</span>
+                      )}
+                      {(a.durum === 'bekliyor' || a.durum === 'hata') && (
+                        <button onClick={() => tekGonder(a)} style={{
+                          padding:'0.25rem 0.6rem', borderRadius:5, border:'1px solid var(--accent)',
+                          background:'transparent', color:'var(--accent)', fontSize:11, fontWeight:700, cursor:'pointer', flexShrink:0,
+                        }}>Gönder</button>
+                      )}
+                      <button onClick={() => aliciSil(a.eposta)} style={{
+                        padding:'0.25rem 0.5rem', borderRadius:5, border:'1px solid #ef4444',
+                        background:'transparent', color:'#ef4444', fontSize:11, cursor:'pointer', flexShrink:0,
+                      }}>✕</button>
+                    </div>
+                  ))}
                 </div>
-                <div style={{ fontSize:11, color:'var(--muted)', marginTop:6 }}>
-                  Adaya test daveti ve bağlantı e-posta ile gönderilir.
-                </div>
+
+                {/* Tümüne gönder */}
+                {ataAlicilar.some(a => a.durum === 'bekliyor' || a.durum === 'hata') && (
+                  <button onClick={tumunuGonder} style={{
+                    marginTop:8, width:'100%', padding:'0.55rem', borderRadius:7, border:'none',
+                    background:'var(--accent)', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer',
+                  }}>
+                    📧 Tümüne Gönder ({ataAlicilar.filter(a => a.durum === 'bekliyor' || a.durum === 'hata').length} kişi)
+                  </button>
+                )}
+                {ataAlicilar.every(a => a.durum === 'gonderildi') && (
+                  <div style={{ marginTop:8, padding:'0.6rem 1rem', background:'rgba(34,197,94,0.12)', border:'1px solid rgba(34,197,94,0.3)', borderRadius:8, textAlign:'center', fontSize:13, fontWeight:700, color:'#22c55e' }}>
+                    ✅ Tüm davetler gönderildi!
+                  </div>
+                )}
               </div>
-            ) : (
-              <div style={{
-                background:'rgba(34,197,94,0.12)', border:'1px solid rgba(34,197,94,0.3)',
-                borderRadius:10, padding:'0.85rem 1rem', textAlign:'center',
-              }}>
-                <div style={{ fontSize:16, marginBottom:4 }}>✅</div>
-                <div style={{ fontSize:13, fontWeight:700, color:'#22c55e' }}>Davet gönderildi!</div>
-                <div style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>
-                  <strong>{ataEmail}</strong> adresine test daveti iletildi.
-                </div>
+            )}
+
+            {ataAlicilar.length === 0 && (
+              <div style={{ fontSize:11, color:'var(--muted)', textAlign:'center', padding:'0.5rem 0' }}>
+                Yukarıdan kişi ekleyip davetiye gönderin.
               </div>
             )}
           </div>

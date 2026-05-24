@@ -15,6 +15,7 @@ import UcretsizDenemeTesti from './pages/UcretsizDenemeTesti.jsx';
 import EvrakKutusu from './pages/EvrakKutusu.jsx';
 import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
+import TestCoz from './pages/TestCoz.jsx';
 
 const qc = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -77,6 +78,7 @@ export default function App() {
             <Route path="/app" element={
               <ProtectedRoute><MainApp /></ProtectedRoute>
             } />
+            <Route path="/test" element={<TestCoz />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
