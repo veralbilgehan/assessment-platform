@@ -7,7 +7,7 @@ import {
 
 const API = import.meta.env.VITE_API_URL || '';
 
-/* ─── Ortak UI ────────────────────────────────────────────────── */
+/* ─── Ortak UI ──────────────────────────────────────────── */
 function authH() {
   const t = localStorage.getItem('token');
   return t ? { Authorization: `Bearer ${t}` } : {};
@@ -38,7 +38,7 @@ function Pbar({ value, color='var(--accent)' }) {
 
 /* ─── ADIM GÖSTERGESİ ──────────────────────────────────── */
 function Adimlar({ aktif }) {
-  const adimlar = ['Parametreler', 'Döküman & Proje', 'Filtrele & Hedef', 'Üret & Önizle'];
+  const adimlar = ['Döküman & Proje', 'Filtrele & Hedef', 'Üret & Önizle'];
   return (
     <div style={{ display:'flex', alignItems:'center', marginBottom:'2rem', gap:0 }}>
       {adimlar.map((a, i) => (
@@ -64,7 +64,7 @@ function Adimlar({ aktif }) {
   );
 }
 
-/* ─── SORU KARTI (önizleme) ────────────────────────────────── */
+/* ─── SORU KARTI (önizleme) ────────────────────────────── */
 function SoruKarti({ soru, index, cevap, onCevap, showAnswer }) {
   const kaynak = { dokuman:'📄', havuz:'🗃️', ai:'🤖' }[soru.kaynak] || '🤖';
   return (
@@ -157,7 +157,7 @@ function SoruKarti({ soru, index, cevap, onCevap, showAnswer }) {
   );
 }
 
-/* ─── ADAY GİRİŞ FORMU ───────────────────────────────────── */
+/* ─── ADAY GİRİŞ FORMU ─────────────────────────────────── */
 function AdayGiris({ proje, onBaslat }) {
   const [ad, setAd]           = useState('');
   const [soyad, setSoyad]     = useState('');
@@ -365,7 +365,7 @@ function TestEkrani({ oturumData, proje, onBitis }) {
   );
 }
 
-/* ─── SONUÇ RAPORU ─────────────────────────────────────────── */
+/* ─── SONUÇ RAPORU ─────────────────────────────────────── */
 function SonucRaporu({ sonuc, proje }) {
   const { oturum_id, skor, sorular, cevaplar } = sonuc;
   const [showCevaplar, setShowCevaplar] = useState(false);
@@ -468,7 +468,7 @@ function SonucRaporu({ sonuc, proje }) {
   );
 }
 
-/* ─── ANA SAYFA ────────────────────────────────────────────── */
+/* ─── ANA SAYFA ────────────────────────────────────────── */
 export default function TestModulu() {
   const [adim, setAdim] = useState(0);
 
@@ -521,6 +521,7 @@ export default function TestModulu() {
   const [ataGonderiliyor, setAtaGonderiliyor] = useState(false);
   const [ataKopyalandi, setAtaKopyalandi]     = useState(false);
   const [ataAlicilar, setAtaAlicilar]         = useState([]); // [{ad, eposta, durum:'bekliyor'|'gonderildi'|'hata'}]
+  const [yeniTestModal, setYeniTestModal]     = useState(false);
 
   // Cascading queries
   const { data: sektorler = [] } = useQuery({ queryKey:['h-sektorler'], queryFn: getHiyerarsiSektorler });
@@ -664,7 +665,7 @@ export default function TestModulu() {
     }
   }
 
-  /* ── Test Ata yardımcıları ──────────────────────────────── */
+  /* ── Test Ata yardımcıları ─────────────────────────── */
   function openAtaModal(proje) {
     setTestAtaProje(proje);
     setAtaEmail(''); setAtaAd('');
@@ -893,35 +894,64 @@ export default function TestModulu() {
           </div>
         </div>
       )}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.5rem' }}>
-        <div>
-          <h1 style={{ fontSize:'1.2rem', fontWeight:800, margin:0 }}>Test Hazırlama & Değerlendirme</h1>
-          <p style={{ fontSize:13, color:'var(--muted)', margin:'4px 0 0' }}>Döküman ve AI destekli hibrit test motoru</p>
-        </div>
-      </div>
+      {/* ── MODAL: Yeni Test Parametreleri ── */}
+      {yeniTestModal && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.65)', zIndex:1000,
+          display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem' }}
+          onClick={() => setYeniTestModal(false)}>
+          <div style={{ background:'var(--surface)', borderRadius:14, padding:'1.75rem',
+            maxWidth:500, width:'100%', boxShadow:'0 20px 60px rgba(0,0,0,0.4)',
+            maxHeight:'90vh', overflowY:'auto' }}
+            onClick={e => e.stopPropagation()}>
 
-      <Adimlar aktif={adim} />
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.5rem' }}>
+              <div style={{ fontSize:'1rem', fontWeight:800 }}>📝 Yeni Test Oluştur</div>
+              <button onClick={() => setYeniTestModal(false)} style={{ background:'transparent', border:'none', color:'var(--muted)', cursor:'pointer', fontSize:20, lineHeight:1 }}>✕</button>
+            </div>
 
-      {/* ── ADIM 0: Parametreler ── */}
-      {adim === 0 && (
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-          <Kart>
-            <div style={{ fontSize:13, fontWeight:600, marginBottom:'1rem' }}>⚙️ Test Parametreleri</div>
-            <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+            <div style={{ display:'flex', flexDirection:'column', gap:18 }}>
+              {/* Proje Adı */}
               <div>
-                <Lbl>Proje Adı</Lbl>
-                <input value={projeAd} onChange={e => setProjeAd(e.target.value)} placeholder="Örn: Q3 2025 Yazılım Geliştirici Testi" style={{ width:'100%' }} />
+                <Lbl>Proje Adı <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0 }}>(opsiyonel)</span></Lbl>
+                <input value={projeAd} onChange={e => setProjeAd(e.target.value)}
+                  placeholder="Örn: Q3 2025 Yazılım Geliştirici Testi" style={{ width:'100%' }} />
               </div>
+
+              {/* Soru Sayısı */}
               <div>
                 <Lbl>Soru Sayısı</Lbl>
-                <div style={{ display:'flex', gap:6 }}>
+                <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
                   {[10,15,20,25,30].map(n => (
                     <Chip key={n} label={String(n)} active={soruSayisi===n} onClick={() => setSoruSayisi(n)} />
                   ))}
-                  <input type="number" min={5} max={50} value={soruSayisi} onChange={e => setSoruSayisi(+e.target.value)}
-                    style={{ width:60, textAlign:'center' }} />
+                  <input type="number" min={5} max={50} value={soruSayisi}
+                    onChange={e => setSoruSayisi(+e.target.value)} style={{ width:60, textAlign:'center' }} />
                 </div>
               </div>
+
+              {/* Zorluk */}
+              <div>
+                <Lbl>Zorluk Derecesi</Lbl>
+                <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                  {[['kolay','#22c55e'],['orta','#f59e0b'],['zor','#ef4444'],['karisik','#8b5cf6']].map(([z,c]) => (
+                    <Chip key={z} label={z} active={zorluk===z} onClick={() => setZorluk(z)} color={c} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Süre */}
+              <div>
+                <Lbl>Süre Limiti (dakika)</Lbl>
+                <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
+                  {[30,45,60,90].map(n => (
+                    <Chip key={n} label={`${n} dk`} active={sureDakika===n} onClick={() => setSureDakika(n)} />
+                  ))}
+                  <input type="number" min={10} max={180} value={sureDakika}
+                    onChange={e => setSureDakika(+e.target.value)} style={{ width:60, textAlign:'center' }} />
+                </div>
+              </div>
+
+              {/* Soru Türü */}
               <div>
                 <Lbl>Soru Türü</Lbl>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
@@ -942,76 +972,59 @@ export default function TestModulu() {
                   ))}
                 </div>
               </div>
-              <div>
-                <Lbl>Zorluk Derecesi</Lbl>
-                <div style={{ display:'flex', gap:6 }}>
-                  {[['kolay','#22c55e'],['orta','#f59e0b'],['zor','#ef4444'],['karisik','#8b5cf6']].map(([z,c]) => (
-                    <Chip key={z} label={z} active={zorluk===z} onClick={() => setZorluk(z)} color={c} />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <Lbl>Süre Limiti (dakika)</Lbl>
-                <div style={{ display:'flex', gap:6, alignItems:'center' }}>
-                  {[30,45,60,90].map(n => (
-                    <Chip key={n} label={`${n} dk`} active={sureDakika===n} onClick={() => setSureDakika(n)} />
-                  ))}
-                  <input type="number" min={10} max={180} value={sureDakika} onChange={e => setSureDakika(+e.target.value)}
-                    style={{ width:60, textAlign:'center' }} />
-                </div>
-              </div>
-            </div>
-          </Kart>
-
-          <Kart>
-            <div style={{ fontSize:13, fontWeight:600, marginBottom:'1rem' }}>🔀 Soru Kaynağı Dağılımı</div>
-            <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:16 }}>
-              {[['dokuman','Sadece Döküman'],['havuz','Sadece Havuz'],['ai','Sadece AI'],['hibrit','Hibrit (Hepsi)']].map(([k,l]) => (
-                <label key={k} style={{
-                  display:'flex', alignItems:'center', gap:10, padding:'0.55rem 0.8rem',
-                  borderRadius:6, cursor:'pointer',
-                  background: kaynakModu===k ? 'var(--accent-dim)' : 'var(--surface2)',
-                  border:`1px solid ${kaynakModu===k ? 'var(--accent)' : 'var(--border)'}`,
-                }}>
-                  <input type="radio" value={k} checked={kaynakModu===k} onChange={() => setKaynakModu(k)} style={{ accentColor:'var(--accent)' }} />
-                  <span style={{ fontSize:13, fontWeight: kaynakModu===k ? 600 : 400 }}>{l}</span>
-                </label>
-              ))}
             </div>
 
-            {kaynakModu === 'hibrit' && (
-              <div style={{ background:'var(--surface2)', borderRadius:8, padding:'1rem' }}>
-                <Lbl>Hibrit Oran Ayarı</Lbl>
-                {[
-                  ['📄 Döküman', dokOran, setDokOran, '#6366f1'],
-                  ['🗃️ Soru Havuzu', havuzOran, setHavuzOran, '#f59e0b'],
-                  ['🤖 AI Üretimi', aiOran, setAiOran, '#22c55e'],
-                ].map(([label, val, setter, color]) => (
-                  <div key={label} style={{ marginBottom:10 }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, marginBottom:4 }}>
-                      <span>{label}</span><span style={{ fontWeight:700, color }}>{val}%</span>
-                    </div>
-                    <input type="range" min={0} max={100} value={val} onChange={e => setter(+e.target.value)}
-                      style={{ width:'100%', accentColor:color }} />
-                  </div>
-                ))}
-                <div style={{ fontSize:11, color: Math.abs(dokOran+havuzOran+aiOran-100) < 1 ? '#22c55e' : '#ef4444' }}>
-                  Toplam: {dokOran+havuzOran+aiOran}% {Math.abs(dokOran+havuzOran+aiOran-100) < 1 ? '✓' : '⚠ 100 olmalı'}
-                </div>
-              </div>
-            )}
-          </Kart>
+            <div style={{ display:'flex', gap:8, marginTop:'1.5rem' }}>
+              <button onClick={() => setYeniTestModal(false)} style={{
+                flex:1, padding:'0.65rem', borderRadius:8, border:'1px solid var(--border)',
+                background:'var(--surface2)', color:'var(--text)', fontSize:13, cursor:'pointer',
+              }}>İptal</button>
+              <button onClick={() => { setYeniTestModal(false); setAdim(1); }} style={{
+                flex:2, padding:'0.65rem', borderRadius:8, border:'none',
+                background:'var(--accent)', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer',
+              }}>Devam Et →</button>
+            </div>
+          </div>
+        </div>
+      )}
 
-          {/* Mevcut testler — adım 0'da her zaman görünür */}
-          {projeler.length > 0 && (
-            <div style={{ gridColumn:'1/-1' }}>
-              <div style={{ fontSize:12, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:8 }}>📋 Mevcut Testler ({projeler.length})</div>
-              <div style={{ display:'flex', flexDirection:'column', gap:6, maxHeight:240, overflowY:'auto' }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.5rem' }}>
+        <div>
+          <h1 style={{ fontSize:'1.2rem', fontWeight:800, margin:0 }}>Test Hazırlama & Değerlendirme</h1>
+          <p style={{ fontSize:13, color:'var(--muted)', margin:'4px 0 0' }}>Döküman ve AI destekli hibrit test motoru</p>
+        </div>
+      </div>
+
+      {adim > 0 && <Adimlar aktif={adim - 1} />}
+
+      {/* ── ADIM 0: Test Listesi ── */}
+      {adim === 0 && (
+        <div>
+          {projeler.length === 0 ? (
+            <Kart style={{ textAlign:'center', padding:'3.5rem 2rem' }}>
+              <div style={{ fontSize:52, marginBottom:12 }}>📋</div>
+              <div style={{ fontSize:16, fontWeight:700, marginBottom:6 }}>Henüz test yok</div>
+              <div style={{ fontSize:13, color:'var(--muted)', marginBottom:'1.75rem' }}>İlk testinizi oluşturmak için aşağıdaki butona tıklayın.</div>
+              <button onClick={() => setYeniTestModal(true)} style={{
+                padding:'0.8rem 2.5rem', borderRadius:10, border:'none',
+                background:'var(--accent)', color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer',
+              }}>+ Yeni Test Oluştur</button>
+            </Kart>
+          ) : (
+            <Kart>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1rem' }}>
+                <div style={{ fontSize:13, fontWeight:700 }}>📋 Testler ({projeler.length})</div>
+                <button onClick={() => setYeniTestModal(true)} style={{
+                  padding:'0.45rem 1.25rem', borderRadius:8, border:'none',
+                  background:'var(--accent)', color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer',
+                }}>+ Yeni Test Oluştur</button>
+              </div>
+              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
                 {projeler.map(p => (
                   <div key={p.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'0.6rem 0.75rem', borderRadius:8, background:'var(--surface2)', border:'1px solid var(--border)' }}>
                     <div style={{ flex:1, minWidth:0 }}>
                       <div style={{ fontSize:13, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.ad}</div>
-                      <div style={{ fontSize:11, color:'var(--muted)' }}>{p.soru_uretilen}/{p.soru_sayisi} soru · {p.katilimci_sayisi} katılımcı · {p.zorluk}</div>
+                      <div style={{ fontSize:11, color:'var(--muted)' }}>{p.soru_uretilen}/{p.soru_sayisi} soru · {p.katilimci_sayisi} katılımcı · {p.zorluk} · {p.sure_dakika} dk</div>
                     </div>
                     <span style={{ fontSize:10, padding:'2px 6px', borderRadius:10, background: p.durum==='hazir' ? 'rgba(34,197,94,0.15)' : p.durum==='uretiliyor' ? 'rgba(99,102,241,0.15)' : 'rgba(251,191,36,0.15)', color: p.durum==='hazir' ? '#22c55e' : p.durum==='uretiliyor' ? '#6366f1' : '#f59e0b' }}>
                       {p.durum === 'uretiliyor' ? '⚙️ üretiliyor' : p.durum}
@@ -1045,15 +1058,8 @@ export default function TestModulu() {
                   </div>
                 ))}
               </div>
-            </div>
+            </Kart>
           )}
-
-          <div style={{ gridColumn:'1/-1', display:'flex', justifyContent:'flex-end' }}>
-            <button onClick={() => setAdim(1)} style={{
-              padding:'0.65rem 2rem', borderRadius:8, border:'none',
-              background:'var(--accent)', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer',
-            }}>+ Yeni Test Oluştur →</button>
-          </div>
         </div>
       )}
 
@@ -1174,73 +1180,45 @@ export default function TestModulu() {
           </Kart>
 
           <Kart>
-            <div style={{ fontSize:13, fontWeight:600, marginBottom:'1rem' }}>📋 Mevcut Testler</div>
-            {projeler.length === 0 ? (
-              <div style={{ textAlign:'center', padding:'2rem', color:'var(--muted)', fontSize:13 }}>
-                Henüz test yok.<br/>Sol taraftan döküman yükleyip devam edin.
-              </div>
-            ) : (
-              <div style={{ maxHeight:300, overflowY:'auto' }}>
-                {projeler.map(p => (
-                  <div key={p.id} style={{
-                    display:'flex', alignItems:'center', gap:8,
-                    padding:'0.6rem 0.75rem', borderRadius:8, marginBottom:6,
-                    background:'var(--surface2)', border:'1px solid var(--border)',
-                  }}>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontSize:13, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.ad}</div>
-                      <div style={{ fontSize:11, color:'var(--muted)' }}>
-                        {p.soru_uretilen}/{p.soru_sayisi} soru · {p.katilimci_sayisi} katılımcı · {p.zorluk}
-                      </div>
+            <div style={{ fontSize:13, fontWeight:600, marginBottom:'1rem' }}>🔀 Soru Kaynağı Dağılımı</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:16 }}>
+              {[['dokuman','Sadece Döküman'],['havuz','Sadece Havuz'],['ai','Sadece AI'],['hibrit','Hibrit (Hepsi)']].map(([k,l]) => (
+                <label key={k} style={{
+                  display:'flex', alignItems:'center', gap:10, padding:'0.55rem 0.8rem',
+                  borderRadius:6, cursor:'pointer',
+                  background: kaynakModu===k ? 'var(--accent-dim)' : 'var(--surface2)',
+                  border:`1px solid ${kaynakModu===k ? 'var(--accent)' : 'var(--border)'}`,
+                }}>
+                  <input type="radio" value={k} checked={kaynakModu===k} onChange={() => setKaynakModu(k)} style={{ accentColor:'var(--accent)' }} />
+                  <span style={{ fontSize:13, fontWeight: kaynakModu===k ? 600 : 400 }}>{l}</span>
+                </label>
+              ))}
+            </div>
+            {kaynakModu === 'hibrit' && (
+              <div style={{ background:'var(--surface2)', borderRadius:8, padding:'1rem' }}>
+                <Lbl>Hibrit Oran Ayarı</Lbl>
+                {[
+                  ['📄 Döküman', dokOran, setDokOran, '#6366f1'],
+                  ['🗃️ Soru Havuzu', havuzOran, setHavuzOran, '#f59e0b'],
+                  ['🤖 AI Üretimi', aiOran, setAiOran, '#22c55e'],
+                ].map(([label, val, setter, color]) => (
+                  <div key={label} style={{ marginBottom:10 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, marginBottom:4 }}>
+                      <span>{label}</span><span style={{ fontWeight:700, color }}>{val}%</span>
                     </div>
-                    <span style={{
-                      fontSize:10, padding:'2px 6px', borderRadius:10,
-                      background: p.durum==='hazir' ? 'rgba(34,197,94,0.15)' : p.durum==='uretiliyor' ? 'rgba(99,102,241,0.15)' : 'rgba(251,191,36,0.15)',
-                      color: p.durum==='hazir' ? '#22c55e' : p.durum==='uretiliyor' ? '#6366f1' : '#f59e0b',
-                    }}>
-                      {p.durum === 'uretiliyor' ? '⚙️ üretiliyor' : p.durum}
-                    </span>
-                    {p.durum === 'uretiliyor' && (
-                      <button onClick={async () => {
-                        setAdim(3); setUretimDurum('⚙️ Yeniden üretiliyor...');
-                        const uretRes = await fetch(`${API}/api/testler/proje/${p.id}/uret`, { method:'POST', headers: authH() });
-                        const reader2 = uretRes.body.getReader(); const dec2 = new TextDecoder();
-                        let ok = false;
-                        while (true) {
-                          const { done, value } = await reader2.read(); if (done) break;
-                          for (const line of dec2.decode(value, { stream:true }).split('\n')) {
-                            if (line.startsWith(':')) continue;
-                            if (!line.startsWith('data: ')) continue;
-                            const p2 = line.slice(6).trim();
-                            try { const obj = JSON.parse(p2); if (obj.tip === 'ilerleme') setUretimDurum(`🤖 AI yazıyor... (${obj.karakter} kr)`); if (obj.tip === 'bitti') { setSorularOnizle(obj.sorular||[]); setUretildi(true); ok=true; } } catch {}
-                          }
-                        }
-                        await yukleProjeListesi();
-                        if (ok) setAdim(3); else setAdim(0);
-                      }} style={{ padding:'0.3rem 0.6rem', borderRadius:6, border:'1px solid #6366f1', background:'transparent', color:'#6366f1', fontSize:11, fontWeight:700, cursor:'pointer' }}>
-                        🔄 Tekrar
-                      </button>
-                    )}
-                    {p.durum !== 'uretiliyor' && (
-                      <button onClick={() => openAtaModal(p)} title="Test Ata" style={{
-                        padding:'0.3rem 0.6rem', borderRadius:6, border:'1px solid var(--accent)',
-                        background:'transparent', color:'var(--accent)', fontSize:11, fontWeight:700, cursor:'pointer',
-                      }}>🧪 Ata</button>
-                    )}
-                    {p.durum === 'hazir' && (
-                      <button onClick={() => { setSecilenProje(p); setMod('aday_giris'); }} style={{
-                        padding:'0.3rem 0.7rem', borderRadius:6, border:'none',
-                        background:'var(--accent)', color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer',
-                      }}>▶</button>
-                    )}
-                    <button onClick={() => projeSil(p)} title="Sil" style={{
-                      padding:'0.3rem 0.6rem', borderRadius:6, border:'1px solid #ef4444',
-                      background:'transparent', color:'#ef4444', fontSize:11, fontWeight:700, cursor:'pointer',
-                    }}>🗑</button>
+                    <input type="range" min={0} max={100} value={val} onChange={e => setter(+e.target.value)}
+                      style={{ width:'100%', accentColor:color }} />
                   </div>
                 ))}
+                <div style={{ fontSize:11, color: Math.abs(dokOran+havuzOran+aiOran-100) < 1 ? '#22c55e' : '#ef4444' }}>
+                  Toplam: {dokOran+havuzOran+aiOran}% {Math.abs(dokOran+havuzOran+aiOran-100) < 1 ? '✓' : '⚠ 100 olmalı'}
+                </div>
               </div>
             )}
+            <div style={{ marginTop:16, padding:'0.75rem 1rem', background:'var(--surface2)', borderRadius:8, fontSize:12, color:'var(--muted)', lineHeight:1.6 }}>
+              <strong style={{ color:'var(--text)' }}>Seçilen parametreler:</strong><br/>
+              {soruSayisi} soru · {zorluk} · {sureDakika} dk · {soruTipi === 'karma' ? 'karma' : soruTipi === 'cok_secmeli' ? 'çok seçmeli' : soruTipi === 'dogru_yanlis' ? 'doğru/yanlış' : 'açık uçlu'}
+            </div>
           </Kart>
 
           <div style={{ gridColumn:'1/-1', display:'flex', justifyContent:'space-between' }}>
@@ -1290,7 +1268,7 @@ export default function TestModulu() {
               padding:'0.65rem 2rem', borderRadius:8, border:'none',
               background:'linear-gradient(135deg,#6366f1,#8b5cf6)',
               color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer',
-            }}>✶ Testi Üret →</button>
+            }}>✦ Testi Üret →</button>
           </div>
         </div>
       )}
