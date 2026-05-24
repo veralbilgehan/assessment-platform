@@ -924,40 +924,6 @@ export default function TestModulu() {
                   placeholder="Örn: Q3 2025 Yazılım Geliştirici Testi" style={{ width:'100%' }} />
               </div>
 
-              {/* Soru Sayısı */}
-              <div>
-                <Lbl>Soru Sayısı</Lbl>
-                <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
-                  {[10,15,20,25,30].map(n => (
-                    <Chip key={n} label={String(n)} active={soruSayisi===n} onClick={() => setSoruSayisi(n)} />
-                  ))}
-                  <input type="number" min={5} max={50} value={soruSayisi}
-                    onChange={e => setSoruSayisi(+e.target.value)} style={{ width:60, textAlign:'center' }} />
-                </div>
-              </div>
-
-              {/* Zorluk */}
-              <div>
-                <Lbl>Zorluk Derecesi</Lbl>
-                <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-                  {[['kolay','#22c55e'],['orta','#f59e0b'],['zor','#ef4444'],['karisik','#8b5cf6']].map(([z,c]) => (
-                    <Chip key={z} label={z} active={zorluk===z} onClick={() => setZorluk(z)} color={c} />
-                  ))}
-                </div>
-              </div>
-
-              {/* Süre */}
-              <div>
-                <Lbl>Süre Limiti (dakika)</Lbl>
-                <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
-                  {[30,45,60,90].map(n => (
-                    <Chip key={n} label={`${n} dk`} active={sureDakika===n} onClick={() => setSureDakika(n)} />
-                  ))}
-                  <input type="number" min={10} max={180} value={sureDakika}
-                    onChange={e => setSureDakika(+e.target.value)} style={{ width:60, textAlign:'center' }} />
-                </div>
-              </div>
-
               {/* Soru Türü */}
               <div>
                 <Lbl>Soru Türü</Lbl>
