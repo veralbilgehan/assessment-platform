@@ -38,7 +38,7 @@ function Pbar({ value, color='var(--accent)' }) {
 
 /* ─── ADIM GÖSTERGESİ ──────────────────────────────────── */
 function Adimlar({ aktif }) {
-  const adimlar = ['Döküman & Proje', 'Filtrele & Hedef', 'Parametreler', 'Üret & Önizle'];
+  const adimlar = ['Parametreler', 'Döküman & Proje', 'Filtrele & Hedef', 'Üret & Önizle'];
   return (
     <div style={{ display:'flex', alignItems:'center', marginBottom:'2rem', gap:0 }}>
       {adimlar.map((a, i) => (
@@ -825,8 +825,117 @@ export default function TestModulu() {
 
       <Adimlar aktif={adim} />
 
-      {/* ── ADIM 0: Döküman & Proje ── */}
+      {/* ── ADIM 0: Parametreler ── */}
       {adim === 0 && (
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+          <Kart>
+            <div style={{ fontSize:13, fontWeight:600, marginBottom:'1rem' }}>⚙️ Test Parametreleri</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+              <div>
+                <Lbl>Proje Adı</Lbl>
+                <input value={projeAd} onChange={e => setProjeAd(e.target.value)} placeholder="Örn: Q3 2025 Yazılım Geliştirici Testi" style={{ width:'100%' }} />
+              </div>
+              <div>
+                <Lbl>Soru Sayısı</Lbl>
+                <div style={{ display:'flex', gap:6 }}>
+                  {[10,15,20,25,30].map(n => (
+                    <Chip key={n} label={String(n)} active={soruSayisi===n} onClick={() => setSoruSayisi(n)} />
+                  ))}
+                  <input type="number" min={5} max={50} value={soruSayisi} onChange={e => setSoruSayisi(+e.target.value)}
+                    style={{ width:60, textAlign:'center' }} />
+                </div>
+              </div>
+              <div>
+                <Lbl>Soru Türü</Lbl>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
+                  {[
+                    ['karma','🎲 Karma','Karışık türler (önerilen)','#8b5cf6'],
+                    ['cok_secmeli','📝 Çok Seçmeli','A, B, C, D seçenekli','#6366f1'],
+                    ['dogru_yanlis','✅ Doğru / Yanlış','İki seçenekli ifade','#f59e0b'],
+                    ['acik_uclu','✍️ Açık Uçlu','Yazılı kısa cevap','#22c55e'],
+                  ].map(([v,l,desc,c]) => (
+                    <button key={v} onClick={() => setSoruTipi(v)} style={{
+                      padding:'0.55rem 0.75rem', borderRadius:8, border:`1px solid ${soruTipi===v ? c : 'var(--border)'}`,
+                      background: soruTipi===v ? `${c}18` : 'var(--surface2)',
+                      cursor:'pointer', textAlign:'left', transition:'all 0.15s',
+                    }}>
+                      <div style={{ fontSize:12, fontWeight:700, color: soruTipi===v ? c : 'var(--text)' }}>{l}</div>
+                      <div style={{ fontSize:10, color:'var(--muted)', marginTop:2 }}>{desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <Lbl>Zorluk Derecesi</Lbl>
+                <div style={{ display:'flex', gap:6 }}>
+                  {[['kolay','#22c55e'],['orta','#f59e0b'],['zor','#ef4444'],['karisik','#8b5cf6']].map(([z,c]) => (
+                    <Chip key={z} label={z} active={zorluk===z} onClick={() => setZorluk(z)} color={c} />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <Lbl>Süre Limiti (dakika)</Lbl>
+                <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                  {[30,45,60,90].map(n => (
+                    <Chip key={n} label={`${n} dk`} active={sureDakika===n} onClick={() => setSureDakika(n)} />
+                  ))}
+                  <input type="number" min={10} max={180} value={sureDakika} onChange={e => setSureDakika(+e.target.value)}
+                    style={{ width:60, textAlign:'center' }} />
+                </div>
+              </div>
+            </div>
+          </Kart>
+
+          <Kart>
+            <div style={{ fontSize:13, fontWeight:600, marginBottom:'1rem' }}>🔀 Soru Kaynağı Dağılımı</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:16 }}>
+              {[['dokuman','Sadece Döküman'],['havuz','Sadece Havuz'],['ai','Sadece AI'],['hibrit','Hibrit (Hepsi)']].map(([k,l]) => (
+                <label key={k} style={{
+                  display:'flex', alignItems:'center', gap:10, padding:'0.55rem 0.8rem',
+                  borderRadius:6, cursor:'pointer',
+                  background: kaynakModu===k ? 'var(--accent-dim)' : 'var(--surface2)',
+                  border:`1px solid ${kaynakModu===k ? 'var(--accent)' : 'var(--border)'}`,
+                }}>
+                  <input type="radio" value={k} checked={kaynakModu===k} onChange={() => setKaynakModu(k)} style={{ accentColor:'var(--accent)' }} />
+                  <span style={{ fontSize:13, fontWeight: kaynakModu===k ? 600 : 400 }}>{l}</span>
+                </label>
+              ))}
+            </div>
+
+            {kaynakModu === 'hibrit' && (
+              <div style={{ background:'var(--surface2)', borderRadius:8, padding:'1rem' }}>
+                <Lbl>Hibrit Oran Ayarı</Lbl>
+                {[
+                  ['📄 Döküman', dokOran, setDokOran, '#6366f1'],
+                  ['🗃️ Soru Havuzu', havuzOran, setHavuzOran, '#f59e0b'],
+                  ['🤖 AI Üretimi', aiOran, setAiOran, '#22c55e'],
+                ].map(([label, val, setter, color]) => (
+                  <div key={label} style={{ marginBottom:10 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, marginBottom:4 }}>
+                      <span>{label}</span><span style={{ fontWeight:700, color }}>{val}%</span>
+                    </div>
+                    <input type="range" min={0} max={100} value={val} onChange={e => setter(+e.target.value)}
+                      style={{ width:'100%', accentColor:color }} />
+                  </div>
+                ))}
+                <div style={{ fontSize:11, color: Math.abs(dokOran+havuzOran+aiOran-100) < 1 ? '#22c55e' : '#ef4444' }}>
+                  Toplam: {dokOran+havuzOran+aiOran}% {Math.abs(dokOran+havuzOran+aiOran-100) < 1 ? '✓' : '⚠ 100 olmalı'}
+                </div>
+              </div>
+            )}
+          </Kart>
+
+          <div style={{ gridColumn:'1/-1', display:'flex', justifyContent:'flex-end' }}>
+            <button onClick={() => setAdim(1)} style={{
+              padding:'0.65rem 2rem', borderRadius:8, border:'none',
+              background:'var(--accent)', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer',
+            }}>Devam Et →</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── ADIM 1: Döküman & Proje ── */}
+      {adim === 1 && (
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
           <Kart>
             {/* Sekme Barı */}
@@ -1012,8 +1121,9 @@ export default function TestModulu() {
             )}
           </Kart>
 
-          <div style={{ gridColumn:'1/-1', display:'flex', justifyContent:'flex-end' }}>
-            <button onClick={() => setAdim(1)} style={{
+          <div style={{ gridColumn:'1/-1', display:'flex', justifyContent:'space-between' }}>
+            <button onClick={() => setAdim(0)} style={{ padding:'0.65rem 1.5rem', borderRadius:8, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:13, cursor:'pointer' }}>← Geri</button>
+            <button onClick={() => setAdim(2)} style={{
               padding:'0.65rem 2rem', borderRadius:8, border:'none',
               background:'var(--accent)', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer',
             }}>Devam Et →</button>
@@ -1021,8 +1131,8 @@ export default function TestModulu() {
         </div>
       )}
 
-      {/* ── ADIM 1: Filtrele & Hedef ── */}
-      {adim === 1 && (
+      {/* ── ADIM 2: Filtrele & Hedef ── */}
+      {adim === 2 && (
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
           <Kart>
             <div style={{ fontSize:13, fontWeight:600, marginBottom:'1rem' }}>🎯 Hedef Kitle Seçimi</div>
@@ -1050,113 +1160,6 @@ export default function TestModulu() {
                 </select>
               </div>
             </div>
-          </Kart>
-
-          <div style={{ gridColumn:'1/-1', display:'flex', justifyContent:'space-between' }}>
-            <button onClick={() => setAdim(0)} style={{ padding:'0.65rem 1.5rem', borderRadius:8, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:13, cursor:'pointer' }}>← Geri</button>
-            <button onClick={() => setAdim(2)} style={{ padding:'0.65rem 2rem', borderRadius:8, border:'none', background:'var(--accent)', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Devam Et →</button>
-          </div>
-        </div>
-      )}
-
-      {/* ── ADIM 2: Parametreler ── */}
-      {adim === 2 && (
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-          <Kart>
-            <div style={{ fontSize:13, fontWeight:600, marginBottom:'1rem' }}>⚙️ Test Parametreleri</div>
-            <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-              <div>
-                <Lbl>Proje Adı</Lbl>
-                <input value={projeAd} onChange={e => setProjeAd(e.target.value)} placeholder="Örn: Q3 2025 Yazılım Geliştirici Testi" style={{ width:'100%' }} />
-              </div>
-              <div>
-                <Lbl>Soru Sayısı</Lbl>
-                <div style={{ display:'flex', gap:6 }}>
-                  {[10,15,20,25,30].map(n => (
-                    <Chip key={n} label={String(n)} active={soruSayisi===n} onClick={() => setSoruSayisi(n)} />
-                  ))}
-                  <input type="number" min={5} max={50} value={soruSayisi} onChange={e => setSoruSayisi(+e.target.value)}
-                    style={{ width:60, textAlign:'center' }} />
-                </div>
-              </div>
-              <div>
-                <Lbl>Soru Türü</Lbl>
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
-                  {[
-                    ['karma','🎲 Karma','Karışık türler (önerilen)','#8b5cf6'],
-                    ['cok_secmeli','📝 Çok Seçmeli','A, B, C, D seçenekli','#6366f1'],
-                    ['dogru_yanlis','✅ Doğru / Yanlış','İki seçenekli ifade','#f59e0b'],
-                    ['acik_uclu','✍️ Açık Uçlu','Yazılı kısa cevap','#22c55e'],
-                  ].map(([v,l,desc,c]) => (
-                    <button key={v} onClick={() => setSoruTipi(v)} style={{
-                      padding:'0.55rem 0.75rem', borderRadius:8, border:`1px solid ${soruTipi===v ? c : 'var(--border)'}`,
-                      background: soruTipi===v ? `${c}18` : 'var(--surface2)',
-                      cursor:'pointer', textAlign:'left', transition:'all 0.15s',
-                    }}>
-                      <div style={{ fontSize:12, fontWeight:700, color: soruTipi===v ? c : 'var(--text)' }}>{l}</div>
-                      <div style={{ fontSize:10, color:'var(--muted)', marginTop:2 }}>{desc}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <Lbl>Zorluk Derecesi</Lbl>
-                <div style={{ display:'flex', gap:6 }}>
-                  {[['kolay','#22c55e'],['orta','#f59e0b'],['zor','#ef4444'],['karisik','#8b5cf6']].map(([z,c]) => (
-                    <Chip key={z} label={z} active={zorluk===z} onClick={() => setZorluk(z)} color={c} />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <Lbl>Süre Limiti (dakika)</Lbl>
-                <div style={{ display:'flex', gap:6, alignItems:'center' }}>
-                  {[30,45,60,90].map(n => (
-                    <Chip key={n} label={`${n} dk`} active={sureDakika===n} onClick={() => setSureDakika(n)} />
-                  ))}
-                  <input type="number" min={10} max={180} value={sureDakika} onChange={e => setSureDakika(+e.target.value)}
-                    style={{ width:60, textAlign:'center' }} />
-                </div>
-              </div>
-            </div>
-          </Kart>
-
-          <Kart>
-            <div style={{ fontSize:13, fontWeight:600, marginBottom:'1rem' }}>🔀 Soru Kaynağı Dağılımı</div>
-            <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:16 }}>
-              {[['dokuman','Sadece Döküman'],['havuz','Sadece Havuz'],['ai','Sadece AI'],['hibrit','Hibrit (Hepsi)']].map(([k,l]) => (
-                <label key={k} style={{
-                  display:'flex', alignItems:'center', gap:10, padding:'0.55rem 0.8rem',
-                  borderRadius:6, cursor:'pointer',
-                  background: kaynakModu===k ? 'var(--accent-dim)' : 'var(--surface2)',
-                  border:`1px solid ${kaynakModu===k ? 'var(--accent)' : 'var(--border)'}`,
-                }}>
-                  <input type="radio" value={k} checked={kaynakModu===k} onChange={() => setKaynakModu(k)} style={{ accentColor:'var(--accent)' }} />
-                  <span style={{ fontSize:13, fontWeight: kaynakModu===k ? 600 : 400 }}>{l}</span>
-                </label>
-              ))}
-            </div>
-
-            {kaynakModu === 'hibrit' && (
-              <div style={{ background:'var(--surface2)', borderRadius:8, padding:'1rem' }}>
-                <Lbl>Hibrit Oran Ayarı</Lbl>
-                {[
-                  ['📄 Döküman', dokOran, setDokOran, '#6366f1'],
-                  ['🗃️ Soru Havuzu', havuzOran, setHavuzOran, '#f59e0b'],
-                  ['🤖 AI Üretimi', aiOran, setAiOran, '#22c55e'],
-                ].map(([label, val, setter, color]) => (
-                  <div key={label} style={{ marginBottom:10 }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, marginBottom:4 }}>
-                      <span>{label}</span><span style={{ fontWeight:700, color }}>{val}%</span>
-                    </div>
-                    <input type="range" min={0} max={100} value={val} onChange={e => setter(+e.target.value)}
-                      style={{ width:'100%', accentColor:color }} />
-                  </div>
-                ))}
-                <div style={{ fontSize:11, color: Math.abs(dokOran+havuzOran+aiOran-100) < 1 ? '#22c55e' : '#ef4444' }}>
-                  Toplam: {dokOran+havuzOran+aiOran}% {Math.abs(dokOran+havuzOran+aiOran-100) < 1 ? '✓' : '⚠ 100 olmalı'}
-                </div>
-              </div>
-            )}
           </Kart>
 
           <div style={{ gridColumn:'1/-1', display:'flex', justifyContent:'space-between' }}>
