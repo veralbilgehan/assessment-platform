@@ -772,9 +772,8 @@ export default function TestModulu() {
                 )}
               </Kart>
 
-              {/* Bölüm 2: Hedef Kitle + Parametreler */}
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
-                <Kart style={{ padding:'1.25rem' }}>
+              {/* Bölüm 2: Hedef Kitle */}
+              <Kart style={{ padding:'1.25rem' }}>
                   <div style={{ fontSize:13, fontWeight:700, marginBottom:'0.9rem' }}>🎯 Hedef Kitle</div>
                   <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                     <div>
@@ -800,9 +799,10 @@ export default function TestModulu() {
                       </select>
                     </div>
                   </div>
-                </Kart>
+              </Kart>
 
-                <Kart style={{ padding:'1.25rem' }}>
+              {/* Bölüm 3: Test Parametreleri */}
+              <Kart style={{ padding:'1.25rem' }}>
                   <div style={{ fontSize:13, fontWeight:700, marginBottom:'0.9rem' }}>⚙️ Test Parametreleri</div>
                   <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
                     <div>
@@ -861,10 +861,9 @@ export default function TestModulu() {
                       </div>
                     </div>
                   </div>
-                </Kart>
-              </div>
+              </Kart>
 
-              {/* Bölüm 3: Soru Kaynağı */}
+              {/* Bölüm 4: Soru Kaynağı */}
               <Kart style={{ padding:'1.25rem' }}>
                 <div style={{ fontSize:13, fontWeight:700, marginBottom:'0.9rem' }}>🔀 Soru Kaynağı</div>
                 {!belgeSecildi && (
