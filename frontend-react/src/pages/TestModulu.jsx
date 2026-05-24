@@ -842,11 +842,8 @@ export default function TestModulu() {
               )}
             </Kart>
 
-            {/* Hedef Kitle + Parametreler */}
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-
-              {/* Hedef Kitle */}
-              <Kart>
+            {/* Hedef Kitle */}
+            <Kart>
                 <div style={{ fontSize:13, fontWeight:600, marginBottom:'0.85rem' }}>🎯 Hedef Kitle</div>
                 <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
                   <div>
@@ -872,10 +869,10 @@ export default function TestModulu() {
                     </select>
                   </div>
                 </div>
-              </Kart>
+            </Kart>
 
-              {/* Test Parametreleri */}
-              <Kart>
+            {/* Test Parametreleri */}
+            <Kart>
                 <div style={{ fontSize:13, fontWeight:600, marginBottom:'0.85rem' }}>⚙️ Test Parametreleri</div>
                 <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
                   <div>
@@ -931,8 +928,7 @@ export default function TestModulu() {
                     </div>
                   </div>
                 </div>
-              </Kart>
-            </div>
+            </Kart>
 
             {/* Soru Kaynağı */}
             <Kart>
