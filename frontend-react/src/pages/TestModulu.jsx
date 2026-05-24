@@ -1002,11 +1002,57 @@ export default function TestModulu() {
             )}
           </Kart>
 
+          {/* Mevcut testler — adım 0'da her zaman görünür */}
+          {projeler.length > 0 && (
+            <div style={{ gridColumn:'1/-1' }}>
+              <div style={{ fontSize:12, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:8 }}>📋 Mevcut Testler ({projeler.length})</div>
+              <div style={{ display:'flex', flexDirection:'column', gap:6, maxHeight:240, overflowY:'auto' }}>
+                {projeler.map(p => (
+                  <div key={p.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'0.6rem 0.75rem', borderRadius:8, background:'var(--surface2)', border:'1px solid var(--border)' }}>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:13, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.ad}</div>
+                      <div style={{ fontSize:11, color:'var(--muted)' }}>{p.soru_uretilen}/{p.soru_sayisi} soru · {p.katilimci_sayisi} katılımcı · {p.zorluk}</div>
+                    </div>
+                    <span style={{ fontSize:10, padding:'2px 6px', borderRadius:10, background: p.durum==='hazir' ? 'rgba(34,197,94,0.15)' : p.durum==='uretiliyor' ? 'rgba(99,102,241,0.15)' : 'rgba(251,191,36,0.15)', color: p.durum==='hazir' ? '#22c55e' : p.durum==='uretiliyor' ? '#6366f1' : '#f59e0b' }}>
+                      {p.durum === 'uretiliyor' ? '⚙️ üretiliyor' : p.durum}
+                    </span>
+                    {p.durum === 'uretiliyor' && (
+                      <button onClick={async () => {
+                        setAdim(3); setUretimDurum('⚙️ Yeniden üretiliyor...');
+                        const uretRes = await fetch(`${API}/api/testler/proje/${p.id}/uret`, { method:'POST', headers: authH() });
+                        const reader2 = uretRes.body.getReader(); const dec2 = new TextDecoder();
+                        let ok = false;
+                        while (true) {
+                          const { done, value } = await reader2.read(); if (done) break;
+                          for (const line of dec2.decode(value, { stream:true }).split('\n')) {
+                            if (line.startsWith(':')) continue;
+                            if (!line.startsWith('data: ')) continue;
+                            const p2 = line.slice(6).trim();
+                            try { const obj = JSON.parse(p2); if (obj.tip === 'bitti') { setSorularOnizle(obj.sorular||[]); setUretildi(true); ok=true; } } catch {}
+                          }
+                        }
+                        await yukleProjeListesi();
+                        if (ok) setAdim(3); else setAdim(0);
+                      }} style={{ padding:'0.3rem 0.6rem', borderRadius:6, border:'1px solid #6366f1', background:'transparent', color:'#6366f1', fontSize:11, fontWeight:700, cursor:'pointer' }}>🔄 Tekrar</button>
+                    )}
+                    {p.durum !== 'uretiliyor' && (
+                      <button onClick={() => openAtaModal(p)} style={{ padding:'0.3rem 0.6rem', borderRadius:6, border:'1px solid var(--accent)', background:'transparent', color:'var(--accent)', fontSize:11, fontWeight:700, cursor:'pointer' }}>🧪 Ata</button>
+                    )}
+                    {p.durum === 'hazir' && (
+                      <button onClick={() => { setSecilenProje(p); setMod('aday_giris'); }} style={{ padding:'0.3rem 0.7rem', borderRadius:6, border:'none', background:'var(--accent)', color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer' }}>▶</button>
+                    )}
+                    <button onClick={() => projeSil(p)} style={{ padding:'0.3rem 0.6rem', borderRadius:6, border:'1px solid #ef4444', background:'transparent', color:'#ef4444', fontSize:11, fontWeight:700, cursor:'pointer' }}>🗑</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div style={{ gridColumn:'1/-1', display:'flex', justifyContent:'flex-end' }}>
             <button onClick={() => setAdim(1)} style={{
               padding:'0.65rem 2rem', borderRadius:8, border:'none',
               background:'var(--accent)', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer',
-            }}>Devam Et →</button>
+            }}>+ Yeni Test Oluştur →</button>
           </div>
         </div>
       )}
