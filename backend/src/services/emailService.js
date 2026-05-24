@@ -4,20 +4,35 @@
  */
 const nodemailer = require('nodemailer');
 
-/* ─── Transporter (lazy singleton) ─────────────────── */
-let _transporter = null;
-function getTransporter() {
-  if (_transporter) return _transporter;
-  _transporter = nodemailer.createTransport({
-    host:   process.env.SMTP_HOST   || 'smtp.gmail.com',
-    port:   parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_PORT === '465',
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-  return _transporter;
+/* ─── DB ayarlarını oku ─────────────────────────────── */
+async function getSmtpAyarlari() {
+  const env = {
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    from: process.env.EMAIL_FROM || '',
+  };
+  try {
+    const pool = require('../db/pool');
+    const { rows } = await pool.query(
+      "SELECT anahtar, deger FROM sistem_ayarlari WHERE anahtar LIKE 'smtp%' OR anahtar = 'email_from'"
+    );
+    for (const { anahtar, deger } of rows) {
+      if (anahtar === 'smtp_host' && deger) env.host = deger;
+      if (anahtar === 'smtp_port' && deger) env.port = parseInt(deger);
+      if (anahtar === 'smtp_user' && deger) env.user = deger;
+      if (anahtar === 'smtp_pass' && deger) env.pass = deger;
+      if (anahtar === 'email_from' && deger) env.from = deger;
+    }
+  } catch { /* DB yoksa env kullan */ }
+  return env;
+}
+
+/* ─── Transporter oluştur ───────────────────────────── */
+async function buildTransporter() {
+  const s = await getSmtpAyarlari();
+  return { t: nodemailer.createTransport({ host: s.host, port: s.port, secure: s.port === 465, auth: { user: s.user, pass: s.pass } }), s };
 }
 
 /* ─── Klasman Hesaplayıcı ───────────────────────────── */
@@ -237,8 +252,9 @@ function olusturHTMLRapor({ oturum, detay }) {
 
 /* ─── Ana Gönderme Fonksiyonu ───────────────────────── */
 async function raporGonder({ alici, aliciAd, oturum, detay }) {
-  if (!process.env.SMTP_USER || process.env.SMTP_USER === 'ornek@gmail.com') {
-    throw new Error('SMTP ayarları yapılandırılmamış. .env dosyasındaki SMTP_USER ve SMTP_PASS değerlerini güncelleyin.');
+  const { t, s } = await buildTransporter();
+  if (!s.user) {
+    throw new Error('SMTP ayarları yapılandırılmamış. Ayarlar sayfasından veya .env dosyasından SMTP bilgilerini girin.');
   }
 
   const html = olusturHTMLRapor({ oturum, detay });
@@ -246,8 +262,8 @@ async function raporGonder({ alici, aliciAd, oturum, detay }) {
   const klas   = getKlasman(basari);
   const tarih  = new Date(oturum.bitis || oturum.baslangic).toLocaleDateString('tr-TR');
 
-  const bilgi = await getTransporter().sendMail({
-    from:    process.env.EMAIL_FROM || `"Değerlendirme Sistemi" <${process.env.SMTP_USER}>`,
+  const bilgi = await t.sendMail({
+    from:    s.from || `"Değerlendirme Sistemi" <${s.user}>`,
     to:      `"${aliciAd}" <${alici}>`,
     subject: `📊 Performans Raporu — ${oturum.aday_ad} ${oturum.aday_soyad} | %${Math.round(basari)} | ${klas.durum}`,
     text:    `${oturum.aday_ad} ${oturum.aday_soyad} — ${tarih}\nGenel Başarı: %${Math.round(basari)}\nStatü: ${klas.durum}\nTest: ${oturum.proje_adi || '—'}`,
@@ -259,8 +275,9 @@ async function raporGonder({ alici, aliciAd, oturum, detay }) {
 
 /* ─── Test Davet E-postası ──────────────────────────── */
 async function davetGonder({ alici, aliciAd, testLinki, proje_adi, pozisyon, davet_eden }) {
-  if (!process.env.SMTP_USER || process.env.SMTP_USER === 'ornek@gmail.com') {
-    throw new Error('SMTP ayarları yapılandırılmamış. .env dosyasındaki SMTP_USER ve SMTP_PASS değerlerini güncelleyin.');
+  const { t, s } = await buildTransporter();
+  if (!s.user) {
+    throw new Error('SMTP ayarları yapılandırılmamış. Ayarlar sayfasından SMTP bilgilerini girin.');
   }
 
   const pozText = pozisyon || proje_adi || 'Yetkinlik Değerlendirmesi';
@@ -304,8 +321,8 @@ async function davetGonder({ alici, aliciAd, testLinki, proje_adi, pozisyon, dav
 </div>
 </body></html>`;
 
-  await getTransporter().sendMail({
-    from:    process.env.EMAIL_FROM || `"Değerlendirme Sistemi" <${process.env.SMTP_USER}>`,
+  await t.sendMail({
+    from:    s.from || `"Değerlendirme Sistemi" <${s.user}>`,
     to:      `"${aliciAd}" <${alici}>`,
     subject: `🧪 Test Daveti — ${pozText}`,
     text:    `Sayın ${aliciAd},\n\n${davet_eden || 'Değerlendirme ekibi'} sizi ${pozText} pozisyonu için bir yetkinlik değerlendirme testine davet etti.\n\nTest linki: ${testLinki || '—'}`,
