@@ -10,12 +10,13 @@ import Degerlendirmeler from './pages/Degerlendirmeler.jsx';
 import BelgeAnaliz from './pages/BelgeAnaliz.jsx';
 import TestModulu from './pages/TestModulu.jsx';
 import AdayKiyasla from './pages/AdayKiyasla.jsx';
-import GorevAkisi from './pages/GorevAkisi.jsx';
 import PerformansRaporu from './pages/PerformansRaporu.jsx';
 import UcretsizDenemeTesti from './pages/UcretsizDenemeTesti.jsx';
 import EvrakKutusu from './pages/EvrakKutusu.jsx';
+import Ayarlar from './pages/Ayarlar.jsx';
 import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
+import TestCoz from './pages/TestCoz.jsx';
 
 const qc = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -58,10 +59,10 @@ function MainApp() {
           {tab === 'belge'           && <BelgeAnaliz />}
           {tab === 'test'            && <TestModulu />}
           {tab === 'kiyasla'         && <AdayKiyasla />}
-          {tab === 'akis'            && <GorevAkisi />}
           {tab === 'rapor'           && <PerformansRaporu />}
           {tab === 'deneme'          && <UcretsizDenemeTesti />}
           {tab === 'evrak'           && <EvrakKutusu />}
+          {tab === 'ayarlar'         && <Ayarlar />}
         </main>
       </div>
     </div>
@@ -79,6 +80,7 @@ export default function App() {
             <Route path="/app" element={
               <ProtectedRoute><MainApp /></ProtectedRoute>
             } />
+            <Route path="/test" element={<TestCoz />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>

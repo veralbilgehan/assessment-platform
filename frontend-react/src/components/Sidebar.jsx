@@ -18,15 +18,15 @@ const NAV_GRUPLARI = [
       { tab: 'belge',   simge: '📄', etiket: 'Belge & Profil' },
       { tab: 'test',    simge: '🧪', etiket: 'Test Modülü'    },
       { tab: 'kiyasla', simge: '⚖️', etiket: 'Aday Kıyasla'  },
-      { tab: 'akis',    simge: '🔄', etiket: 'Görev Akışı'   },
       { tab: 'rapor',   simge: '📊', etiket: 'Perf. Raporu'  },
     ],
   },
   {
     baslik: 'ARAÇLAR',
     oğeler: [
-      { tab: 'deneme', simge: '🆓', etiket: 'Deneme Testi'  },
-      { tab: 'evrak',  simge: '📦', etiket: 'Evrak Kutusu'  },
+      { tab: 'deneme',  simge: '🆓', etiket: 'Deneme Testi'  },
+      { tab: 'evrak',   simge: '📦', etiket: 'Evrak Kutusu'  },
+      { tab: 'ayarlar', simge: '⚙️', etiket: 'Ayarlar', adminOnly: true },
     ],
   },
 ];
@@ -237,7 +237,7 @@ export default function Sidebar({ activeTab, onTabChange, selectedId, onSelect, 
 
             {/* Düğmeler */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {grup.oğeler.map(o => (
+              {grup.oğeler.filter(o => !o.adminOnly || user?.rol === 'admin').map(o => (
                 <NavBtn
                   key={o.tab}
                   simge={o.simge}
