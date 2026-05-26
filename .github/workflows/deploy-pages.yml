@@ -36,6 +36,8 @@ jobs:
         working-directory: optik360/frontend
 
       - name: Build
+        env:
+          GITHUB_PAGES: true
         run: npm run build
         working-directory: optik360/frontend
 

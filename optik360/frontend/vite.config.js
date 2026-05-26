@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: '/assessment-platform/optik360/',
+  base: process.env.GITHUB_PAGES ? '/assessment-platform/' : '/',
   server: {
     port: 5174,
     proxy: {
