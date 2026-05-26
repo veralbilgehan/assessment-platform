@@ -1,0 +1,19 @@
+# Cloud Build GitHub Trigger tanımı
+# gcloud builds triggers import --source=optik360/trigger.yaml
+name: optik360-main-deploy
+description: "Optik360 ERP — main branch push'ta otomatik deploy"
+filename: optik360/cloudbuild.yaml
+github:
+  owner: veralbilgehan
+  name: assessment-platform
+  push:
+    branch: ^main$
+includedFiles:
+  - "optik360/**"
+substitutions:
+  _REGION: europe-west1
+  _REPO: optik360
+  _SERVICE: optik360-api
+  _DB_NAME: optik360_db
+  _DB_USER: optik360_user
+  _CLOUD_SQL_INSTANCE: PLACEHOLDER   # setup-cicd.sh tarafından doldurulur
