@@ -14,15 +14,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Deploy secret kontrolü
+        id: deploy_kontrol
+        run: |
+          if [ -n "${{ secrets.GCP_SA_KEY }}" ] && [ -n "${{ secrets.GCP_SERVICE_NAME }}" ]; then
+            echo "hazir=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hazir=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Google Auth
+        if: steps.deploy_kontrol.outputs.hazir == 'true'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
+        if: steps.deploy_kontrol.outputs.hazir == 'true'
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Deploy to Cloud Run
+        if: steps.deploy_kontrol.outputs.hazir == 'true'
         id: deploy
         uses: google-github-actions/deploy-cloudrun@v2
         with:
@@ -52,4 +64,9 @@ jobs:
             EMAIL_FROM=${{ secrets.EMAIL_FROM }}
 
       - name: Show deployed URL
+        if: steps.deploy_kontrol.outputs.hazir == 'true'
         run: echo "Deployed to ${{ steps.deploy.outputs.url }}"
+
+      - name: Deploy atlandı
+        if: steps.deploy_kontrol.outputs.hazir != 'true'
+        run: echo "GCP_SA_KEY veya GCP_SERVICE_NAME tanımlı olmadığı için deploy adımları atlandı."
