@@ -2,7 +2,11 @@ name: Deploy Optik360 to GitHub Pages
 
 on:
   push:
-    branches: [master, main, feat/notebooklm-entegrasyon]
+    branches:
+      - master
+      - main
+      - feat/notebooklm-entegrasyon
+      - claude/new-session-tVKLw
   workflow_dispatch:
 
 permissions:
