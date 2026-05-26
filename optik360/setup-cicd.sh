@@ -6,7 +6,7 @@
 set -e
 
 # ─── Değiştirin ──────────────────────────────────────────────────
-PROJECT_ID="YOUR_GCP_PROJECT_ID"
+PROJECT_ID="gen-lang-client-0693247342"
 REGION="europe-west1"
 DB_INSTANCE_NAME="optik360-pg"
 GITHUB_OWNER="veralbilgehan"

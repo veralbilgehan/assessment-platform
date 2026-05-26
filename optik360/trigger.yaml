@@ -16,4 +16,4 @@ substitutions:
   _SERVICE: optik360-api
   _DB_NAME: optik360_db
   _DB_USER: optik360_user
-  _CLOUD_SQL_INSTANCE: PLACEHOLDER   # setup-cicd.sh tarafından doldurulur
+  _CLOUD_SQL_INSTANCE: gen-lang-client-0693247342:europe-west1:optik360-pg

@@ -7,7 +7,7 @@
 set -e
 
 # ─── Değiştirmeniz gereken değişkenler ───────────────────────────
-PROJECT_ID="YOUR_GCP_PROJECT_ID"
+PROJECT_ID="gen-lang-client-0693247342"
 REGION="europe-west1"
 SERVICE="optik360-api"
 REPO="optik360"
