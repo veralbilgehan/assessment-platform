@@ -1,6 +1,4 @@
-﻿import { useState, useEffect } from 'react';
-
-const API = import.meta.env.VITE_API_URL || '';
+﻿import { useState } from 'react';
 
 /* ─── Modül kartı tanımları ─────────────────────────── */
 const MODULLER = [
@@ -68,47 +66,6 @@ const HIZLI_ERISIM = [
   { tab: 'test',            etiket: '🧪 Test Modülü'    },
   { tab: 'degerlendirmeler',etiket: '📝 Değerlendirmeler'},
 ];
-
-/* ─── SVG Arka Plan Deseni ──────────────────────────── */
-function GridDesen() {
-  return (
-    <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.03, pointerEvents: 'none' }}>
-      <defs>
-        <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
-          <path d="M 32 0 L 0 0 0 32" fill="none" stroke="white" strokeWidth="0.5" />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#grid)" />
-    </svg>
-  );
-}
-
-/* ─── İstatistik özet ───────────────────────────────── */
-function IstatKart({ deger, etiket, renk, simge }) {
-  return (
-    <div style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--border)',
-      borderRadius: 10,
-      padding: '0.85rem 1.1rem',
-      display: 'flex',
-      alignItems: 'center',
-      gap: 10,
-    }}>
-      <span style={{
-        fontSize: 20,
-        width: 36, height: 36,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        borderRadius: 8, background: renk + '22',
-        flexShrink: 0,
-      }}>{simge}</span>
-      <div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: renk, lineHeight: 1 }}>{deger}</div>
-        <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{etiket}</div>
-      </div>
-    </div>
-  );
-}
 
 /* ─── Modül Kartı ───────────────────────────────────── */
 function ModulKarti({ m, onClick }) {
@@ -184,63 +141,16 @@ function ModulKarti({ m, onClick }) {
 }
 
 /* ─── Ana bileşen ───────────────────────────────────── */
-export default function Dashboard({ user, onTabChange }) {
+export default function Dashboard({ user: _user, onTabChange }) {
   const [aramaQ, setAramaQ] = useState('');
-  const [istat, setIstat] = useState(null);
 
-  useEffect(() => {
-    fetch(`${API}/api/evrak/istatistik`)
-      .then(r => r.json())
-      .then(setIstat)
-      .catch(() => {});
-  }, []);
-
-  // Arama: enter veya tıkla → evrak kutusu
   function aramaGit(e) {
     e.preventDefault();
     onTabChange('evrak');
   }
 
-  const saat = new Date().getHours();
-  const selamlama = saat < 12 ? 'Günaydın' : saat < 18 ? 'İyi günler' : 'İyi akşamlar';
-  const adKisa = user?.ad?.split(' ')[0] || '';
-
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-
-      {/* ─── Hero selamlama ────────────────────────────── */}
-      <div style={{
-        background: 'linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%)',
-        border: '1px solid var(--border)',
-        borderRadius: 16,
-        padding: '2rem 2.25rem',
-        marginBottom: '1.5rem',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        <GridDesen />
-        <div style={{ position: 'relative' }}>
-          <p style={{ color: 'var(--muted)', fontSize: 13, margin: '0 0 4px' }}>
-            {selamlama}{adKisa ? `, ${adKisa}` : ''} 👋
-          </p>
-          <h1 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '0 0 0.65rem', lineHeight: 1.3 }}>
-            Değerlendirme Paneli
-          </h1>
-          <p style={{ color: 'var(--muted)', fontSize: 14, margin: 0 }}>
-            AI destekli işe alım ve performans analiz platformuna hoş geldiniz.
-          </p>
-        </div>
-
-        {/* Özet sayaçlar */}
-        {istat && (
-          <div style={{ display: 'flex', gap: 12, marginTop: '1.5rem', flexWrap: 'wrap' }}>
-            <IstatKart deger={istat.testler}          etiket="Test Projesi"      renk="#8b5cf6" simge="📝" />
-            <IstatKart deger={istat.raporlar}         etiket="Tamamlanan Rapor"  renk="#06b6d4" simge="📊" />
-            <IstatKart deger={istat.dokumanlar}       etiket="Döküman"           renk="#6366f1" simge="📄" />
-            <IstatKart deger={`%${istat.ortalama_basari ?? 0}`} etiket="Ort. Başarı" renk="#22c55e" simge="🎯" />
-          </div>
-        )}
-      </div>
 
       {/* ─── Arama Alanı ───────────────────────────────── */}
       <div style={{
