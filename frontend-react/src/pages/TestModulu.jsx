@@ -449,6 +449,8 @@ export default function TestModulu() {
   const [belgeler, setBelgeler]     = useState([]);
   const [belgelerYuk, setBelgelerYuk] = useState(false);
   const [secilenBelge, setSecilenBelge] = useState(null);
+  const [belgeInputMod, setBelgeInputMod] = useState('belgeler'); // 'belgeler' | 'metin'
+  const [direktMetin, setDirektMetin]     = useState('');
 
   // Hedef kitle
   const [sektorId, setSektorId]   = useState('');
@@ -899,50 +901,116 @@ export default function TestModulu() {
           {/* SOL KOLON */}
           <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
 
-            {/* Kart 1: Belgelerimden Seç */}
+            {/* Kart 1: Belge Seç veya Bilgi Gir */}
             <Kart>
-              <div style={{ fontSize:13, fontWeight:700, marginBottom:'1rem' }}>📚 Belgelerimden Seç</div>
-              {belgelerYuk ? (
-                <div style={{ textAlign:'center', padding:'1.5rem', color:'var(--muted)', fontSize:13 }}>Yükleniyor...</div>
-              ) : belgeler.length === 0 ? (
-                <div style={{ textAlign:'center', padding:'1.5rem', color:'var(--muted)', fontSize:13 }}>
-                  Belge Analiz sayfasından belge ekleyin.
-                </div>
-              ) : (
-                <div style={{ maxHeight:200, overflowY:'auto', display:'flex', flexDirection:'column', gap:6 }}>
-                  {belgeler.map(b => (
-                    <div key={b.id} style={{
-                      padding:'0.55rem 0.75rem', borderRadius:8,
-                      background: secilenBelge?.id === b.id ? 'var(--accent-dim)' : 'var(--surface2)',
-                      border:`1px solid ${secilenBelge?.id === b.id ? 'var(--accent)' : 'var(--border)'}`,
-                      display:'flex', alignItems:'center', gap:8,
-                    }}>
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ fontSize:12, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                          {b.ai_konu || b.orijinal_ad || 'Belge'}
-                        </div>
-                        <div style={{ fontSize:10, color:'var(--muted)', marginTop:2 }}>
-                          {new Date(b.olusturma).toLocaleDateString('tr-TR')}
-                        </div>
-                      </div>
-                      <button onClick={() => secBelge(b)} style={{
-                        padding:'0.3rem 0.6rem', borderRadius:6,
+              {/* Sekme başlıkları */}
+              <div style={{ display:'flex', gap:6, marginBottom:'1rem', background:'var(--surface2)', borderRadius:10, padding:4 }}>
+                {[
+                  { key:'belgeler', icon:'📚', label:'Belgelerimden Seç' },
+                  { key:'metin',    icon:'✍️', label:'Bilgiden Test Üret' },
+                ].map(({ key, icon, label }) => (
+                  <button key={key} onClick={() => {
+                    setBelgeInputMod(key);
+                    if (key === 'belgeler') { setDirektMetin(''); if (!secilenBelge) setBelgeMetin(''); }
+                    if (key === 'metin')    { setSecilenBelge(null); setBelgeMetin(direktMetin); }
+                  }} style={{
+                    flex:1, padding:'0.45rem 0.75rem', borderRadius:8, border:'none',
+                    background: belgeInputMod === key ? 'var(--surface)' : 'transparent',
+                    color: belgeInputMod === key ? 'var(--accent)' : 'var(--muted)',
+                    fontWeight: belgeInputMod === key ? 700 : 400,
+                    fontSize:12, cursor:'pointer', boxShadow: belgeInputMod === key ? '0 1px 4px rgba(0,0,0,.15)' : 'none',
+                    transition:'all 0.15s',
+                  }}>{icon} {label}</button>
+                ))}
+              </div>
+
+              {/* Belgelerimden Seç */}
+              {belgeInputMod === 'belgeler' && (<>
+                {belgelerYuk ? (
+                  <div style={{ textAlign:'center', padding:'1.5rem', color:'var(--muted)', fontSize:13 }}>Yükleniyor...</div>
+                ) : belgeler.length === 0 ? (
+                  <div style={{ textAlign:'center', padding:'1.5rem', color:'var(--muted)', fontSize:13 }}>
+                    Belge Analiz sayfasından belge ekleyin.
+                  </div>
+                ) : (
+                  <div style={{ maxHeight:200, overflowY:'auto', display:'flex', flexDirection:'column', gap:6 }}>
+                    {belgeler.map(b => (
+                      <div key={b.id} style={{
+                        padding:'0.55rem 0.75rem', borderRadius:8,
+                        background: secilenBelge?.id === b.id ? 'var(--accent-dim)' : 'var(--surface2)',
                         border:`1px solid ${secilenBelge?.id === b.id ? 'var(--accent)' : 'var(--border)'}`,
-                        background: secilenBelge?.id === b.id ? 'var(--accent)' : 'transparent',
-                        color: secilenBelge?.id === b.id ? '#fff' : 'var(--muted)',
-                        fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap',
-                      }}>{secilenBelge?.id === b.id ? '✓ Seçildi' : 'Seç'}</button>
-                      <button onClick={() => belgeSil(b)} style={{
-                        padding:'0.3rem 0.55rem', borderRadius:6, border:'1px solid #ef4444',
-                        background:'transparent', color:'#ef4444', fontSize:11, fontWeight:700, cursor:'pointer',
-                      }}>🗑</button>
+                        display:'flex', alignItems:'center', gap:8,
+                      }}>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:12, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                            {b.ai_konu || b.orijinal_ad || 'Belge'}
+                          </div>
+                          <div style={{ fontSize:10, color:'var(--muted)', marginTop:2 }}>
+                            {new Date(b.olusturma).toLocaleDateString('tr-TR')}
+                          </div>
+                        </div>
+                        <button onClick={() => secBelge(b)} style={{
+                          padding:'0.3rem 0.6rem', borderRadius:6,
+                          border:`1px solid ${secilenBelge?.id === b.id ? 'var(--accent)' : 'var(--border)'}`,
+                          background: secilenBelge?.id === b.id ? 'var(--accent)' : 'transparent',
+                          color: secilenBelge?.id === b.id ? '#fff' : 'var(--muted)',
+                          fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap',
+                        }}>{secilenBelge?.id === b.id ? '✓ Seçildi' : 'Seç'}</button>
+                        <button onClick={() => belgeSil(b)} style={{
+                          padding:'0.3rem 0.55rem', borderRadius:6, border:'1px solid #ef4444',
+                          background:'transparent', color:'#ef4444', fontSize:11, fontWeight:700, cursor:'pointer',
+                        }}>🗑</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {secilenBelge && (
+                  <div style={{ marginTop:8, padding:'0.5rem 0.75rem', background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', borderRadius:6, fontSize:12, color:'#22c55e' }}>
+                    ✓ <strong>{secilenBelge.ai_konu || secilenBelge.orijinal_ad}</strong> seçildi
+                  </div>
+                )}
+              </>)}
+
+              {/* Bilgiden Test Üret */}
+              {belgeInputMod === 'metin' && (
+                <div>
+                  <Lbl>Konu anlatımı, prosedür, teknik içerik veya herhangi bir bilgi yapıştırın</Lbl>
+                  <textarea
+                    value={direktMetin}
+                    onChange={e => {
+                      setDirektMetin(e.target.value);
+                      setBelgeMetin(e.target.value);
+                      if (e.target.value.trim()) {
+                        setKaynakModu('dokuman');
+                        if (!projeAd) setProjeAd('Bilgi Tabanlı Test');
+                      } else {
+                        setKaynakModu('ai');
+                      }
+                    }}
+                    placeholder="Örn: PPAP (Üretim Parçası Onay Prosesi), şunları kapsar: 1. Tasarım kayıtları... 2. Mühendislik onayı..."
+                    rows={7}
+                    style={{ width:'100%', resize:'vertical', fontSize:12, lineHeight:1.6, borderRadius:8 }}
+                  />
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:6 }}>
+                    <div style={{ fontSize:11, color:'var(--muted)' }}>
+                      {direktMetin.length > 0
+                        ? <span style={{ color: direktMetin.length >= 100 ? '#22c55e' : '#f59e0b' }}>
+                            {direktMetin.length} karakter {direktMetin.length < 100 ? '— en az 100 karakter önerilir' : '✓'}
+                          </span>
+                        : 'İçerik girdikçe AI sorular üretecek'}
                     </div>
-                  ))}
-                </div>
-              )}
-              {secilenBelge && (
-                <div style={{ marginTop:8, padding:'0.5rem 0.75rem', background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', borderRadius:6, fontSize:12, color:'#22c55e' }}>
-                  ✓ <strong>{secilenBelge.ai_konu || secilenBelge.orijinal_ad}</strong> seçildi
+                    {direktMetin.length > 0 && (
+                      <button onClick={() => { setDirektMetin(''); setBelgeMetin(''); setKaynakModu('ai'); }} style={{
+                        padding:'0.2rem 0.6rem', borderRadius:5, border:'1px solid #ef4444',
+                        background:'transparent', color:'#ef4444', fontSize:11, cursor:'pointer',
+                      }}>Temizle</button>
+                    )}
+                  </div>
+                  {direktMetin.length >= 100 && (
+                    <div style={{ marginTop:8, padding:'0.5rem 0.75rem', background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', borderRadius:6, fontSize:12, color:'#22c55e' }}>
+                      ✓ Bilgi hazır — parametreleri ayarlayıp testi üretin
+                    </div>
+                  )}
                 </div>
               )}
             </Kart>
