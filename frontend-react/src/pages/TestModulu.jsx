@@ -440,6 +440,66 @@ function SonucRaporu({ sonuc, proje }) {
   );
 }
 
+/* ─── SORU BANKASI ─────────────────────────────────────── */
+const SORU_BANKASI = {
+  "Otomotiv": {
+    "Başlangıç": [
+      { q:"PPAP nedir, kabaca neyi doğrular?", a:["Tasarım değişikliklerini","Üretim parçalarının uygunluğunu","Müşteri şikayetlerini","Tedarikçi fiyat listesini"], c:1 },
+      { q:"SPC'nin amacı nedir?", a:["Proje maliyetini azaltmak","Süreç varyasyonunu izlemek","Personel izinlerini planlamak","Satış tahmini"], c:1 },
+      { q:"FMEA hangi risk türünü puanlar?", a:["Finansal risk","IT siber risk","Süreç hata riski","Hukuki risk"], c:2 },
+      { q:"IATF 16949 hangi sektörün standardı?", a:["Gıda","Otomotiv","İlaç","Tekstil"], c:1 },
+      { q:"'Örnek alma planı' kime hizmet eder?", a:["Satışa","Kalite kontrole","Muhasebeye","İK'ya"], c:1 },
+    ],
+    "Gelişmekte": [
+      { q:"Kontrol planı hangi çıktı ile bağlanır?", a:["Satış bütçesi","Proses akışı & karakteristikler","Kıdem tazminatı","Sevkiyat planı"], c:1 },
+      { q:"MSA neyi değerlendirir?", a:["Ölçüm sistemini","Makine yıpranmasını","Ekip bağlılığını","Satış performansını"], c:0 },
+      { q:"R&R çalışması hedefi nedir?", a:["Operatör konforu","Tekrarlanabilirlik/yeniden üretilebilirlik","Sevkiyat hızı","Stok devir hızı"], c:1 },
+      { q:"Poka-Yoke ne demektir?", a:["Hata önleme","Maliyet azaltımı","Motivasyon","Tedarikçi skoru"], c:0 },
+      { q:"8D'de 'D4' genelde neyi ifade eder?", a:["Kök neden analizi","Geçici aksiyon","Kalıcı aksiyon","Ekip kurulumu"], c:0 },
+    ],
+  },
+  "BT & Yazılım": {
+    "Başlangıç": [
+      { q:"KVKK'nın temel amacı nedir?", a:["Satış artırmak","Kişisel veriyi korumak","Veri silmek","UI tasarımı"], c:1 },
+      { q:"SQL SELECT ne yapar?", a:["Tablo oluşturur","Veri siler","Veri çeker","Kullanıcı ekler"], c:2 },
+      { q:"Loglama neden önemlidir?", a:["Renk paleti","Olay izleme & adli analiz","Pazarlama","Fatura"], c:1 },
+      { q:"Hash fonksiyonu nasıl çalışır?", a:["Ters çevrilebilir","Tek yönlü özet","Sıkıştırma","SVG üretir"], c:1 },
+      { q:"İki faktörlü kimlik doğrulama nedir?", a:["Sadece şifre","Şifre + ek doğrulama","Sadece e-posta","Sadece IP"], c:1 },
+    ],
+    "Gelişmekte": [
+      { q:"RBAC ne anlama gelir?", a:["Rol tabanlı yetkilendirme","Yedekleme türü","Ağ topolojisi","Önbellekleme"], c:0 },
+      { q:"DPIA nedir?", a:["Finans yönetimi","Veri koruma etki analizi","Makine bakımı","SEO"], c:1 },
+      { q:"Veritabanı index kullanımının etkisi?", a:["Sorgu performansı artar","UI teması değişir","Sunucu lokasyonu","CSV şeması"], c:0 },
+      { q:"Hash'e salt eklemek ne sağlar?", a:["Rengi güzelleştirir","Hash çakışmasını azaltır","Mail hızlandırır","Görselleştirir"], c:1 },
+      { q:"SIEM'in temel çıktısı nedir?", a:["Personel çizelgesi","Güvenlik olay korelasyonu","Stok raporu","ERP fatura"], c:1 },
+    ],
+  },
+  "İnsan Kaynakları": {
+    "Başlangıç": [
+      { q:"İşe alım sürecinde ilk adım nedir?", a:["Maaş teklifi","İhtiyaç analizi","Referans kontrolü","Sözleşme"], c:1 },
+      { q:"360 derece geri bildirim neyi ölçer?", a:["Ürün kalitesini","Çalışan performansını","Finansal hedefleri","Müşteri memnuniyetini"], c:1 },
+      { q:"Yetkinlik bazlı mülakatın amacı?", a:["Maaş pazarlığı","Geçmiş davranıştan yetkinlik tespiti","CV kontrolü","Referans alma"], c:1 },
+      { q:"Onboarding süreci ne zaman başlar?", a:["İlk gün","Teklif kabul edildiğinde","3. ayda","Deneme bitiminde"], c:1 },
+      { q:"İK'da 'turnover' ne anlama gelir?", a:["Eğitim süresi","Çalışan devir hızı","Terfi oranı","İzin günü"], c:1 },
+    ],
+  },
+  "Finans & Muhasebe": {
+    "Başlangıç": [
+      { q:"Bilanço neyi gösterir?", a:["Satış hedeflerini","Varlık, borç ve öz kaynağı","Pazarlama planını","Çalışan listesini"], c:1 },
+      { q:"Brüt kar marjı nasıl hesaplanır?", a:["Net gelir / Toplam varlık","(Gelir - COGS) / Gelir","Gider / Varlık","Borç / Özkaynak"], c:1 },
+      { q:"Nakit akış tablosunun amacı?", a:["Pazarlama analizi","Nakit giriş-çıkışlarını izlemek","Personel planlaması","Ürün fiyatlandırması"], c:1 },
+      { q:"Amortisman nedir?", a:["Gelir artışı","Varlık değerinin zaman içinde azalması","Borç ödeme planı","Kâr paylaşımı"], c:1 },
+      { q:"Likidite oranı ne ölçer?", a:["Uzun vadeli borç kapasitesi","Kısa vadeli yükümlülükleri karşılama gücü","Hisse senedi değeri","Pazar payı"], c:1 },
+    ],
+  },
+};
+
+function riskHesapla(yuzde) {
+  if (yuzde <= 40) return { label:'Yüksek Risk', renk:'#ef4444', bg:'rgba(239,68,68,0.1)', border:'rgba(239,68,68,0.3)' };
+  if (yuzde <= 70) return { label:'Orta Risk',   renk:'#f59e0b', bg:'rgba(245,158,11,0.1)', border:'rgba(245,158,11,0.3)' };
+  return              { label:'Düşük Risk',  renk:'#22c55e', bg:'rgba(34,197,94,0.1)',  border:'rgba(34,197,94,0.3)'  };
+}
+
 /* ─── ANA SAYFA ────────────────────────────────────────── */
 export default function TestModulu() {
   const [adim, setAdim] = useState(0);
@@ -451,6 +511,15 @@ export default function TestModulu() {
   const [secilenBelge, setSecilenBelge] = useState(null);
   const [belgeInputMod, setBelgeInputMod] = useState('belgeler'); // 'belgeler' | 'metin'
   const [direktMetin, setDirektMetin]     = useState('');
+
+  // Hızlı Test (Bilgi Bankası)
+  const [hzMod, setHzMod]           = useState('setup'); // 'setup' | 'quiz' | 'sonuc'
+  const [hzSektor, setHzSektor]     = useState('');
+  const [hzSeviye, setHzSeviye]     = useState('Başlangıç');
+  const [hzSoruSayisi, setHzSoruSayisi] = useState(5);
+  const [hzSorular, setHzSorular]   = useState([]);
+  const [hzCevaplar, setHzCevaplar] = useState({});
+  const [hzSonuc, setHzSonuc]       = useState(null);
 
   // Hedef kitle
   const [sektorId, setSektorId]   = useState('');
@@ -547,6 +616,62 @@ export default function TestModulu() {
     await fetch(`${API}/api/belgeler/${belge.id}`, { method: 'DELETE', headers: authH() });
     if (secilenBelge?.id === belge.id) { setSecilenBelge(null); setBelgeMetin(''); }
     await yukleBelgeler();
+  }
+
+  function hzBaslat() {
+    const bySector = SORU_BANKASI[hzSektor];
+    if (!bySector) return;
+    const byLevel = bySector[hzSeviye] || bySector[Object.keys(bySector)[0]];
+    const shuffled = [...byLevel].sort(() => Math.random() - 0.5);
+    setHzSorular(shuffled.slice(0, Math.min(hzSoruSayisi, shuffled.length)));
+    setHzCevaplar({});
+    setHzMod('quiz');
+  }
+
+  function hzBitir() {
+    let dogru = 0;
+    hzSorular.forEach((s, i) => { if (hzCevaplar[i] === s.c) dogru++; });
+    const yuzde = Math.round((dogru / hzSorular.length) * 100);
+    setHzSonuc({ dogru, yanlis: hzSorular.length - dogru, toplam: hzSorular.length, yuzde, sektor: hzSektor, seviye: hzSeviye });
+    setHzMod('sonuc');
+  }
+
+  function hzPdfIndir() {
+    if (!hzSonuc) return;
+    const risk = riskHesapla(hzSonuc.yuzde);
+    const tarih = new Date().toLocaleString('tr-TR');
+    const detayHtml = hzSorular.map((s, i) => {
+      const dogru = hzCevaplar[i] === s.c;
+      const verilen = hzCevaplar[i] !== undefined ? s.a[hzCevaplar[i]] : '—';
+      return `<div style="margin:10px 0;padding:10px 12px;border-left:3px solid ${dogru ? '#22c55e' : '#ef4444'};background:${dogru ? '#f0fdf4' : '#fff5f5'}">
+        <strong>Soru ${i+1}:</strong> ${s.q}<br>
+        <span>Cevabınız: <strong>${verilen}</strong> ${dogru ? '✓' : '✗'}</span><br>
+        ${!dogru ? `<span style="color:#22c55e">Doğru cevap: ${s.a[s.c]}</span>` : ''}
+      </div>`;
+    }).join('');
+    const w = window.open('', '_blank');
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Test Raporu</title>
+    <style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;color:#111;font-size:14px}
+    h1{color:#4f46e5}h2{color:#374151;border-bottom:1px solid #e5e7eb;padding-bottom:6px}
+    .risk{display:inline-block;padding:8px 18px;border-radius:20px;font-weight:700;font-size:15px;margin:8px 0}
+    .meta{display:flex;gap:20px;background:#f9fafb;padding:12px;border-radius:8px;margin:12px 0}
+    .score{font-size:48px;font-weight:900;color:#4f46e5;line-height:1}
+    @media print{.noprint{display:none}}</style></head><body>
+    <h1>Test Sonuç Raporu</h1>
+    <div class="meta">
+      <div><div style="font-size:11px;color:#6b7280;text-transform:uppercase">Sektör</div><strong>${hzSonuc.sektor}</strong></div>
+      <div><div style="font-size:11px;color:#6b7280;text-transform:uppercase">Seviye</div><strong>${hzSonuc.seviye}</strong></div>
+      <div><div style="font-size:11px;color:#6b7280;text-transform:uppercase">Tarih</div><strong>${tarih}</strong></div>
+    </div>
+    <div style="text-align:center;padding:20px;background:#f8f9ff;border-radius:12px;margin:16px 0">
+      <div class="score">${hzSonuc.yuzde}%</div>
+      <div style="color:#6b7280;margin:4px 0">${hzSonuc.dogru}/${hzSonuc.toplam} doğru</div>
+      <div class="risk" style="background:${risk.bg};color:${risk.renk};border:1px solid ${risk.border}">${risk.label}</div>
+    </div>
+    <h2>Soru Detayları</h2>${detayHtml}
+    <button class="noprint" onclick="window.print()" style="margin-top:20px;padding:10px 24px;background:#4f46e5;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px">🖨 Yazdır / PDF Kaydet</button>
+    </body></html>`);
+    w.document.close();
   }
 
   async function secBelge(belge) {
@@ -971,46 +1096,126 @@ export default function TestModulu() {
                 )}
               </>)}
 
-              {/* Bilgiden Test Üret */}
+              {/* Bilgiden Test Üret — Hızlı Bilgi Bankası Testi */}
               {belgeInputMod === 'metin' && (
                 <div>
-                  <Lbl>Konu anlatımı, prosedür, teknik içerik veya herhangi bir bilgi yapıştırın</Lbl>
-                  <textarea
-                    value={direktMetin}
-                    onChange={e => {
-                      setDirektMetin(e.target.value);
-                      setBelgeMetin(e.target.value);
-                      if (e.target.value.trim()) {
-                        setKaynakModu('dokuman');
-                        if (!projeAd) setProjeAd('Bilgi Tabanlı Test');
-                      } else {
-                        setKaynakModu('ai');
-                      }
-                    }}
-                    placeholder="Örn: PPAP (Üretim Parçası Onay Prosesi), şunları kapsar: 1. Tasarım kayıtları... 2. Mühendislik onayı..."
-                    rows={7}
-                    style={{ width:'100%', resize:'vertical', fontSize:12, lineHeight:1.6, borderRadius:8 }}
-                  />
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:6 }}>
-                    <div style={{ fontSize:11, color:'var(--muted)' }}>
-                      {direktMetin.length > 0
-                        ? <span style={{ color: direktMetin.length >= 100 ? '#22c55e' : '#f59e0b' }}>
-                            {direktMetin.length} karakter {direktMetin.length < 100 ? '— en az 100 karakter önerilir' : '✓'}
-                          </span>
-                        : 'İçerik girdikçe AI sorular üretecek'}
-                    </div>
-                    {direktMetin.length > 0 && (
-                      <button onClick={() => { setDirektMetin(''); setBelgeMetin(''); setKaynakModu('ai'); }} style={{
-                        padding:'0.2rem 0.6rem', borderRadius:5, border:'1px solid #ef4444',
-                        background:'transparent', color:'#ef4444', fontSize:11, cursor:'pointer',
-                      }}>Temizle</button>
-                    )}
-                  </div>
-                  {direktMetin.length >= 100 && (
-                    <div style={{ marginTop:8, padding:'0.5rem 0.75rem', background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', borderRadius:6, fontSize:12, color:'#22c55e' }}>
-                      ✓ Bilgi hazır — parametreleri ayarlayıp testi üretin
+                  {/* KURULUM */}
+                  {hzMod === 'setup' && (
+                    <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                      <div>
+                        <Lbl>Sektör / Alan</Lbl>
+                        <select value={hzSektor} onChange={e => { setHzSektor(e.target.value); setHzSeviye(Object.keys(SORU_BANKASI[e.target.value]||{})[0]||'Başlangıç'); }} style={{ width:'100%' }}>
+                          <option value="">Sektör seçin...</option>
+                          {Object.keys(SORU_BANKASI).map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                      {hzSektor && (
+                        <div>
+                          <Lbl>Seviye</Lbl>
+                          <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                            {Object.keys(SORU_BANKASI[hzSektor]).map(sev => (
+                              <Chip key={sev} label={sev} active={hzSeviye === sev} onClick={() => setHzSeviye(sev)} />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div>
+                        <Lbl>Soru Sayısı</Lbl>
+                        <div style={{ display:'flex', gap:6 }}>
+                          {[3, 5, 10].map(n => <Chip key={n} label={String(n)} active={hzSoruSayisi === n} onClick={() => setHzSoruSayisi(n)} />)}
+                        </div>
+                      </div>
+                      {hzSektor && (
+                        <div style={{ padding:'0.5rem 0.75rem', background:'var(--surface2)', borderRadius:6, fontSize:11, color:'var(--muted)' }}>
+                          {SORU_BANKASI[hzSektor]?.[hzSeviye]?.length || 0} soru mevcut — anında test, AI bekleme yok
+                        </div>
+                      )}
+                      <button disabled={!hzSektor} onClick={hzBaslat} style={{
+                        padding:'0.65rem', borderRadius:8, border:'none',
+                        background: hzSektor ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : 'var(--muted)',
+                        color:'#fff', fontSize:13, fontWeight:700,
+                        cursor: hzSektor ? 'pointer' : 'not-allowed',
+                      }}>▶ Testi Başlat</button>
                     </div>
                   )}
+
+                  {/* QUIZ */}
+                  {hzMod === 'quiz' && (
+                    <div>
+                      <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'var(--muted)', marginBottom:6 }}>
+                        <span>{hzSektor} • {hzSeviye}</span>
+                        <span>{Object.keys(hzCevaplar).length}/{hzSorular.length} yanıtlandı</span>
+                      </div>
+                      <Pbar value={(Object.keys(hzCevaplar).length / hzSorular.length) * 100} />
+                      <div style={{ marginTop:10, display:'flex', flexDirection:'column', gap:8, maxHeight:340, overflowY:'auto' }}>
+                        {hzSorular.map((s, i) => (
+                          <div key={i} style={{
+                            padding:'0.75rem', borderRadius:8, background:'var(--surface2)',
+                            border:`1px solid ${hzCevaplar[i] !== undefined ? 'var(--accent)' : 'var(--border)'}`,
+                          }}>
+                            <div style={{ fontSize:12, fontWeight:700, marginBottom:8, display:'flex', gap:6, alignItems:'flex-start' }}>
+                              <span style={{ flexShrink:0, width:20, height:20, borderRadius:'50%', background:'var(--accent-dim)', color:'var(--accent)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10 }}>{i+1}</span>
+                              {s.q}
+                            </div>
+                            <div style={{ display:'flex', flexDirection:'column', gap:4, paddingLeft:26 }}>
+                              {s.a.map((opt, oi) => (
+                                <label key={oi} style={{
+                                  display:'flex', alignItems:'center', gap:8, padding:'0.3rem 0.6rem',
+                                  borderRadius:6, cursor:'pointer', fontSize:12,
+                                  background: hzCevaplar[i] === oi ? 'var(--accent-dim)' : 'transparent',
+                                  border:`1px solid ${hzCevaplar[i] === oi ? 'var(--accent)' : 'transparent'}`,
+                                }}>
+                                  <input type="radio" name={`hz${i}`} checked={hzCevaplar[i] === oi}
+                                    onChange={() => setHzCevaplar(prev => ({ ...prev, [i]: oi }))}
+                                    style={{ accentColor:'var(--accent)', flexShrink:0 }} />
+                                  {opt}
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ display:'flex', gap:8, marginTop:10 }}>
+                        <button onClick={() => { setHzMod('setup'); setHzCevaplar({}); }} style={{ padding:'0.5rem 0.85rem', borderRadius:7, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:12, cursor:'pointer' }}>← Vazgeç</button>
+                        <button onClick={hzBitir} style={{ flex:1, padding:'0.5rem', borderRadius:7, border:'none', background:'linear-gradient(135deg,#6366f1,#8b5cf6)', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>
+                          Testi Bitir ✓
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SONUÇ */}
+                  {hzMod === 'sonuc' && hzSonuc && (() => {
+                    const risk = riskHesapla(hzSonuc.yuzde);
+                    return (
+                      <div>
+                        <div style={{ textAlign:'center', padding:'1.25rem', background:'var(--surface2)', borderRadius:10, marginBottom:10 }}>
+                          <div style={{ fontSize:48, fontWeight:900, color:'var(--accent)', lineHeight:1 }}>{hzSonuc.yuzde}%</div>
+                          <div style={{ fontSize:12, color:'var(--muted)', marginTop:4 }}>{hzSonuc.dogru}/{hzSonuc.toplam} doğru · {hzSonuc.yanlis} yanlış</div>
+                          <div style={{ marginTop:8, display:'inline-block', padding:'5px 14px', borderRadius:20, background:risk.bg, border:`1px solid ${risk.border}`, color:risk.renk, fontWeight:700, fontSize:12 }}>
+                            {risk.yuzde <= 40 ? '🔴' : risk.yuzde <= 70 ? '🟡' : '🟢'} {risk.label}
+                          </div>
+                        </div>
+                        <div style={{ display:'flex', flexDirection:'column', gap:5, maxHeight:220, overflowY:'auto', marginBottom:10 }}>
+                          {hzSorular.map((s, i) => {
+                            const dogru = hzCevaplar[i] === s.c;
+                            return (
+                              <div key={i} style={{ padding:'0.55rem 0.75rem', borderRadius:7, background:'var(--surface2)', border:`1px solid ${dogru ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
+                                <div style={{ fontSize:11, fontWeight:600, marginBottom:2 }}>{i+1}. {s.q}</div>
+                                <div style={{ fontSize:11, color: dogru ? '#22c55e' : '#ef4444' }}>
+                                  {dogru ? '✓ Doğru' : `✗ Yanlış — Doğru: ${s.a[s.c]}`}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div style={{ display:'flex', gap:8 }}>
+                          <button onClick={() => { setHzMod('setup'); setHzSonuc(null); setHzCevaplar({}); }} style={{ flex:1, padding:'0.5rem', borderRadius:7, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:12, cursor:'pointer' }}>↺ Yeniden</button>
+                          <button onClick={hzPdfIndir} style={{ flex:1, padding:'0.5rem', borderRadius:7, border:'none', background:'#6366f1', color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>📄 PDF İndir</button>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </Kart>
