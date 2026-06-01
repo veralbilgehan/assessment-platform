@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getDegerlendirme, putPuanlar, AI_STREAM_URL } from '../api/index.js';
 import Badge from './Badge.jsx';
+import DergiOnizleme from './DergiOnizleme.jsx';
 
 const zorlukMap = { 1: ['Kolay', 'green'], 2: ['Orta', 'yellow'], 3: ['Zor', 'red'] };
 
@@ -10,6 +11,7 @@ export default function DegerlendirmeModal({ id, onClose }) {
   const [makale, setMakale] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [aiDone, setAiDone] = useState(false);
+  const [dergiAcik, setDergiAcik] = useState(false);
   const abortRef = useRef(null);
 
   const { data: d, isLoading } = useQuery({
@@ -78,6 +80,7 @@ export default function DegerlendirmeModal({ id, onClose }) {
   }
 
   return (
+    <>
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{
@@ -91,10 +94,23 @@ export default function DegerlendirmeModal({ id, onClose }) {
         maxHeight: '90vh', overflowY: 'auto', padding: '1.75rem', position: 'relative',
         animation: 'fadeIn 0.15s',
       }}>
-        <button onClick={onClose} style={{
-          position: 'absolute', top: 14, right: 14, background: 'transparent',
-          color: 'var(--muted)', fontSize: 18, lineHeight: 1,
-        }}>✕</button>
+        <div style={{ position: 'absolute', top: 14, right: 14, display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => setDergiAcik(true)}
+            title="Dergi Önizlemesi"
+            style={{
+              padding: '0.3rem 0.7rem',
+              background: 'var(--surface2)', border: '1px solid var(--border)',
+              borderRadius: 6, fontSize: 12, color: 'var(--text)',
+              display: 'flex', alignItems: 'center', gap: 4,
+            }}
+          >
+            📰 Dergi
+          </button>
+          <button onClick={onClose} style={{
+            background: 'transparent', color: 'var(--muted)', fontSize: 18, lineHeight: 1,
+          }}>✕</button>
+        </div>
 
         {isLoading ? (
           <div style={{ padding: '2rem', color: 'var(--muted)' }}>Yükleniyor...</div>
@@ -209,6 +225,15 @@ export default function DegerlendirmeModal({ id, onClose }) {
         )}
       </div>
     </div>
+
+    {dergiAcik && (
+      <DergiOnizleme
+        d={{ ...d, uretilen_makale: makale || d?.uretilen_makale }}
+        id={id}
+        onClose={() => setDergiAcik(false)}
+      />
+    )}
+    </>
   );
 }
 
