@@ -77,11 +77,13 @@ async function soruUret({ projeId, belgeMetin, pozisyon, sektor, soru_sayisi, zo
   const dokHedef = kaynak_modu === 'hibrit'
     ? Math.round(soru_sayisi * dokuman_oran / 100)
     : kaynak_modu === 'dokuman' ? soru_sayisi : 0;
-  const aiHedef  = kaynak_modu === 'hibrit'
-    ? Math.max(0, soru_sayisi - sorular.length - dokHedef)
-    : kaynak_modu === 'ai' ? soru_sayisi : 0;
+  // Belge yoksa dokuman payı AI'ya devredilir — gerçek erişilebilir hedef
+  const efektivDokHedef = belgeMetin ? dokHedef : 0;
+  const aiHedef = kaynak_modu === 'hibrit'
+    ? Math.max(0, soru_sayisi - sorular.length - efektivDokHedef)
+    : (kaynak_modu === 'ai' || (!belgeMetin && kaynak_modu === 'dokuman')) ? soru_sayisi : 0;
 
-  const toplamAIHedef = (belgeMetin ? dokHedef : 0) + aiHedef + Math.max(0, soru_sayisi - sorular.length - dokHedef - aiHedef);
+  const toplamAIHedef = efektivDokHedef + aiHedef + Math.max(0, soru_sayisi - sorular.length - efektivDokHedef - aiHedef);
 
   if (toplamAIHedef > 0) {
     res?.write(`data: ${JSON.stringify({ tip: 'durum', mesaj: `AI ${toplamAIHedef} soru üretiyor...` })}\n\n`);
@@ -132,9 +134,11 @@ BAĞLAM:
 
 KURALLAR:
 - Soru Tipi Tercihi: ${tipiTalimat}
-- "kaynak": döküman içeriğinden üretilen için "dokuman", yetkinlik/pozisyon bilgisinden için "ai"
+- "kaynak": döküman içeriğinden üretilen için "dokuman", teknik/mesleki bilgiden üretilen için "ai"
 - ${belgeMetin ? `İlk ${dokHedef} soruyu döküman içeriğine dayandır` : 'Tüm soruları pozisyon için gereken teknik bilgi, araç ve metodolojilere dayandır'}
-- Soruları pozisyona özgü teknik konulara odakla: kullanılan teknolojiler, metodolojiler, araçlar, sektörel uygulamalar
+- Soruları YALNIZCA pozisyona özgü teknik ve mesleki konulara odakla: kullanılan yazılım/donanım/araçlar, sektöre özgü prosedürler, mevzuat, standartlar, metodolojiler, hesaplama/analiz teknikleri
+- YASAK: "takım çalışması", "iletişim becerileri", "liderlik", "motivasyon", "zaman yönetimi" gibi genel yetkinlik veya kişisel özellik soruları sorma — bunlar yerine somut teknik bilgi ölç
+- Her soru BENZERSİZ olmalı — aynı konuyu veya soruyu farklı ifadeyle tekrar etme, her soru farklı bir kavramı veya beceriyi ölçmeli
 - Türkçe yaz`;
 
     try {
@@ -163,17 +167,23 @@ KURALLAR:
       const parsed = JSON.parse(cleaned);
 
       if (parsed.sorular?.length) {
-        sorular.push(...parsed.sorular.map((s, i) => ({
-          sira_no:     sorular.length + i + 1,
-          soru_metni:  s.soru_metni,
-          soru_tipi:   s.soru_tipi || 'cok_secmeli',
-          secenekler:  s.secenekler,
-          dogru_cevap: s.dogru_cevap,
-          aciklama:    s.aciklama,
-          kaynak:      s.kaynak || 'ai',
-          zorluk:      s.zorluk || zorluk,
-          puan_degeri: s.puan_degeri || 1,
-        })));
+        const mevcutMetinler = new Set(sorular.map(s => s.soru_metni.trim().toLowerCase().slice(0, 80)));
+        for (const s of parsed.sorular) {
+          const anahtar = (s.soru_metni || '').trim().toLowerCase().slice(0, 80);
+          if (!anahtar || mevcutMetinler.has(anahtar)) continue;
+          mevcutMetinler.add(anahtar);
+          sorular.push({
+            sira_no:     sorular.length + 1,
+            soru_metni:  s.soru_metni,
+            soru_tipi:   s.soru_tipi || 'cok_secmeli',
+            secenekler:  s.secenekler,
+            dogru_cevap: s.dogru_cevap,
+            aciklama:    s.aciklama,
+            kaynak:      s.kaynak || 'ai',
+            zorluk:      s.zorluk || zorluk,
+            puan_degeri: s.puan_degeri || 1,
+          });
+        }
       }
     } catch (e) {
       res?.write(`data: ${JSON.stringify({ tip: 'uyari', mesaj: 'AI soru üretiminde hata: ' + e.message })}\n\n`);
