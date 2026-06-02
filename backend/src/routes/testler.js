@@ -683,4 +683,46 @@ router.post('/davet', optionalAuth, async (req, res, next) => {
   }
 });
 
+// POST /api/testler/oturum/:id/bildir — test tamamlandığında proje yaratıcısına otomatik rapor gönder
+router.post('/oturum/:id/bildir', async (req, res, next) => {
+  try {
+    const { rows: [oturum] } = await pool.query(
+      `SELECT o.*, tp.ad AS proje_adi, tp.olusturan_id, tp.sure_dakika, tp.zorluk, tp.soru_sayisi,
+              s.ad AS sektor_adi, p.ad AS pozisyon_adi
+       FROM test_oturumlari o
+       JOIN test_projeleri tp ON tp.id=o.proje_id
+       LEFT JOIN sektorler s ON s.id=tp.sektor_id
+       LEFT JOIN pozisyonlar p ON p.id=tp.pozisyon_id
+       WHERE o.id=$1`, [req.params.id]
+    );
+    if (!oturum) return res.status(404).json({ hata: 'Oturum bulunamadı' });
+
+    if (!oturum.olusturan_id)
+      return res.json({ mesaj: 'Proje yaratıcısı bulunamadı, bildirim atlandı' });
+
+    const { rows: [kullanici] } = await pool.query(
+      'SELECT eposta, ad FROM kullanicilar WHERE id=$1', [oturum.olusturan_id]
+    );
+    if (!kullanici?.eposta)
+      return res.json({ mesaj: 'Yaratıcı e-postası bulunamadı' });
+
+    const { rows: detay } = await pool.query(
+      `SELECT ts.sira_no, ts.soru_metni, ts.dogru_cevap, ts.puan_degeri,
+              tc.verilen_cevap, tc.dogru_mu
+       FROM test_sorulari ts
+       LEFT JOIN test_cevaplari tc ON tc.soru_id=ts.id AND tc.oturum_id=$1
+       WHERE ts.proje_id=(SELECT proje_id FROM test_oturumlari WHERE id=$1)
+       ORDER BY ts.sira_no`, [req.params.id]
+    );
+
+    await raporGonder({ alici: kullanici.eposta, aliciAd: kullanici.ad, oturum, detay });
+    res.json({ mesaj: 'Yaratıcıya bildirim gönderildi', alici: kullanici.eposta });
+  } catch (err) {
+    if (err.message?.includes('SMTP') || err.message?.includes('yapılandırılmamış')) {
+      return res.status(503).json({ hata: err.message });
+    }
+    next(err);
+  }
+});
+
 module.exports = router;

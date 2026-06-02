@@ -1,4 +1,5 @@
 # Claude workspace (bu klasörler sadece Claude'a ait)
+.claude/
 projects/
 sessions/
 history.jsonl

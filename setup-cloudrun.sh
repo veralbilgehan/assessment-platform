@@ -52,6 +52,7 @@ echo ""
 read -rp "Proje ID girin (yoksa yeni oluşturulacak, boş bırakın): " INPUT_PROJECT
 
 if [[ -z "$INPUT_PROJECT" ]]; then
+  # Yeni proje oluştur
   PROJECT_ID="assessment-$(date +%s | tail -c 6)"
   echo "Yeni proje oluşturuluyor: $PROJECT_ID"
   gcloud projects create "$PROJECT_ID" --name="Assessment Platform" 2>/dev/null || true
@@ -64,7 +65,7 @@ fi
 gcloud config set project "$PROJECT_ID" --quiet
 info "Aktif proje: $PROJECT_ID"
 
-# Billing hesabını bağla
+# Billing hesabını bağla (otomatik, ilk billing hesabı)
 BILLING_ACCOUNT=$(gcloud billing accounts list --format="value(name)" --filter="open=true" 2>/dev/null | head -1 || echo "")
 if [[ -n "$BILLING_ACCOUNT" ]]; then
   gcloud billing projects link "$PROJECT_ID" --billing-account="$BILLING_ACCOUNT" --quiet 2>/dev/null || true
@@ -91,6 +92,7 @@ info "Tüm API'lar etkinleştirildi"
 header "Service Account Oluşturma"
 SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
+# Var mı kontrol
 if gcloud iam service-accounts describe "$SA_EMAIL" --quiet &>/dev/null 2>&1; then
   info "Service Account zaten var: $SA_EMAIL"
 else
@@ -100,6 +102,7 @@ else
   info "Service Account oluşturuldu: $SA_EMAIL"
 fi
 
+# Rolleri ekle
 ROLES=(
   "roles/run.admin"
   "roles/cloudbuild.builds.editor"
@@ -114,6 +117,7 @@ for role in "${ROLES[@]}"; do
     --quiet 2>/dev/null | grep -q "Updated" && echo "  → $role eklendi" || echo "  → $role zaten var"
 done
 
+# SA JSON key oluştur
 mkdir -p "$(dirname "$KEY_FILE")"
 if [[ -f "$KEY_FILE" ]]; then
   warn "SA key zaten var: $KEY_FILE"
@@ -161,6 +165,9 @@ info "JWT_SECRET üretildi ve kaydedildi: $JWT_SECRET_FILE"
 
 # ─── İlk Cloud Run Deploy ────────────────────────────────────────────────────
 header "Cloud Run Servisi Oluşturma (ilk deploy)"
+
+# gcloud run deploy için Docker build gerekiyor
+echo "Proje dizinine gidiliyor..."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
@@ -221,6 +228,7 @@ if [[ "$GH_AVAILABLE" == "true" ]]; then
   done
   info "GitHub Secrets eklendi"
 else
+  # Manuel ekleme için bilgileri yaz
   SECRETS_FILE="$HOME/.config/gcloud/assessment-secrets.txt"
   cat > "$SECRETS_FILE" << EOF
 # Bu bilgileri GitHub → Settings → Secrets → Actions'a ekleyin
@@ -254,5 +262,6 @@ echo -e "  Uygulama URL : ${BOLD}${SERVICE_URL}${RESET}"
 echo ""
 echo "  Artık master'a her push'ta otomatik deploy olacak."
 echo ""
-echo "  Veritabanı migration'larını çalıştırmayı unutmayın."
+echo "  Veritabanı migration'larını çalıştırmayı unutmayın:"
+echo "  Uygulama URL üzerinden /health ile kontrol edin."
 echo -e "${BOLD}════════════════════════════════════════${RESET}"
