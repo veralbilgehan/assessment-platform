@@ -47,6 +47,7 @@ There is no automated test suite.
 - `backend/` — Node.js / Express REST API (CommonJS)
 - `frontend-react/` — React 19 / Vite SPA (ESM)
 - `belgelerimden_sec.py` — standalone Python utility, unrelated to the main app
+- `meet-teams-bot/` — standalone Node.js/Playwright tool that joins a Google Meet or Microsoft Teams call and records the audio to a file; unrelated to the main app (see its own README)
 
 ### Backend
 
