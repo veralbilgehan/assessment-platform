@@ -28,6 +28,7 @@ async function main() {
 
   const browser = await chromium.launch({
     headless: false,
+    executablePath: process.env.CHROMIUM_YOLU || undefined,
     args: [
       '--use-fake-ui-for-media-stream',
       '--autoplay-policy=no-user-gesture-required',

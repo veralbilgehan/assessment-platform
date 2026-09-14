@@ -57,6 +57,13 @@ Bot adı varsayılan olarak "Kayıt Botu"dur; değiştirmek için:
 BOT_ADI="Toplantı Kaydı" ./basla.sh "<link>"
 ```
 
+Playwright'ın kendi Chromium indirmesini yapamadığınız (ör. kısıtlı ağ) bir
+ortamda, sistemde zaten kurulu bir Chromium/Chrome ikilisini göstermek için:
+
+```bash
+CHROMIUM_YOLU="/usr/bin/chromium" ./basla.sh "<link>"
+```
+
 ## Sınırlamalar
 
 - Meet/Teams arayüzleri sık değiştiği için katılma butonlarının metin
