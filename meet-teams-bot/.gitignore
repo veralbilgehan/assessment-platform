@@ -1,0 +1,4 @@
+node_modules/
+kayitlar/*.wav
+bot.log
+.bot.pid
