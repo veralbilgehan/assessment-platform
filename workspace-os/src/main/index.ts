@@ -8,9 +8,11 @@ import { ofisIpcKaydet } from './ipc/ofisIpc'
 import { aiIpcKaydet } from './ipc/aiIpc'
 import { bulutIpcKaydet } from './ipc/bulutIpc'
 import { bekleyenVar, bekleyenleriGonder } from './bulut/senkron'
+import { guncellemeDurumu, guncellemeKontrolEt, guncellemeyiBaslat, guncellemeyiKur } from './guncelleme'
 
 function pencereOlustur() {
   const pencere = new BrowserWindow({
+    icon: join(__dirname, '../../build/icon.png'), // Linux/geliştirme; Windows'ta simge .exe'ye gömülür
     width: 1280,
     height: 800,
     minWidth: 960,
@@ -65,6 +67,11 @@ function ipcKaydet() {
 
   ipcMain.handle(IPC.kaynaklariKaydet, async (_e, kaynaklar: string[]) => durumYaz({ ...(await durumOku()), kaynaklar }))
 
+  ipcMain.handle(IPC.guncellemeDurumu, () => guncellemeDurumu())
+  ipcMain.handle(IPC.guncellemeKontrol, () => guncellemeKontrolEt())
+  ipcMain.handle(IPC.guncellemeKur, () => guncellemeyiKur())
+  ipcMain.handle(IPC.veriKlasoruAc, () => shell.openPath(app.getPath('userData')))
+
   ipcMain.handle(IPC.sistemBilgisi, () => ({
     kullaniciAdi: os.userInfo().username,
     platform: process.platform,
@@ -79,6 +86,7 @@ app.whenReady().then(() => {
   aiIpcKaydet()
   bulutIpcKaydet()
   pencereOlustur()
+  guncellemeyiBaslat(async () => (await durumOku()).tercihler.otomatikGuncelleme !== false)
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) pencereOlustur()
   })

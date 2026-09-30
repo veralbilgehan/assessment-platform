@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from 'react'
-import type { UygulamaDurumu } from '@shared/tipler'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { GuncellemeDurumu, UygulamaDurumu } from '@shared/tipler'
 import { uzantiAl } from '@shared/kategoriler'
 import { GOOGLE_KISAYOL_UZANTILARI, editorBul } from '@shared/ofis'
 import { modulleriGetir } from '@core/modulKayit'
@@ -30,6 +30,14 @@ export default function Kabuk({ durum, durumGuncelle }: { durum: UygulamaDurumu;
     [dahiliEditor, modulAc],
   )
 
+  // Güncelleme indirildiğinde her ekranda görünen şerit
+  const [guncelleme, setGuncelleme] = useState<GuncellemeDurumu | null>(null)
+  const [seritKapali, setSeritKapali] = useState(false)
+  useEffect(() => {
+    window.workspace.guncellemeDurumu().then(setGuncelleme)
+    return window.workspace.olayDinle('guncelleme:durum', setGuncelleme)
+  }, [])
+
   const baglam = useMemo<KabukBaglami>(() => ({ modulAc, belgeAc }), [modulAc, belgeAc])
 
   return (
@@ -52,6 +60,13 @@ export default function Kabuk({ durum, durumGuncelle }: { durum: UygulamaDurumu;
           </nav>
         </aside>
         <main className="icerik">
+          {guncelleme?.durum === 'hazir' && !seritKapali && (
+            <div className="guncelleme-seridi" role="status">
+              <span>✨ Workspace OS {guncelleme.yeniSurum} hazır.</span>
+              <button className="dugme kucuk birincil" onClick={() => window.workspace.guncellemeKur()}>Yeniden başlat ve güncelle</button>
+              <button className="dugme kucuk metin" onClick={() => setSeritKapali(true)}>Sonra</button>
+            </div>
+          )}
           {modul && (
             <modul.bilesen
               key={`${modul.id}:${aktif.parametre ? aktif.surum : ''}`}

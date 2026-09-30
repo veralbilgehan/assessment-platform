@@ -430,3 +430,7 @@ details.ayar-karti summary { cursor: pointer; }
 .bulut-durumu.cakisma { color: #d97706; }
 .bulut-durumu.hata { color: var(--hata); }
 [data-tema='koyu'] .bulut-durumu.yuklendi { color: #34d399; }
+
+/* ── Güncelleme ─────────────────────────────────────────── */
+.guncelleme-seridi { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; padding: .6rem .9rem; margin: -32px 0 1rem; border-radius: 10px; background: color-mix(in srgb, var(--vurgu) 14%, var(--panel)); border: 1px solid color-mix(in srgb, var(--vurgu) 35%, var(--kenarlik)); font-size: .9rem; }
+.guncelleme-seridi span { flex: 1; }

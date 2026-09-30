@@ -8,8 +8,11 @@ Dosyaları, sürücüleri, bulut hesaplarını ve ofis/AI araçlarını tek ekos
 npm install
 npm run dev        # geliştirme (hot reload)
 npm run typecheck
-npm run dist:win   # Windows kurulum dosyası → release/
+npm run dist:win   # Windows kurulum dosyası → release/ (Windows'ta)
 ```
+
+Windows kurulum dosyası her PR'da GitHub Actions'ta derlenir; `v*` etiketiyle yayınlanır ve kurulu
+uygulamalar otomatik güncellenir. Ayrıntılar: [docs/SURUM_YAYINLAMA.md](docs/SURUM_YAYINLAMA.md).
 
 ## Mimari
 
@@ -30,6 +33,7 @@ src/
     ai/                   Claude API: şifreli anahtar deposu, şablon deposu, akışlı üretim ve öneriler
     bulut/                OAuth 2.0 + PKCE, Google Drive v3 ve Microsoft Graph istemcileri, önbellek + senkron
     sifreliDepo.ts        Gizli değerler için DPAPI (safeStorage) deposu
+    guncelleme.ts         Otomatik güncelleme (electron-updater, GitHub Releases)
     ipc/                  Modül başına IPC kayıtları
   preload/                contextBridge ile dar `window.workspace` API'si
   renderer/src/
@@ -42,6 +46,7 @@ src/
     moduller/dosyalar/    Modül 2 — Sürücüler, klasör gezgini, Kütüphane
     moduller/projeler/    Modül 3 — Projeler, ortak ProjeListesi bileşeni
     moduller/ofis/        Modül 4 — MS 365 / Google uygulama grupları, Word/Excel/PowerPoint/Not Defteri editörleri
+    moduller/ayarlar/     Görünüm, güncellemeler, hakkında
     moduller/bulut/       Modül 6 — Bulut Hesapları: bağlantı, kurulum, bulut gezgini
     moduller/ai/          Modül 5 — Office Agent, API anahtarı, model ayarları, istem şablonu düzenleyici
     core/htmlTemizle.ts   AI'dan gelen HTML'i beyaz listeyle temizler (istem enjeksiyonuna karşı)

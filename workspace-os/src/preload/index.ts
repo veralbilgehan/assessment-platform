@@ -55,6 +55,10 @@ const api: WorkspaceApi = {
   bulutKlasorOlustur: (s, ustId, ad) => ipcRenderer.invoke(IPC.bulutKlasorOlustur, s, ustId, ad),
   bulutYenidenAdlandir: (s, id, ad) => ipcRenderer.invoke(IPC.bulutYenidenAdlandir, s, id, ad),
   bulutSenkronDurumu: (yol) => ipcRenderer.invoke(IPC.bulutSenkronDurumu, yol),
+  guncellemeDurumu: () => ipcRenderer.invoke(IPC.guncellemeDurumu),
+  guncellemeKontrol: () => ipcRenderer.invoke(IPC.guncellemeKontrol),
+  guncellemeKur: () => ipcRenderer.invoke(IPC.guncellemeKur),
+  veriKlasoruAc: () => ipcRenderer.invoke(IPC.veriKlasoruAc),
   dosyaYolu: (dosya) => webUtils.getPathForFile(dosya),
 
   olayDinle: (kanal, dinleyici) => {

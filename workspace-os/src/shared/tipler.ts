@@ -28,6 +28,15 @@ export interface Tercihler {
   /** Modül 5 */
   aiModel?: string
   aiOtomatikYapistir?: boolean // AI içeriği bitince doğrudan belgeye yazılsın
+  otomatikGuncelleme?: boolean // varsayılan açık
+}
+
+export interface GuncellemeDurumu {
+  durum: 'gelistirme' | 'bekliyor' | 'kontrol' | 'guncel' | 'indiriliyor' | 'hazir' | 'hata'
+  surum: string // çalışan sürüm
+  yeniSurum?: string
+  yuzde?: number
+  mesaj?: string
 }
 
 export const VARSAYILAN_PROJE_ESIK_GUN = 30
@@ -134,8 +143,9 @@ export interface OlayHaritasi {
   'suruculer:degisti': null
   'ai:parca': { id: string; metin: string }
   'bulut:senkron': SenkronOlayi
+  'guncelleme:durum': GuncellemeDurumu
 }
-export const OLAY_KANALLARI: (keyof OlayHaritasi)[] = ['tarama:ilerleme', 'suruculer:degisti', 'ai:parca', 'bulut:senkron']
+export const OLAY_KANALLARI: (keyof OlayHaritasi)[] = ['tarama:ilerleme', 'suruculer:degisti', 'ai:parca', 'bulut:senkron', 'guncelleme:durum']
 
 export const IPC = {
   durumGetir: 'durum:getir',
@@ -185,6 +195,10 @@ export const IPC = {
   bulutKlasorOlustur: 'bulut:klasor-olustur',
   bulutYenidenAdlandir: 'bulut:yeniden-adlandir',
   bulutSenkronDurumu: 'bulut:senkron-durumu',
+  guncellemeDurumu: 'guncelleme:durum-getir',
+  guncellemeKontrol: 'guncelleme:kontrol',
+  guncellemeKur: 'guncelleme:kur',
+  veriKlasoruAc: 'sistem:veri-klasoru',
 } as const
 
 export interface WorkspaceApi {
@@ -252,6 +266,12 @@ export interface WorkspaceApi {
   bulutKlasorOlustur(s: BulutSaglayici, ustId: string | null, ad: string): Promise<BulutOgesi>
   bulutYenidenAdlandir(s: BulutSaglayici, id: string, ad: string): Promise<BulutOgesi>
   bulutSenkronDurumu(yol: string): Promise<SenkronOlayi | null>
+  guncellemeDurumu(): Promise<GuncellemeDurumu>
+  guncellemeKontrol(): Promise<GuncellemeDurumu>
+  /** İndirilen güncellemeyi kurmak için uygulamayı yeniden başlatır */
+  guncellemeKur(): Promise<void>
+  veriKlasoruAc(): Promise<void>
+
   /** Sürükle-bırak ile gelen dosyanın diskteki yolu */
   dosyaYolu(dosya: File): string
 
