@@ -3,6 +3,7 @@ import type { DosyaSorgusu, ProjeStatusu, SorguSonucu } from '@shared/tipler'
 import { KATEGORI_HARITASI } from '@shared/kategoriler'
 import { goreliZaman, hataMesaji } from '@core/bicim'
 import { sonParca, ustKlasor } from '@core/yol'
+import { useKabuk } from '@core/kabukBaglami'
 
 type Sekme = ProjeStatusu | 'tumu'
 
@@ -17,6 +18,7 @@ export default function ProjeListesi({ sorgu, statuSekmeli, degisti }: {
   const [sonuc, setSonuc] = useState<SorguSonucu | null>(null)
   const [secili, setSecili] = useState<Set<string>>(new Set())
   const [hata, setHata] = useState<string | null>(null)
+  const { belgeAc } = useKabuk()
   const sorguAnahtari = JSON.stringify(sorgu)
 
   const yukle = useCallback(
@@ -43,7 +45,7 @@ export default function ProjeListesi({ sorgu, statuSekmeli, degisti }: {
     degisti?.()
   }
 
-  const ac = (yol: string) => islem(() => window.workspace.dosyaAc(yol))
+  const ac = (yol: string) => islem(() => belgeAc(yol))
   const statu = (yollar: string[], s: ProjeStatusu | null) => islem(() => window.workspace.statuAyarla(yollar, s))
   const koru = (yollar: string[], k: boolean) => islem(() => window.workspace.korumaAyarla(yollar, k))
 
@@ -74,15 +76,22 @@ export default function ProjeListesi({ sorgu, statuSekmeli, degisti }: {
         </div>
       )}
 
-      {statuSekmeli && secili.size > 0 && (
-        <div className="toplu-islem">
-          <span>{secili.size} seçili</span>
-          <button className="dugme kucuk" onClick={() => statu(seciliListe, 'tamamlandi')}>✓ Tamamlandı</button>
-          <button className="dugme kucuk" onClick={() => statu(seciliListe, 'yeni')}>↺ Yeni projelere al</button>
-          <button className="dugme kucuk" onClick={() => statu(seciliListe, null)} title="Elle işaretlemeyi kaldır, tarihe göre belirlensin">Otomatik</button>
-          <button className="dugme kucuk" onClick={() => koru(seciliListe, true)} title="Salt okunur yap">🔒 Koru</button>
-          <button className="dugme kucuk" onClick={() => koru(seciliListe, false)}>🔓 Korumayı kaldır</button>
-          <button className="dugme kucuk metin" onClick={() => setSecili(new Set())}>Temizle</button>
+      {/* Çubuk her zaman yer kaplar: seçim değişince liste kaymasın (yoksa çift tık başka satıra düşer) */}
+      {statuSekmeli && (
+        <div className={`toplu-islem ${secili.size ? '' : 'bos'}`}>
+          {secili.size > 0 ? (
+            <>
+              <span>{secili.size} seçili</span>
+              <button className="dugme kucuk" onClick={() => statu(seciliListe, 'tamamlandi')}>✓ Tamamlandı</button>
+              <button className="dugme kucuk" onClick={() => statu(seciliListe, 'yeni')}>↺ Yeni projelere al</button>
+              <button className="dugme kucuk" onClick={() => statu(seciliListe, null)} title="Elle işaretlemeyi kaldır, tarihe göre belirlensin">Otomatik</button>
+              <button className="dugme kucuk" onClick={() => koru(seciliListe, true)} title="Salt okunur yap">🔒 Koru</button>
+              <button className="dugme kucuk" onClick={() => koru(seciliListe, false)}>🔓 Korumayı kaldır</button>
+              <button className="dugme kucuk metin" onClick={() => setSecili(new Set())}>Temizle</button>
+            </>
+          ) : (
+            <small>Çift tık: aç · Ctrl+tık: çoklu seçim · Seçip toplu olarak tamamla veya koru</small>
+          )}
         </div>
       )}
 
@@ -147,7 +156,6 @@ export default function ProjeListesi({ sorgu, statuSekmeli, degisti }: {
       {sonuc && sonuc.toplam > sonuc.dosyalar.length && (
         <p className="ipucu">İlk {sonuc.dosyalar.length} / {sonuc.toplam.toLocaleString('tr-TR')} dosya gösteriliyor. Daraltmak için ara.</p>
       )}
-      {statuSekmeli && <p className="ipucu">Çift tık: aç · Ctrl+tık: çoklu seçim · Seçip toplu olarak tamamla veya koru</p>}
     </div>
   )
 }

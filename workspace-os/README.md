@@ -17,21 +17,27 @@ npm run dist:win   # Windows kurulum dosyası → release/
 src/
   shared/tipler.ts        Main ↔ Renderer sözleşmeleri (tipler + IPC kanal adları)
   shared/kategoriler.ts   Uzantı → kategori sınıflandırma tablosu (17 kategori, ~250 uzantı)
+  shared/ofis.ts          Belge modelleri (Word/Excel/Sunum/Metin), sunum temaları, boş şablonlar
+  shared/formul.ts        Tablo formül motoru (Türkçe + İngilizce fonksiyonlar)
   main/                   Electron ana süreç — dosya sistemi, kalıcı durum, IPC
     suruculer.ts          Disk/USB/harici disk/bulut tespiti, önemli klasörler, takılma izleme
     dosyaIslemleri.ts     Listeleme, klasör oluşturma, yeniden adlandırma, taşıma
     tarayici.ts           Kaynak klasörleri tarayıp dosyaları sınıflandırır
     dizinDeposu.ts        Taranan dosya dizini (özet + sayfalı sorgu)
     statuDeposu.ts        Proje statüleri (Yeni / Tamamlandı), koruma, son açılma
+    ofis/                 docx (mammoth + docx), xlsx/csv (exceljs), pptx (JSZip + pptxgenjs) okuma/yazma
     ipc/                  Modül başına IPC kayıtları
   preload/                contextBridge ile dar `window.workspace` API'si
   renderer/src/
     core/modulKayit.ts    Plugin kayıt defteri — her modül kendini buraya kaydeder
+    core/kabukBaglami.ts  Modüller arası gezinme + belgeAc (dahili editör / sistem uygulaması)
+    core/editorKoprusu.ts Açık editörün içeriğini okuma / içerik yapıştırma (Modül 5 AI bunu kullanır)
     moduller/index.ts     Etkin modüllerin listesi (bir import = bir plugin)
     moduller/kurulum/     Modül 1 — Kurulum sihirbazı
     moduller/masaustu/    Kabuk (kenar çubuğu) + Ana Sayfa
     moduller/dosyalar/    Modül 2 — Sürücüler, klasör gezgini, Kütüphane
     moduller/projeler/    Modül 3 — Projeler, ortak ProjeListesi bileşeni
+    moduller/ofis/        Modül 4 — MS 365 / Google uygulama grupları, Word/Excel/PowerPoint/Not Defteri editörleri
 ```
 
 ### Yeni modül eklemek
@@ -50,5 +56,17 @@ Elle işaretlenmemiş dosyalar, son değiştirilme tarihine göre otomatik sın�
 Projeler ekranından değiştirilebilir) içinde değişenler **Yeni Projeler**, diğerleri **Tamamlananlar**.
 Elle işaretleme yeniden taramada ve taşıma/yeniden adlandırmada korunur. Takip edilen kategoriler
 `kategoriler.ts` içinde `projeTakibi: true` ile belirlenir.
+
+### Ofis editörleri
+| Uygulama | Biçim | Not |
+|---|---|---|
+| Word / Google Dokümanlar | .docx | Başlıklar, listeler, tablolar, resimler. Karmaşık biçim sadeleşebilir. |
+| Excel / Google E-Tablolar | .xlsx, .csv | Formüller canlı hesaplanır, dosyaya İngilizce adla yazılır. Hücre biçimleri korunur. |
+| PowerPoint / Google Slaytlar | .pptx | Başlık + madde slaytları, 4 tema, notlar, tam ekran sunum. |
+| Not Defteri | .txt, .md, .log | |
+
+Başka programla oluşturulmuş bir dosyanın üzerine ilk kez yazılmadan önce orijinali
+`%APPDATA%/Workspace OS/yedekler/` klasörüne kopyalanır. Yeni uygulama eklemek için
+`moduller/ofis/uygulamalar.ts`, yeni dosya biçimi için `main/ofis/index.ts`.
 
 Durum `%APPDATA%/Workspace OS/durum.json`, dosya dizini `dizin.json`, proje statüleri `statuler.json` dosyasında saklanır.

@@ -1,6 +1,7 @@
 // Main ↔ Preload ↔ Renderer arasında paylaşılan sözleşmeler.
 // Yeni modüller buraya kendi tiplerini ve IPC kanallarını ekler.
 import type { KategoriId } from './kategoriler'
+import type { AcikBelge, BelgeIcerigi, EditorTuru } from './ofis'
 
 export type Tema = 'acik' | 'koyu' | 'sistem'
 export type Dil = 'tr' | 'en'
@@ -20,6 +21,8 @@ export interface Tercihler {
   aiOnerileriAcik: boolean
   /** Modül 3: son N gün içinde değişen dosyalar otomatik olarak "Yeni Proje" sayılır */
   projeEsikGun?: number
+  /** Modül 4: desteklenen belgeler (docx, xlsx, pptx, txt…) Workspace'in kendi editörlerinde açılsın */
+  dahiliEditor?: boolean
 }
 
 export const VARSAYILAN_PROJE_ESIK_GUN = 30
@@ -149,6 +152,12 @@ export const IPC = {
   statuAyarla: 'proje:statu',
   korumaAyarla: 'proje:koruma',
   tercihleriKaydet: 'tercihler:kaydet',
+  belgeAc: 'ofis:ac',
+  belgeKaydet: 'ofis:kaydet',
+  farkliKaydet: 'ofis:farkli-kaydet',
+  yeniBelge: 'ofis:yeni',
+  googleKisayolAc: 'ofis:google-kisayol',
+  webAc: 'ofis:web',
 } as const
 
 export interface WorkspaceApi {
@@ -178,6 +187,14 @@ export interface WorkspaceApi {
   /** Salt okunur koruma — tamamlanmış dosyaların yanlışlıkla değişmesini önler */
   korumaAyarla(yollar: string[], korumali: boolean): Promise<void>
   tercihleriKaydet(tercihler: Tercihler): Promise<UygulamaDurumu>
+
+  belgeAc(yol: string): Promise<AcikBelge>
+  /** Kaydedilme zamanını döndürür */
+  belgeKaydet(yol: string, icerik: BelgeIcerigi): Promise<number>
+  farkliKaydet(icerik: BelgeIcerigi, onerilenYol: string): Promise<string | null>
+  yeniBelge(tur: EditorTuru, konum?: 'belgeler' | 'google-drive' | 'onedrive'): Promise<string>
+  googleKisayolAc(yol: string): Promise<void>
+  webAc(url: string): Promise<void>
 
   olayDinle<K extends keyof OlayHaritasi>(kanal: K, dinleyici: (veri: OlayHaritasi[K]) => void): () => void
 }

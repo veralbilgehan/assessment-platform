@@ -3,6 +3,7 @@ import type { KlasorOgesi } from '@shared/tipler'
 import { KATEGORI_HARITASI } from '@shared/kategoriler'
 import { boyutBicimle, hataMesaji, tarihBicimle } from '@core/bicim'
 import { ustKlasor, yolParcalari } from '@core/yol'
+import { useKabuk } from '@core/kabukBaglami'
 import AdGirdisi from './AdGirdisi'
 
 const SURUKLEME_TURU = 'application/x-workspace-yollar'
@@ -11,6 +12,7 @@ type Duzenleme = { tur: 'yeni' } | { tur: 'ad'; yol: string } | null
 
 // Klasör gezgini: gezinme, yeni klasör, yeniden adlandırma, taşıma (düğme veya sürükle-bırak), açma.
 export default function Gezgin({ baslangic, kapat }: { baslangic: string; kapat: () => void }) {
+  const { belgeAc } = useKabuk()
   const [yol, setYol] = useState(baslangic)
   const [gecmis, setGecmis] = useState<string[]>([])
   const [ogeler, setOgeler] = useState<KlasorOgesi[]>([])
@@ -65,7 +67,7 @@ export default function Gezgin({ baslangic, kapat }: { baslangic: string; kapat:
     await yenile()
   }
 
-  const ac = (o: KlasorOgesi) => (o.klasor ? git(o.yol) : islem(() => window.workspace.dosyaAc(o.yol)))
+  const ac = (o: KlasorOgesi) => (o.klasor ? git(o.yol) : islem(() => belgeAc(o.yol)))
 
   const tikla = (o: KlasorOgesi, e: React.MouseEvent) => {
     setSecili((s) => {

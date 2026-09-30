@@ -1,9 +1,10 @@
-import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron'
+import { app, BrowserWindow, ipcMain, nativeTheme, shell } from 'electron'
 import { join } from 'path'
 import os from 'os'
 import { IPC, type KullaniciProfili, type Tercihler } from '@shared/tipler'
 import { durumOku, durumSifirla, durumYaz } from './durumDeposu'
 import { dosyaIpcKaydet } from './ipc/dosyaIpc'
+import { ofisIpcKaydet } from './ipc/ofisIpc'
 
 function pencereOlustur() {
   const pencere = new BrowserWindow({
@@ -24,6 +25,16 @@ function pencereOlustur() {
   })
 
   pencere.once('ready-to-show', () => pencere.show())
+
+  // Belge içindeki bağlantılar uygulama penceresini değiştirmesin: https bağlantıları sistem tarayıcısında açılır
+  pencere.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://')) shell.openExternal(url)
+    return { action: 'deny' }
+  })
+  pencere.webContents.on('will-navigate', (e, url) => {
+    const uygulamaAdresi = process.env.ELECTRON_RENDERER_URL ?? 'file://'
+    if (!url.startsWith(uygulamaAdresi)) e.preventDefault()
+  })
 
   if (process.env.ELECTRON_RENDERER_URL) pencere.loadURL(process.env.ELECTRON_RENDERER_URL)
   else pencere.loadFile(join(__dirname, '../renderer/index.html'))
@@ -61,6 +72,7 @@ function ipcKaydet() {
 app.whenReady().then(() => {
   ipcKaydet()
   dosyaIpcKaydet()
+  ofisIpcKaydet()
   pencereOlustur()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) pencereOlustur()

@@ -27,6 +27,13 @@ const api: WorkspaceApi = {
   korumaAyarla: (yollar, korumali) => ipcRenderer.invoke(IPC.korumaAyarla, yollar, korumali),
   tercihleriKaydet: (tercihler) => ipcRenderer.invoke(IPC.tercihleriKaydet, tercihler),
 
+  belgeAc: (yol) => ipcRenderer.invoke(IPC.belgeAc, yol),
+  belgeKaydet: (yol, icerik) => ipcRenderer.invoke(IPC.belgeKaydet, yol, icerik),
+  farkliKaydet: (icerik, onerilenYol) => ipcRenderer.invoke(IPC.farkliKaydet, icerik, onerilenYol),
+  yeniBelge: (tur, konum) => ipcRenderer.invoke(IPC.yeniBelge, tur, konum),
+  googleKisayolAc: (yol) => ipcRenderer.invoke(IPC.googleKisayolAc, yol),
+  webAc: (url) => ipcRenderer.invoke(IPC.webAc, url),
+
   olayDinle: (kanal, dinleyici) => {
     if (!OLAY_KANALLARI.includes(kanal)) throw new Error(`Bilinmeyen olay kanalı: ${kanal}`)
     const sarmalayici = (_e: IpcRendererEvent, veri: Parameters<typeof dinleyici>[0]) => dinleyici(veri)

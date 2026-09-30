@@ -199,6 +199,17 @@ const BILINEN_KLASORLER = [
   ['music', 'Müzik', '🎵'],
 ] as const
 
+/** Windows bilinen klasörü. XDG yapılandırması olmayan Linux'ta getPath ev dizinine düşer → standart ada geri çekil. */
+export function bilinenKlasor(anahtar: (typeof BILINEN_KLASORLER)[number][0]): string {
+  let yol: string | null = null
+  try {
+    yol = app.getPath(anahtar)
+  } catch {
+    /* platformda tanımlı değil */
+  }
+  return !yol || yol === os.homedir() ? path.join(os.homedir(), anahtar[0].toUpperCase() + anahtar.slice(1)) : yol
+}
+
 /**
  * "Önemli" klasörler üç kaynaktan gelir:
  * 1. Windows bilinen klasörleri (OneDrive yönlendirmesi dahil — app.getPath bunu takip eder)
@@ -208,14 +219,7 @@ const BILINEN_KLASORLER = [
 export async function onemliKlasorleriGetir(suruculer?: Surucu[]): Promise<OnemliKlasor[]> {
   const liste: OnemliKlasor[] = []
   for (const [anahtar, ad, ikon] of BILINEN_KLASORLER) {
-    // XDG yapılandırması olmayan Linux'ta getPath ev dizinine düşer → standart ada geri çekil
-    let yol: string | null = null
-    try {
-      yol = app.getPath(anahtar)
-    } catch {
-      /* platformda tanımlı değil */
-    }
-    if (!yol || yol === os.homedir()) yol = path.join(os.homedir(), anahtar[0].toUpperCase() + anahtar.slice(1))
+    const yol = bilinenKlasor(anahtar)
     if (await varMi(yol)) liste.push({ ad, yol, ikon, kaynak: 'sistem' })
   }
 

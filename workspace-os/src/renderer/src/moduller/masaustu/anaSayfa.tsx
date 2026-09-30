@@ -3,12 +3,13 @@ import type { ProjeDosyasi } from '@shared/tipler'
 import { KATEGORI_HARITASI, PROJE_KATEGORILERI } from '@shared/kategoriler'
 import { modulKaydet, type ModulProps } from '@core/modulKayit'
 import { goreliZaman, hataMesaji } from '@core/bicim'
+import { useKabuk } from '@core/kabukBaglami'
 
 const KISAYOLLAR = [
   { ikon: '💽', ad: 'Sürücüler', aciklama: 'Diskler, USB ve bulut', modul: 'suruculer' },
   { ikon: '📂', ad: 'Projeler', aciklama: 'Devam eden ve tamamlananlar', modul: 'projeler' },
   { ikon: '🗂️', ad: 'Kütüphane', aciklama: 'Türe göre ayrışmış dosyalar', modul: 'kutuphane' },
-  { ikon: '📝', ad: 'Ofis', aciklama: 'Yakında' },
+  { ikon: '📝', ad: 'Ofis', aciklama: 'Word, Excel, PowerPoint, Google', modul: 'ofis' },
   { ikon: '✨', ad: 'AI', aciklama: 'Yakında' },
 ]
 
@@ -17,6 +18,7 @@ function AnaSayfa({ durum, durumGuncelle, modulAc }: ModulProps) {
   const selam = saat < 12 ? 'Günaydın' : saat < 18 ? 'İyi günler' : 'İyi akşamlar'
   const [sonProjeler, setSonProjeler] = useState<ProjeDosyasi[]>([])
   const [hata, setHata] = useState<string | null>(null)
+  const { belgeAc } = useKabuk()
 
   useEffect(() => {
     window.workspace
@@ -24,7 +26,7 @@ function AnaSayfa({ durum, durumGuncelle, modulAc }: ModulProps) {
       .then((r) => setSonProjeler(r.dosyalar))
   }, [])
 
-  const devamEt = (yol: string) => window.workspace.dosyaAc(yol).catch((e) => setHata(hataMesaji(e)))
+  const devamEt = (yol: string) => belgeAc(yol).catch((e) => setHata(hataMesaji(e)))
 
   const sifirla = async () => {
     if (confirm('Kurulum sıfırlanacak ve karşılama ekranı yeniden açılacak. Emin misin?'))

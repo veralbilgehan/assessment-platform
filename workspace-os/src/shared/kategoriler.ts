@@ -17,10 +17,10 @@ export interface Kategori {
 }
 
 export const KATEGORILER: Kategori[] = [
-  { id: 'word', ad: 'Word Belgeleri', ikon: '📘', renk: '#2b579a', projeTakibi: true, uzantilar: ['doc', 'docx', 'docm', 'dot', 'dotx', 'dotm', 'odt', 'rtf', 'pages', 'wps'] },
+  { id: 'word', ad: 'Word Belgeleri', ikon: '📘', renk: '#2b579a', projeTakibi: true, uzantilar: ['doc', 'docx', 'docm', 'dot', 'dotx', 'dotm', 'odt', 'rtf', 'pages', 'wps', 'gdoc'] },
   { id: 'metin', ad: 'Metin Dosyaları', ikon: '📝', renk: '#64748b', projeTakibi: true, uzantilar: ['txt', 'md', 'markdown', 'log', 'rst', 'tex', 'nfo', 'text'] },
-  { id: 'excel', ad: 'Excel & Tablolar', ikon: '📗', renk: '#217346', projeTakibi: true, uzantilar: ['xls', 'xlsx', 'xlsm', 'xlsb', 'xlt', 'xltx', 'xltm', 'csv', 'tsv', 'ods', 'numbers'] },
-  { id: 'sunum', ad: 'Sunumlar', ikon: '📙', renk: '#d24726', projeTakibi: true, uzantilar: ['ppt', 'pptx', 'pptm', 'pps', 'ppsx', 'pot', 'potx', 'odp', 'key'] },
+  { id: 'excel', ad: 'Excel & Tablolar', ikon: '📗', renk: '#217346', projeTakibi: true, uzantilar: ['xls', 'xlsx', 'xlsm', 'xlsb', 'xlt', 'xltx', 'xltm', 'csv', 'tsv', 'ods', 'numbers', 'gsheet'] },
+  { id: 'sunum', ad: 'Sunumlar', ikon: '📙', renk: '#d24726', projeTakibi: true, uzantilar: ['ppt', 'pptx', 'pptm', 'pps', 'ppsx', 'pot', 'potx', 'odp', 'key', 'gslides'] },
   { id: 'pdf', ad: 'PDF', ikon: '📕', renk: '#b91c1c', projeTakibi: true, uzantilar: ['pdf', 'xps', 'oxps'] },
   {
     id: 'kod', projeTakibi: true, ad: 'Kod', ikon: '💻', renk: '#7c3aed',

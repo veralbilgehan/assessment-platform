@@ -11,10 +11,10 @@ const GRUPLAR: { ad: string; turler: SurucuTuru[] }[] = [
   { ad: 'Ağ ve Diğer', turler: ['ag', 'optik'] },
 ]
 
-export default function Suruculer(_: ModulProps) {
+export default function Suruculer({ parametre }: ModulProps) {
   const [suruculer, setSuruculer] = useState<Surucu[] | null>(null)
   const [onemli, setOnemli] = useState<OnemliKlasor[]>([])
-  const [acikYol, setAcikYol] = useState<string | null>(null)
+  const [acikYol, setAcikYol] = useState<string | null>((parametre as { yol?: string } | undefined)?.yol ?? null)
 
   const yukle = useCallback(async () => {
     const s = await window.workspace.suruculeriGetir()

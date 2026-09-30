@@ -10,6 +10,7 @@ interface StatuKaydi {
   statu?: ProjeStatusu // elle işaretlendiyse
   korumali?: boolean
   sonAcilma?: number
+  dahili?: boolean // Workspace'te oluşturuldu veya orijinali yedeklendi (Modül 4)
 }
 
 let kayitlar: Record<string, StatuKaydi> | null = null
@@ -43,7 +44,7 @@ async function guncelle(yollar: string[], degisiklik: (k: StatuKaydi) => void) {
     const a = yolAnahtari(yol)
     const k = (r[a] ??= {})
     degisiklik(k)
-    if (k.statu === undefined && !k.korumali && k.sonAcilma === undefined) delete r[a]
+    if (k.statu === undefined && !k.korumali && k.sonAcilma === undefined && !k.dahili) delete r[a]
   }
   await kaydet()
 }
@@ -71,6 +72,16 @@ export async function acildiIsaretle(yol: string) {
   await guncelle([yol], (k) => {
     k.sonAcilma = Date.now()
   })
+}
+
+export async function dahiliIsaretle(yol: string) {
+  await guncelle([yol], (k) => {
+    k.dahili = true
+  })
+}
+
+export async function kaydiGetir(yol: string): Promise<StatuKaydi | undefined> {
+  return (await yukle())[yolAnahtari(yol)]
 }
 
 /** Taşıma/yeniden adlandırmada işaretlemeler dosyayla birlikte gider. */

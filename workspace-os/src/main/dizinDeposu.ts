@@ -1,4 +1,5 @@
 import { app } from 'electron'
+import { kategoriBul, uzantiAl } from '@shared/kategoriler'
 import { promises as fs } from 'fs'
 import path from 'path'
 import { VARSAYILAN_PROJE_ESIK_GUN, type DizinOzeti, type DosyaKaydi, type DosyaSorgusu, type SorguSonucu } from '@shared/tipler'
@@ -119,5 +120,20 @@ export async function yollariGuncelle(degisiklikler: { eski: string; yeni: strin
       }
     }
   }
+  await kaydet()
+}
+
+/** Tek bir dosyanın kaydını ekler/günceller — Workspace'te oluşturulan/kaydedilen belgeler anında Projeler'de görünür. */
+export async function kayitGuncelle(yol: string) {
+  const d = await yukle()
+  if (!d) return
+  const st = await fs.stat(yol)
+  const win = process.platform === 'win32'
+  const a = win ? yol.toLowerCase() : yol
+  const ad = path.basename(yol)
+  const kayit: DosyaKaydi = { yol, ad, uzanti: uzantiAl(ad), kategori: kategoriBul(ad), boyut: st.size, degistirilme: st.mtimeMs }
+  const i = d.dosyalar.findIndex((f) => (win ? f.yol.toLowerCase() : f.yol) === a)
+  if (i >= 0) d.dosyalar[i] = kayit
+  else d.dosyalar.push(kayit)
   await kaydet()
 }
