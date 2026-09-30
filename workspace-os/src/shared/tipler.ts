@@ -3,6 +3,7 @@
 import type { KategoriId } from './kategoriler'
 import type { AcikBelge, BelgeIcerigi, EditorTuru } from './ofis'
 import type { AiDurumu, AiIstegi, AiOnerisi, AiSonucu, IstemSablonu } from './ai'
+import type { BulutAyarGirdisi, BulutAyarlari, BulutHesabi, BulutOgesi, BulutSaglayici, SenkronOlayi } from './bulut'
 
 export type Tema = 'acik' | 'koyu' | 'sistem'
 export type Dil = 'tr' | 'en'
@@ -132,8 +133,9 @@ export interface OlayHaritasi {
   'tarama:ilerleme': TaramaIlerlemesi
   'suruculer:degisti': null
   'ai:parca': { id: string; metin: string }
+  'bulut:senkron': SenkronOlayi
 }
-export const OLAY_KANALLARI: (keyof OlayHaritasi)[] = ['tarama:ilerleme', 'suruculer:degisti', 'ai:parca']
+export const OLAY_KANALLARI: (keyof OlayHaritasi)[] = ['tarama:ilerleme', 'suruculer:degisti', 'ai:parca', 'bulut:senkron']
 
 export const IPC = {
   durumGetir: 'durum:getir',
@@ -171,6 +173,18 @@ export const IPC = {
   aiUret: 'ai:uret',
   aiIptal: 'ai:iptal',
   aiOneriler: 'ai:oneriler',
+  bulutHesaplar: 'bulut:hesaplar',
+  bulutAyarlar: 'bulut:ayarlar',
+  bulutAyarlariKaydet: 'bulut:ayarlari-kaydet',
+  bulutBaglan: 'bulut:baglan',
+  bulutBaglantiKes: 'bulut:baglanti-kes',
+  bulutListele: 'bulut:listele',
+  bulutAc: 'bulut:ac',
+  bulutIndir: 'bulut:indir',
+  bulutYukle: 'bulut:yukle',
+  bulutKlasorOlustur: 'bulut:klasor-olustur',
+  bulutYenidenAdlandir: 'bulut:yeniden-adlandir',
+  bulutSenkronDurumu: 'bulut:senkron-durumu',
 } as const
 
 export interface WorkspaceApi {
@@ -220,6 +234,26 @@ export interface WorkspaceApi {
   aiUret(istek: AiIstegi): Promise<AiSonucu>
   aiIptal(id: string): Promise<void>
   aiOneriler(istek: Omit<AiIstegi, 'id' | 'talimat' | 'cikti'>): Promise<AiOnerisi[]>
+
+  bulutHesaplar(): Promise<BulutHesabi[]>
+  bulutAyarlar(): Promise<BulutAyarlari>
+  bulutAyarlariKaydet(girdi: BulutAyarGirdisi): Promise<BulutAyarlari>
+  /** Sistem tarayıcısında oturum açma sayfasını açar, kullanıcı onaylayınca döner */
+  bulutBaglan(s: BulutSaglayici): Promise<BulutHesabi>
+  bulutBaglantiKes(s: BulutSaglayici): Promise<BulutHesabi>
+  /** klasorId null → kök klasör */
+  bulutListele(s: BulutSaglayici, klasorId: string | null): Promise<BulutOgesi[]>
+  /** Dosyayı yerel önbelleğe indirir ve yolunu döndürür; kaydedilen değişiklikler buluta geri yüklenir */
+  bulutAc(s: BulutSaglayici, oge: BulutOgesi, klasorId: string | null): Promise<string>
+  /** İndirilenler klasörüne kopya indirir */
+  bulutIndir(s: BulutSaglayici, oge: BulutOgesi): Promise<string>
+  /** yollar verilmezse dosya seçme penceresi açılır */
+  bulutYukle(s: BulutSaglayici, klasorId: string | null, yollar?: string[]): Promise<BulutOgesi[]>
+  bulutKlasorOlustur(s: BulutSaglayici, ustId: string | null, ad: string): Promise<BulutOgesi>
+  bulutYenidenAdlandir(s: BulutSaglayici, id: string, ad: string): Promise<BulutOgesi>
+  bulutSenkronDurumu(yol: string): Promise<SenkronOlayi | null>
+  /** Sürükle-bırak ile gelen dosyanın diskteki yolu */
+  dosyaYolu(dosya: File): string
 
   olayDinle<K extends keyof OlayHaritasi>(kanal: K, dinleyici: (veri: OlayHaritasi[K]) => void): () => void
 }

@@ -7,6 +7,8 @@ import { belgeOku, belgeYaz } from '../ofis'
 import { acildiIsaretle, dahiliIsaretle, kaydiGetir } from '../statuDeposu'
 import { kayitGuncelle } from '../dizinDeposu'
 import { bilinenKlasor, suruculeriGetir } from '../suruculer'
+import { kaydedildi as bulutaKaydedildi, yeniBulutBelgesi } from '../bulut/senkron'
+import { oturumVar } from '../bulut/oturum'
 
 async function varMi(yol: string) {
   try {
@@ -47,6 +49,7 @@ async function yazVeKaydet(yol: string, icerik: BelgeIcerigi) {
   await belgeYaz(yol, icerik, mevcut)
   await dahiliIsaretle(yol)
   await kayitGuncelle(yol)
+  await bulutaKaydedildi(yol) // bulut kopyasıysa gecikmeli olarak geri yüklenir
 }
 
 const UZANTI_FILTRELERI: Record<EditorTuru, { name: string; extensions: string[] }[]> = {
@@ -57,7 +60,7 @@ const UZANTI_FILTRELERI: Record<EditorTuru, { name: string; extensions: string[]
 }
 
 // Harici tarayıcıda açılmasına izin verilen adresler
-const IZINLI_ALANLAR = ['docs.google.com', 'drive.google.com', 'sheets.google.com', 'slides.google.com', 'www.office.com', 'office.com', 'www.microsoft365.com', 'onedrive.live.com', 'www.google.com', 'console.anthropic.com', 'platform.claude.com']
+const IZINLI_ALANLAR = ['docs.google.com', 'drive.google.com', 'sheets.google.com', 'slides.google.com', 'www.office.com', 'office.com', 'www.microsoft365.com', 'onedrive.live.com', '1drv.ms', 'www.google.com', 'console.anthropic.com', 'platform.claude.com']
 
 export function ofisIpcKaydet() {
   ipcMain.handle(IPC.belgeAc, async (_e, yol: string): Promise<AcikBelge> => {
@@ -89,14 +92,26 @@ export function ofisIpcKaydet() {
   ipcMain.handle(IPC.yeniBelge, async (_e, tur: EditorTuru, konum: 'belgeler' | 'google-drive' | 'onedrive' = 'belgeler') => {
     let klasor = bilinenKlasor('documents')
     await fs.mkdir(klasor, { recursive: true })
+    // Öncelik: bilgisayardaki senkron klasörü → bağlı bulut hesabı (API) → Belgeler
+    let bulutaYukle: 'google' | 'microsoft' | null = null
     if (konum !== 'belgeler') {
       const bulut = (await suruculeriGetir()).find((s) => s.saglayici === konum)
-      if (!bulut) throw new Error(konum === 'google-drive' ? 'Google Drive klasörü bulunamadı' : 'OneDrive klasörü bulunamadı')
-      klasor = bulut.yol
+      const hesap = konum === 'google-drive' ? 'google' : 'microsoft'
+      if (bulut) klasor = bulut.yol
+      else if (await oturumVar(hesap)) {
+        bulutaYukle = hesap
+        klasor = path.join(app.getPath('userData'), 'bulut', 'yeni')
+        await fs.mkdir(klasor, { recursive: true })
+      } else throw new Error(konum === 'google-drive' ? 'Google Drive klasörü veya bağlı Google hesabı bulunamadı' : 'OneDrive klasörü veya bağlı Microsoft hesabı bulunamadı')
     }
     const sablon = BOS_BELGELER[tur]
     const yol = await benzersizYol(klasor, sablon.ad, sablon.uzanti)
     await belgeYaz(yol, sablon.icerik, false)
+    if (bulutaYukle) {
+      const bulutYolu = await yeniBulutBelgesi(bulutaYukle, yol)
+      await dahiliIsaretle(bulutYolu)
+      return bulutYolu
+    }
     await dahiliIsaretle(yol)
     await kayitGuncelle(yol)
     return yol
@@ -113,7 +128,8 @@ export function ofisIpcKaydet() {
 
   ipcMain.handle(IPC.webAc, async (_e, url: string) => {
     const u = new URL(url)
-    if (u.protocol !== 'https:' || !IZINLI_ALANLAR.includes(u.hostname)) throw new Error('Bu adres açılamaz')
+    const izinli = IZINLI_ALANLAR.includes(u.hostname) || u.hostname.endsWith('.sharepoint.com') // OneDrive iş hesapları
+    if (u.protocol !== 'https:' || !izinli) throw new Error('Bu adres açılamaz')
     await shell.openExternal(u.toString())
   })
 }

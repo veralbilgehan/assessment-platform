@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
+import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron'
 import { IPC, OLAY_KANALLARI, type WorkspaceApi } from '@shared/tipler'
 
 // Renderer yalnızca bu dar API'yi görür; Node/fs erişimi main süreçte kalır.
@@ -42,6 +42,20 @@ const api: WorkspaceApi = {
   aiUret: (istek) => ipcRenderer.invoke(IPC.aiUret, istek),
   aiIptal: (id) => ipcRenderer.invoke(IPC.aiIptal, id),
   aiOneriler: (istek) => ipcRenderer.invoke(IPC.aiOneriler, istek),
+
+  bulutHesaplar: () => ipcRenderer.invoke(IPC.bulutHesaplar),
+  bulutAyarlar: () => ipcRenderer.invoke(IPC.bulutAyarlar),
+  bulutAyarlariKaydet: (girdi) => ipcRenderer.invoke(IPC.bulutAyarlariKaydet, girdi),
+  bulutBaglan: (s) => ipcRenderer.invoke(IPC.bulutBaglan, s),
+  bulutBaglantiKes: (s) => ipcRenderer.invoke(IPC.bulutBaglantiKes, s),
+  bulutListele: (s, klasorId) => ipcRenderer.invoke(IPC.bulutListele, s, klasorId),
+  bulutAc: (s, oge, klasorId) => ipcRenderer.invoke(IPC.bulutAc, s, oge, klasorId),
+  bulutIndir: (s, oge) => ipcRenderer.invoke(IPC.bulutIndir, s, oge),
+  bulutYukle: (s, klasorId, yollar) => ipcRenderer.invoke(IPC.bulutYukle, s, klasorId, yollar),
+  bulutKlasorOlustur: (s, ustId, ad) => ipcRenderer.invoke(IPC.bulutKlasorOlustur, s, ustId, ad),
+  bulutYenidenAdlandir: (s, id, ad) => ipcRenderer.invoke(IPC.bulutYenidenAdlandir, s, id, ad),
+  bulutSenkronDurumu: (yol) => ipcRenderer.invoke(IPC.bulutSenkronDurumu, yol),
+  dosyaYolu: (dosya) => webUtils.getPathForFile(dosya),
 
   olayDinle: (kanal, dinleyici) => {
     if (!OLAY_KANALLARI.includes(kanal)) throw new Error(`Bilinmeyen olay kanalı: ${kanal}`)

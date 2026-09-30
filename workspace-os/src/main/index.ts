@@ -6,6 +6,8 @@ import { durumOku, durumSifirla, durumYaz } from './durumDeposu'
 import { dosyaIpcKaydet } from './ipc/dosyaIpc'
 import { ofisIpcKaydet } from './ipc/ofisIpc'
 import { aiIpcKaydet } from './ipc/aiIpc'
+import { bulutIpcKaydet } from './ipc/bulutIpc'
+import { bekleyenVar, bekleyenleriGonder } from './bulut/senkron'
 
 function pencereOlustur() {
   const pencere = new BrowserWindow({
@@ -75,9 +77,21 @@ app.whenReady().then(() => {
   dosyaIpcKaydet()
   ofisIpcKaydet()
   aiIpcKaydet()
+  bulutIpcKaydet()
   pencereOlustur()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) pencereOlustur()
+  })
+})
+
+// Buluta gönderilmeyi bekleyen değişiklikler kapanmadan önce yüklenir
+let kapanisHazir = false
+app.on('before-quit', (e) => {
+  if (kapanisHazir || !bekleyenVar()) return
+  e.preventDefault()
+  bekleyenleriGonder().finally(() => {
+    kapanisHazir = true
+    app.quit()
   })
 })
 

@@ -6,6 +6,7 @@ import { onemliKlasorleriGetir, surucuIzle, suruculeriGetir } from '../suruculer
 import { tara } from '../tarayici'
 import { dizinOzeti, dizinYaz, dosyaSorgula, yollariGuncelle } from '../dizinDeposu'
 import { acildiIsaretle, korumaAyarla, statuAyarla } from '../statuDeposu'
+import { yolDegisti } from '../bulut/senkron'
 
 function yayinla<K extends keyof OlayHaritasi>(kanal: K, veri: OlayHaritasi[K]) {
   for (const p of BrowserWindow.getAllWindows()) p.webContents.send(kanal, veri)
@@ -23,6 +24,7 @@ export function dosyaIpcKaydet() {
   ipcMain.handle(IPC.yenidenAdlandir, async (_e, yol: string, yeniAd: string) => {
     const yeni = await yenidenAdlandir(yol, yeniAd)
     await yollariGuncelle([{ eski: yol, yeni }])
+    await yolDegisti(yol, yeni)
     return yeni
   })
 

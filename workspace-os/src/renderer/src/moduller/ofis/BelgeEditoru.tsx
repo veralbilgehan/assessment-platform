@@ -9,6 +9,7 @@ import SunumEditor from './editorler/SunumEditor'
 import MetinEditor from './editorler/MetinEditor'
 import AiPaneli from './AiPaneli'
 import type { Tercihler } from '@shared/tipler'
+import type { SenkronOlayi } from '@shared/bulut'
 
 type KayitDurumu = 'kayitli' | 'kirli' | 'kaydediliyor' | 'hata'
 
@@ -28,6 +29,7 @@ export default function BelgeEditoru({ yol: ilkYol, kapat, tercihler, aiIstem }:
   const [kayit, setKayit] = useState<KayitDurumu>('kayitli')
   const [hata, setHata] = useState<string | null>(null)
   const [tamamlandi, setTamamlandi] = useState(false)
+  const [bulut, setBulut] = useState<SenkronOlayi | null>(null)
 
   const yolRef = useRef(yol)
   const icerikRef = useRef<BelgeIcerigi | null>(null)
@@ -66,6 +68,12 @@ export default function BelgeEditoru({ yol: ilkYol, kapat, tercihler, aiIstem }:
     })
     return zincir.current
   }, [])
+
+  // Bulut kopyasıysa yükleme durumunu izle
+  useEffect(() => {
+    window.workspace.bulutSenkronDurumu(yol).then(setBulut)
+    return window.workspace.olayDinle('bulut:senkron', (o) => o.yol.toLowerCase() === yolRef.current.toLowerCase() && setBulut(o))
+  }, [yol])
 
   // Editörden çıkarken (modül değişse bile) bekleyen değişiklikler kaydedilir
   useEffect(() => () => void kaydet(), [kaydet])
@@ -178,6 +186,11 @@ export default function BelgeEditoru({ yol: ilkYol, kapat, tercihler, aiIstem }:
         <span className={`kayit-durumu ${kayit}`}>
           {belge.korumali ? '🔒 Salt okunur' : { kayitli: '✓ Kaydedildi', kirli: 'Kaydedilmemiş değişiklik', kaydediliyor: 'Kaydediliyor…', hata: '⚠ Kaydedilemedi' }[kayit]}
         </span>
+        {bulut && (
+          <span className={`bulut-durumu ${bulut.durum}`} title={bulut.mesaj}>
+            {{ bekliyor: '☁️ Buluta gönderilecek', yukleniyor: '☁️ Yükleniyor…', yuklendi: '☁️ Bulutta güncel', cakisma: '☁️ Kopya olarak kaydedildi', hata: '⚠ Buluta yüklenemedi' }[bulut.durum]}
+          </span>
+        )}
         <span className="bosluk" />
         <button className={`dugme kucuk ${aiAcik ? 'birincil' : ''}`} onClick={() => setAiAcik((a) => !a)} title="Yapay zeka paneli (Ctrl+J)">✨ AI</button>
         <button className="dugme kucuk" onClick={() => (belge.korumali ? farkliKaydet() : kaydet())}>Kaydet</button>
@@ -213,6 +226,9 @@ export default function BelgeEditoru({ yol: ilkYol, kapat, tercihler, aiIstem }:
         </div>
       )}
       {hata && <div className="hata" role="alert">{hata}</div>}
+      {bulut && (bulut.durum === 'cakisma' || bulut.durum === 'hata') && bulut.mesaj && (
+        <div className={`bilgi-kutusu ${bulut.durum === 'hata' ? 'uyari' : ''}`}>☁️ {bulut.mesaj}</div>
+      )}
 
       <div className={`belge-alan ${aiAcik ? 'ai-acik' : ''}`}>
         <div className="belge-govde">

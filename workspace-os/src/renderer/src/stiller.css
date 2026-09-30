@@ -411,3 +411,22 @@ button.cip { cursor: pointer; font: inherit; font-size: .8rem; padding: .3rem .7
 .sablon-ust input:not(.ikon-girdi) { flex: 1; }
 .ikon-girdi { width: 3.2rem; text-align: center; }
 code { font-size: .85em; background: var(--yuzey); padding: 0 .3em; border-radius: 4px; }
+
+/* ── Modül 6: Bulut Hesapları ───────────────────────────── */
+.hesap-izgara { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: .75rem; margin-bottom: 1rem; }
+.hesap-kart { display: flex; flex-direction: column; gap: .5rem; padding: 1rem; background: var(--panel); border: 1px solid var(--kenarlik); border-top: 3px solid var(--hesap-renk); border-radius: 12px; }
+.hesap-ust { display: flex; gap: .75rem; align-items: center; }
+.hesap-ust div { display: flex; flex-direction: column; min-width: 0; }
+.hesap-ust small { color: var(--soluk); overflow: hidden; text-overflow: ellipsis; }
+.hesap-ikon { font-size: 2rem; }
+.kurulum-formu { display: flex; flex-direction: column; gap: .5rem; margin-top: .5rem; }
+.kurulum-formu h4 { margin: .5rem 0 0; }
+.kurulum-formu input { font: inherit; padding: .5rem .7rem; border-radius: 8px; border: 1px solid var(--kenarlik); background: var(--yuzey); color: var(--metin); }
+.kurulum-formu .ipucu { margin: 0; }
+details.ayar-karti summary { cursor: pointer; }
+.donen-halka.satir-ici { display: inline-block; vertical-align: middle; }
+.bulut-durumu { font-size: .8rem; color: var(--soluk); }
+.bulut-durumu.yuklendi { color: #047857; }
+.bulut-durumu.cakisma { color: #d97706; }
+.bulut-durumu.hata { color: var(--hata); }
+[data-tema='koyu'] .bulut-durumu.yuklendi { color: #34d399; }

@@ -28,6 +28,8 @@ src/
     statuDeposu.ts        Proje statüleri (Yeni / Tamamlandı), koruma, son açılma
     ofis/                 docx (mammoth + docx), xlsx/csv (exceljs), pptx (JSZip + pptxgenjs) okuma/yazma
     ai/                   Claude API: şifreli anahtar deposu, şablon deposu, akışlı üretim ve öneriler
+    bulut/                OAuth 2.0 + PKCE, Google Drive v3 ve Microsoft Graph istemcileri, önbellek + senkron
+    sifreliDepo.ts        Gizli değerler için DPAPI (safeStorage) deposu
     ipc/                  Modül başına IPC kayıtları
   preload/                contextBridge ile dar `window.workspace` API'si
   renderer/src/
@@ -40,6 +42,7 @@ src/
     moduller/dosyalar/    Modül 2 — Sürücüler, klasör gezgini, Kütüphane
     moduller/projeler/    Modül 3 — Projeler, ortak ProjeListesi bileşeni
     moduller/ofis/        Modül 4 — MS 365 / Google uygulama grupları, Word/Excel/PowerPoint/Not Defteri editörleri
+    moduller/bulut/       Modül 6 — Bulut Hesapları: bağlantı, kurulum, bulut gezgini
     moduller/ai/          Modül 5 — Office Agent, API anahtarı, model ayarları, istem şablonu düzenleyici
     core/htmlTemizle.ts   AI'dan gelen HTML'i beyaz listeyle temizler (istem enjeksiyonuna karşı)
 ```
@@ -83,5 +86,10 @@ Başka programla oluşturulmuş bir dosyanın üzerine ilk kez yazılmadan önce
 - **Şablonlar:** `{girdi}` ve `{secim}` yer tutucularıyla Yapay Zeka ekranından düzenlenir
   (`%APPDATA%/Workspace OS/istemler.json`). Varsayılanlar `shared/ai.ts` içinde.
 - Belge içeriği isteğe `<belge>` etiketleri içinde veri olarak ve önbellek işaretli ayrı blokta gönderilir.
+
+### Bulut hesapları
+Google Drive ve OneDrive'a hesapla bağlanmak için bir kez uygulama kaydı gerekir; adım adım rehber
+[docs/BULUT_KURULUM.md](docs/BULUT_KURULUM.md). Bulut dosyaları Workspace'te açılıp düzenlenir, kaydedilen
+değişiklikler çakışma denetimiyle otomatik geri yüklenir.
 
 Durum `%APPDATA%/Workspace OS/durum.json`, dosya dizini `dizin.json`, proje statüleri `statuler.json` dosyasında saklanır.

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ProjeDosyasi, Surucu } from '@shared/tipler'
+import type { BulutHesabi } from '@shared/bulut'
 import { KATEGORI_HARITASI } from '@shared/kategoriler'
 import { editorBul } from '@shared/ofis'
 import { modulKaydet, type ModulProps } from '@core/modulKayit'
@@ -23,16 +24,19 @@ function OfisAnaEkrani({ durum, durumGuncelle }: ModulProps) {
   const { modulAc, belgeAc } = useKabuk()
   const [sonBelgeler, setSonBelgeler] = useState<ProjeDosyasi[]>([])
   const [bulut, setBulut] = useState<Surucu[]>([])
+  const [hesaplar, setHesaplar] = useState<BulutHesabi[]>([])
   const [mesaj, setMesaj] = useState<string | null>(null)
   const [hata, setHata] = useState<string | null>(null)
   const dahiliEditor = durum.tercihler.dahiliEditor !== false
   const googleDrive = bulut.find((b) => b.saglayici === 'google-drive')
+  const googleHesabi = hesaplar.some((h) => h.saglayici === 'google' && h.bagli)
 
   useEffect(() => {
     window.workspace
       .dosyaSorgula({ kategoriler: ['word', 'excel', 'sunum', 'metin'], siralama: 'son', limit: 60 })
       .then((r) => setSonBelgeler(r.dosyalar.filter((d) => editorBul(d.ad)).slice(0, 10)))
     window.workspace.suruculeriGetir().then((s) => setBulut(s.filter((x) => x.tur === 'bulut')))
+    window.workspace.bulutHesaplar().then(setHesaplar)
   }, [])
 
   const calistir = async (fn: () => Promise<unknown>) => {
@@ -49,7 +53,7 @@ function OfisAnaEkrani({ durum, durumGuncelle }: ModulProps) {
     calistir(async () => {
       if (u.eylem === 'drive') {
         if (googleDrive) modulAc('suruculer', { yol: googleDrive.yol })
-        else await window.workspace.webAc(u.web!)
+        else modulAc('bulut', googleHesabi ? { saglayici: 'google' } : undefined)
         return
       }
       if (u.eylem === 'ajan') {
@@ -57,7 +61,7 @@ function OfisAnaEkrani({ durum, durumGuncelle }: ModulProps) {
         return
       }
       if (!u.editor) return
-      const konum = u.grup === 'google' && googleDrive ? 'google-drive' : 'belgeler'
+      const konum = u.grup === 'google' && (googleDrive || googleHesabi) ? 'google-drive' : 'belgeler'
       const yol = await window.workspace.yeniBelge(u.editor, konum)
       modulAc('ofis', { yol }) // yeni belge her zaman kendi editörümüzde açılır
     })
@@ -85,9 +89,11 @@ function OfisAnaEkrani({ durum, durumGuncelle }: ModulProps) {
         <div key={g} className="uygulama-grubu">
           <h3 lang="en">{GRUPLAR[g].ad}</h3>
           <p className="ipucu">
-            {g === 'google' && !googleDrive
-              ? 'Google Drive for Desktop bulunamadı — belgeler Belgeler klasörüne kaydedilir.'
-              : GRUPLAR[g].aciklama}
+            {g === 'google' && !googleDrive && !googleHesabi
+              ? 'Google Drive bağlı değil — belgeler Belgeler klasörüne kaydedilir. Bulut Hesapları\'ndan bağlanabilirsin.'
+              : g === 'google' && !googleDrive
+                ? 'Belgeler bağlı Google Drive hesabına kaydedilir.'
+                : GRUPLAR[g].aciklama}
           </p>
           <div className="uygulama-izgara">
             {OFIS_UYGULAMALARI.filter((u) => u.grup === g).map((u) => (

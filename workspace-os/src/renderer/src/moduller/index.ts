@@ -1,6 +1,7 @@
 // Modül kayıt giriş noktası. Her satır bir plugin'i etkinleştirir.
 import './masaustu/anaSayfa'
 import './dosyalar' // Modül 2 — Sürücü ve dosya yönetimi
+import './bulut' // Modül 6 — Google Drive / OneDrive hesap bağlantısı
 import './projeler' // Modül 3 — Proje statüsü
 import './ofis' // Modül 4 — Dahili ofis ve bulut
 import './ai' // Modül 5 — Yapay zeka ve dinamik istem şablonları
