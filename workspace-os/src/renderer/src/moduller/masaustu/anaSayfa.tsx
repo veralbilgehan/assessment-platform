@@ -1,6 +1,14 @@
 import { modulKaydet, type ModulProps } from '@core/modulKayit'
 
-function AnaSayfa({ durum, durumGuncelle }: ModulProps) {
+const KISAYOLLAR = [
+  { ikon: '💽', ad: 'Sürücüler', aciklama: 'Diskler, USB ve bulut', modul: 'suruculer' },
+  { ikon: '🗂️', ad: 'Kütüphane', aciklama: 'Türe göre ayrışmış dosyalar', modul: 'kutuphane' },
+  { ikon: '📂', ad: 'Projeler', aciklama: 'Yakında' },
+  { ikon: '📝', ad: 'Ofis', aciklama: 'Yakında' },
+  { ikon: '✨', ad: 'AI', aciklama: 'Yakında' },
+]
+
+function AnaSayfa({ durum, durumGuncelle, modulAc }: ModulProps) {
   const saat = new Date().getHours()
   const selam = saat < 12 ? 'Günaydın' : saat < 18 ? 'İyi günler' : 'İyi akşamlar'
 
@@ -12,13 +20,19 @@ function AnaSayfa({ durum, durumGuncelle }: ModulProps) {
   return (
     <section className="ana-sayfa">
       <h1>{selam}, {durum.profil?.ad}</h1>
-      <p className="alt-metin">Çalışma alanın hazır. Dosya, proje, ofis ve AI modülleri sırayla buraya eklenecek.</p>
+      <p className="alt-metin">Çalışma alanın hazır.</p>
       <div className="kart-izgara">
-        {['💽 Sürücüler', '📂 Projeler', '📝 Ofis', '✨ AI'].map((x) => (
-          <div key={x} className="secim-kart pasif">
-            <strong>{x}</strong>
-            <small>Yakında</small>
-          </div>
+        {KISAYOLLAR.map((k) => (
+          <button
+            key={k.ad}
+            className={`secim-kart ${k.modul ? '' : 'pasif'}`}
+            disabled={!k.modul}
+            onClick={() => k.modul && modulAc(k.modul)}
+          >
+            <span className="kart-ikon">{k.ikon}</span>
+            <strong>{k.ad}</strong>
+            <small>{k.aciklama}</small>
+          </button>
         ))}
       </div>
       <button className="dugme" onClick={sifirla}>Kurulumu sıfırla</button>

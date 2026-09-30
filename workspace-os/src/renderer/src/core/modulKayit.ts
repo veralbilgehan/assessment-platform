@@ -8,6 +8,8 @@ import type { UygulamaDurumu } from '@shared/tipler'
 export interface ModulProps {
   durum: UygulamaDurumu
   durumGuncelle: (d: UygulamaDurumu) => void
+  /** Başka bir modüle geç (ör. Ana Sayfa → Sürücüler) */
+  modulAc: (id: string) => void
 }
 
 export interface WorkspaceModulu {

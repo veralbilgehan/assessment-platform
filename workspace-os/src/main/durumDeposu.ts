@@ -10,6 +10,7 @@ const varsayilanDurum = (): UygulamaDurumu => ({
   kurulumTamamlandi: false,
   surum: SEMA_SURUMU,
   profil: null,
+  kaynaklar: [],
   tercihler: { tema: 'sistem', dil: 'tr', aiOnerileriAcik: true },
 })
 

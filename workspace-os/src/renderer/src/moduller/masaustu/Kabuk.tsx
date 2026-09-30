@@ -27,7 +27,7 @@ export default function Kabuk({ durum, durumGuncelle }: { durum: UygulamaDurumu;
           ))}
         </nav>
       </aside>
-      <main className="icerik">{aktif && <aktif.bilesen durum={durum} durumGuncelle={durumGuncelle} />}</main>
+      <main className="icerik">{aktif && <aktif.bilesen key={aktif.id} durum={durum} durumGuncelle={durumGuncelle} modulAc={setAktifId} />}</main>
     </div>
   )
 }

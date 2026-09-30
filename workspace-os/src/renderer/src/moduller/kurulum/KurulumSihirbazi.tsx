@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { KullaniciProfili, SistemBilgisi, UygulamaDurumu } from '@shared/tipler'
+import { hataMesaji } from '@core/bicim'
 import { temaUygula } from '@core/tema'
 import type { KurulumTaslagi } from './adimTipleri'
 import { KURULUM_ADIMLARI } from './adimlar'
@@ -7,6 +8,7 @@ import { KURULUM_ADIMLARI } from './adimlar'
 const ilkTaslak = (): KurulumTaslagi => ({
   profil: { ad: '', soyad: '', eposta: '', meslek: '', kullanimAmaci: [], avatarRenk: '#4f7cff' },
   tercihler: { tema: 'sistem', dil: 'tr', aiOnerileriAcik: true },
+  kaynaklar: [],
 })
 
 export default function KurulumSihirbazi({ tamamlandi }: { tamamlandi: (d: UygulamaDurumu) => void }) {
@@ -39,9 +41,9 @@ export default function KurulumSihirbazi({ tamamlandi }: { tamamlandi: (d: Uygul
 
   const tamamla = async () => {
     try {
-      tamamlandi(await window.workspace.kurulumTamamla(taslak.profil, taslak.tercihler))
+      tamamlandi(await window.workspace.kurulumTamamla(taslak.profil, taslak.tercihler, taslak.kaynaklar))
     } catch (e) {
-      setHata(e instanceof Error ? e.message : 'Kurulum kaydedilemedi')
+      setHata(hataMesaji(e))
     }
   }
 

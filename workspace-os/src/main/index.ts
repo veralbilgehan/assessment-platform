@@ -3,6 +3,7 @@ import { join } from 'path'
 import os from 'os'
 import { IPC, type KullaniciProfili, type Tercihler } from '@shared/tipler'
 import { durumOku, durumSifirla, durumYaz } from './durumDeposu'
+import { dosyaIpcKaydet } from './ipc/dosyaIpc'
 
 function pencereOlustur() {
   const pencere = new BrowserWindow({
@@ -31,7 +32,7 @@ function pencereOlustur() {
 function ipcKaydet() {
   ipcMain.handle(IPC.durumGetir, () => durumOku())
 
-  ipcMain.handle(IPC.kurulumTamamla, async (_e, profil: KullaniciProfili, tercihler: Tercihler) => {
+  ipcMain.handle(IPC.kurulumTamamla, async (_e, profil: KullaniciProfili, tercihler: Tercihler, kaynaklar: string[] = []) => {
     if (!profil?.ad?.trim()) throw new Error('İsim zorunludur')
     const mevcut = await durumOku()
     return durumYaz({
@@ -39,11 +40,14 @@ function ipcKaydet() {
       kurulumTamamlandi: true,
       profil: { ...profil, ad: profil.ad.trim(), soyad: profil.soyad?.trim() ?? '' },
       tercihler,
+      kaynaklar,
       kurulumTarihi: new Date().toISOString(),
     })
   })
 
   ipcMain.handle(IPC.kurulumSifirla, () => durumSifirla())
+
+  ipcMain.handle(IPC.kaynaklariKaydet, async (_e, kaynaklar: string[]) => durumYaz({ ...(await durumOku()), kaynaklar }))
 
   ipcMain.handle(IPC.sistemBilgisi, () => ({
     kullaniciAdi: os.userInfo().username,
@@ -54,6 +58,7 @@ function ipcKaydet() {
 
 app.whenReady().then(() => {
   ipcKaydet()
+  dosyaIpcKaydet()
   pencereOlustur()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) pencereOlustur()

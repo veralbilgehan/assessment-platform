@@ -5,6 +5,7 @@ import type { AdimProps } from '../adimTipleri'
 // Mesajlar kozmetik; kalıcı kayıt KurulumSihirbazi.tamamla() içinde yapılır.
 const MESAJLAR = [
   'Profilin oluşturuluyor',
+  'Kaynakların bağlanıyor',
   'Çalışma alanın hazırlanıyor',
   'Modüller yükleniyor',
   'Neredeyse hazır',

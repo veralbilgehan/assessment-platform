@@ -5,6 +5,7 @@ import type { KullaniciProfili, SistemBilgisi, Tercihler } from '@shared/tipler'
 export interface KurulumTaslagi {
   profil: KullaniciProfili
   tercihler: Tercihler
+  kaynaklar: string[]
 }
 
 export interface AdimProps {
