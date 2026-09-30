@@ -38,20 +38,29 @@ export default function SunumEditor({ icerik, belgeAdi, degisti }: EditorProps<S
     setAktif(h)
   }
 
-  // AI köprüsü: slaytlar araya eklenir, düz metin mevcut slayta madde olur
-  const kopruRef = useRef({ belge, slaytEkle, slaytGuncelle, slayt })
-  kopruRef.current = { belge, slaytEkle, slaytGuncelle, slayt }
+  // AI köprüsü: slaytlar aktif slaytın ardına eklenir, düz metin aktif slayta madde olur
+  const kopruRef = useRef({ belge, aktif, slaytEkle, slaytGuncelle, slayt, guncelle })
+  kopruRef.current = { belge, aktif, slaytEkle, slaytGuncelle, slayt, guncelle }
   useEffect(
     () =>
       editorKaydet({
         tur: 'sunum',
         belgeAdi,
-        metinAl: () => kopruRef.current.belge.slaytlar.map((s, i) => `Slayt ${i + 1}: ${s.baslik}\n${s.maddeler.map((m) => `- ${m}`).join('\n')}`).join('\n\n'),
-        seciliMetin: () => kopruRef.current.slayt.baslik,
+        metinAl: () =>
+          kopruRef.current.belge.slaytlar
+            .map((s, i) => `Slayt ${i + 1}: ${s.baslik}\n${s.maddeler.map((m) => `- ${m}`).join('\n')}${s.notlar ? `\nNotlar: ${s.notlar}` : ''}`)
+            .join('\n\n'),
+        seciliMetin: () => '',
+        konum: () => `Aktif slayt ${kopruRef.current.aktif + 1}: ${kopruRef.current.slayt.baslik || '(başlıksız)'}`,
         ekle: ({ slaytlar, metin }) => {
           const k = kopruRef.current
-          if (slaytlar?.length) k.slaytEkle(slaytlar)
+          const onceki = k.belge
+          const tekBosSlayt = k.belge.slaytlar.length === 1 && !k.belge.slaytlar[0].baslik.trim() && !k.belge.slaytlar[0].maddeler.some((m) => m.trim())
+          if (slaytlar?.length && tekBosSlayt) k.guncelle({ ...k.belge, slaytlar }) // yeni sunumun boş kapağını yer değiştir
+          else if (slaytlar?.length) k.slaytEkle(slaytlar)
           else if (metin) k.slaytGuncelle({ maddeler: [...k.slayt.maddeler, ...metin.split('\n').map((m) => m.replace(/^[-•*]\s*/, '')).filter(Boolean)] })
+          else return
+          return () => kopruRef.current.guncelle(onceki)
         },
       }),
     [belgeAdi],

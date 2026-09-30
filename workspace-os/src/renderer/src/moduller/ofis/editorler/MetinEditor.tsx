@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MetinBelgesi } from '@shared/ofis'
-import { editorKaydet } from '@core/editorKoprusu'
+import { editorKaydet, type EkIcerik } from '@core/editorKoprusu'
 import type { EditorProps } from './tipler'
 
 // Not Defteri: .txt / .md / .log için düz metin editörü.
@@ -13,6 +13,16 @@ export default function MetinEditor({ icerik, belgeAdi, degisti }: EditorProps<M
     degisti({ tur: 'metin', metin: yeni })
   }
 
+  const yerlestir = ({ metin: m, tablo }: EkIcerik, seciminYerine: boolean) => {
+    const a = alan.current
+    const ek = m ?? tablo?.map((s) => s.join('\t')).join('\n') ?? ''
+    if (!a || !ek) return
+    const onceki = a.value
+    const bas = seciminYerine ? a.selectionStart : a.selectionEnd
+    guncelle(onceki.slice(0, bas) + ek + onceki.slice(a.selectionEnd))
+    return () => guncelle(onceki)
+  }
+
   useEffect(
     () =>
       editorKaydet({
@@ -23,13 +33,8 @@ export default function MetinEditor({ icerik, belgeAdi, degisti }: EditorProps<M
           const a = alan.current
           return a ? a.value.slice(a.selectionStart, a.selectionEnd) : ''
         },
-        ekle: ({ metin: m, tablo }) => {
-          const a = alan.current
-          const ek = m ?? tablo?.map((s) => s.join('\t')).join('\n') ?? ''
-          if (!a || !ek) return
-          const yeni = a.value.slice(0, a.selectionStart) + ek + a.value.slice(a.selectionEnd)
-          guncelle(yeni)
-        },
+        ekle: (ic) => yerlestir(ic, false),
+        degistir: (ic) => yerlestir(ic, true),
       }),
     [belgeAdi],
   )

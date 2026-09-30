@@ -25,6 +25,7 @@
     }
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.129.0",
     "@tiptap/extension-image": "^3.31.4",
     "@tiptap/extension-table": "^3.31.4",
     "@tiptap/extension-text-align": "^3.31.4",
@@ -37,7 +38,8 @@
     "mammoth": "^1.13.0",
     "pptxgenjs": "^4.0.1",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",

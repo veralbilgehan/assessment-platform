@@ -10,9 +10,13 @@ import { GRUPLAR, OFIS_UYGULAMALARI, type OfisUygulamasi, type UygulamaGrubu } f
 import BelgeEditoru from './BelgeEditoru'
 
 function Ofis(props: ModulProps) {
-  const yol = (props.parametre as { yol?: string } | undefined)?.yol
+  const { yol, aiIstem } = (props.parametre as { yol?: string; aiIstem?: string } | undefined) ?? {}
   const { modulAc } = useKabuk()
-  return yol ? <BelgeEditoru yol={yol} kapat={() => modulAc('ofis')} /> : <OfisAnaEkrani {...props} />
+  return yol ? (
+    <BelgeEditoru yol={yol} aiIstem={aiIstem} tercihler={props.durum.tercihler} kapat={() => modulAc('ofis')} />
+  ) : (
+    <OfisAnaEkrani {...props} />
+  )
 }
 
 function OfisAnaEkrani({ durum, durumGuncelle }: ModulProps) {
@@ -49,7 +53,7 @@ function OfisAnaEkrani({ durum, durumGuncelle }: ModulProps) {
         return
       }
       if (u.eylem === 'ajan') {
-        setMesaj('Office Agent, Modül 5 (Yapay Zeka) ile etkinleşecek. Açık belgeye doğrudan içerik yazabilecek.')
+        modulAc('ai')
         return
       }
       if (!u.editor) return

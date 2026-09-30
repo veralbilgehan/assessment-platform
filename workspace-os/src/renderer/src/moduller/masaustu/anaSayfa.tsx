@@ -10,7 +10,7 @@ const KISAYOLLAR = [
   { ikon: '📂', ad: 'Projeler', aciklama: 'Devam eden ve tamamlananlar', modul: 'projeler' },
   { ikon: '🗂️', ad: 'Kütüphane', aciklama: 'Türe göre ayrışmış dosyalar', modul: 'kutuphane' },
   { ikon: '📝', ad: 'Ofis', aciklama: 'Word, Excel, PowerPoint, Google', modul: 'ofis' },
-  { ikon: '✨', ad: 'AI', aciklama: 'Yakında' },
+  { ikon: '✨', ad: 'Yapay Zeka', aciklama: 'Office Agent ve ayarlar', modul: 'ai' },
 ]
 
 function AnaSayfa({ durum, durumGuncelle, modulAc }: ModulProps) {

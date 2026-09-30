@@ -5,6 +5,7 @@ import { IPC, type KullaniciProfili, type Tercihler } from '@shared/tipler'
 import { durumOku, durumSifirla, durumYaz } from './durumDeposu'
 import { dosyaIpcKaydet } from './ipc/dosyaIpc'
 import { ofisIpcKaydet } from './ipc/ofisIpc'
+import { aiIpcKaydet } from './ipc/aiIpc'
 
 function pencereOlustur() {
   const pencere = new BrowserWindow({
@@ -73,6 +74,7 @@ app.whenReady().then(() => {
   ipcKaydet()
   dosyaIpcKaydet()
   ofisIpcKaydet()
+  aiIpcKaydet()
   pencereOlustur()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) pencereOlustur()

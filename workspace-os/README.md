@@ -19,6 +19,7 @@ src/
   shared/kategoriler.ts   Uzantı → kategori sınıflandırma tablosu (17 kategori, ~250 uzantı)
   shared/ofis.ts          Belge modelleri (Word/Excel/Sunum/Metin), sunum temaları, boş şablonlar
   shared/formul.ts        Tablo formül motoru (Türkçe + İngilizce fonksiyonlar)
+  shared/ai.ts            AI istek/sonuç tipleri, model listesi, varsayılan istem şablonları
   main/                   Electron ana süreç — dosya sistemi, kalıcı durum, IPC
     suruculer.ts          Disk/USB/harici disk/bulut tespiti, önemli klasörler, takılma izleme
     dosyaIslemleri.ts     Listeleme, klasör oluşturma, yeniden adlandırma, taşıma
@@ -26,6 +27,7 @@ src/
     dizinDeposu.ts        Taranan dosya dizini (özet + sayfalı sorgu)
     statuDeposu.ts        Proje statüleri (Yeni / Tamamlandı), koruma, son açılma
     ofis/                 docx (mammoth + docx), xlsx/csv (exceljs), pptx (JSZip + pptxgenjs) okuma/yazma
+    ai/                   Claude API: şifreli anahtar deposu, şablon deposu, akışlı üretim ve öneriler
     ipc/                  Modül başına IPC kayıtları
   preload/                contextBridge ile dar `window.workspace` API'si
   renderer/src/
@@ -38,6 +40,8 @@ src/
     moduller/dosyalar/    Modül 2 — Sürücüler, klasör gezgini, Kütüphane
     moduller/projeler/    Modül 3 — Projeler, ortak ProjeListesi bileşeni
     moduller/ofis/        Modül 4 — MS 365 / Google uygulama grupları, Word/Excel/PowerPoint/Not Defteri editörleri
+    moduller/ai/          Modül 5 — Office Agent, API anahtarı, model ayarları, istem şablonu düzenleyici
+    core/htmlTemizle.ts   AI'dan gelen HTML'i beyaz listeyle temizler (istem enjeksiyonuna karşı)
 ```
 
 ### Yeni modül eklemek
@@ -68,5 +72,16 @@ Elle işaretleme yeniden taramada ve taşıma/yeniden adlandırmada korunur. Tak
 Başka programla oluşturulmuş bir dosyanın üzerine ilk kez yazılmadan önce orijinali
 `%APPDATA%/Workspace OS/yedekler/` klasörüne kopyalanır. Yeni uygulama eklemek için
 `moduller/ofis/uygulamalar.ts`, yeni dosya biçimi için `main/ofis/index.ts`.
+
+### Yapay zeka
+- **Anahtar:** Yapay Zeka ekranında girilen Claude API anahtarı doğrulanır ve Windows'un şifreli deposunda
+  (DPAPI / Electron `safeStorage`) saklanır. Geliştirmede `ANTHROPIC_API_KEY` ortam değişkeni de kullanılabilir.
+- **Model:** varsayılan `claude-opus-5-5` (Sonnet 5.5 seçilebilir). Güvenlik sınıflandırıcısı bir isteği
+  reddederse API'nin sunucu tarafı yedek modeli (`fallbacks: "default"`) devreye girer.
+- **Editör başına çıktı:** Word → HTML (temizlenerek eklenir), Excel → tablo JSON, PowerPoint → slayt JSON
+  (yapılandırılmış çıktı), Not Defteri → düz metin. Her ekleme panelden geri alınabilir.
+- **Şablonlar:** `{girdi}` ve `{secim}` yer tutucularıyla Yapay Zeka ekranından düzenlenir
+  (`%APPDATA%/Workspace OS/istemler.json`). Varsayılanlar `shared/ai.ts` içinde.
+- Belge içeriği isteğe `<belge>` etiketleri içinde veri olarak ve önbellek işaretli ayrı blokta gönderilir.
 
 Durum `%APPDATA%/Workspace OS/durum.json`, dosya dizini `dizin.json`, proje statüleri `statuler.json` dosyasında saklanır.

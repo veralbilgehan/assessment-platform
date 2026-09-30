@@ -2,6 +2,7 @@
 // Yeni modüller buraya kendi tiplerini ve IPC kanallarını ekler.
 import type { KategoriId } from './kategoriler'
 import type { AcikBelge, BelgeIcerigi, EditorTuru } from './ofis'
+import type { AiDurumu, AiIstegi, AiOnerisi, AiSonucu, IstemSablonu } from './ai'
 
 export type Tema = 'acik' | 'koyu' | 'sistem'
 export type Dil = 'tr' | 'en'
@@ -23,6 +24,9 @@ export interface Tercihler {
   projeEsikGun?: number
   /** Modül 4: desteklenen belgeler (docx, xlsx, pptx, txt…) Workspace'in kendi editörlerinde açılsın */
   dahiliEditor?: boolean
+  /** Modül 5 */
+  aiModel?: string
+  aiOtomatikYapistir?: boolean // AI içeriği bitince doğrudan belgeye yazılsın
 }
 
 export const VARSAYILAN_PROJE_ESIK_GUN = 30
@@ -127,8 +131,9 @@ export interface TaramaIlerlemesi {
 export interface OlayHaritasi {
   'tarama:ilerleme': TaramaIlerlemesi
   'suruculer:degisti': null
+  'ai:parca': { id: string; metin: string }
 }
-export const OLAY_KANALLARI: (keyof OlayHaritasi)[] = ['tarama:ilerleme', 'suruculer:degisti']
+export const OLAY_KANALLARI: (keyof OlayHaritasi)[] = ['tarama:ilerleme', 'suruculer:degisti', 'ai:parca']
 
 export const IPC = {
   durumGetir: 'durum:getir',
@@ -158,6 +163,14 @@ export const IPC = {
   yeniBelge: 'ofis:yeni',
   googleKisayolAc: 'ofis:google-kisayol',
   webAc: 'ofis:web',
+  aiDurum: 'ai:durum',
+  aiAnahtarKaydet: 'ai:anahtar-kaydet',
+  aiAnahtarSil: 'ai:anahtar-sil',
+  aiIstemler: 'ai:istemler',
+  aiIstemleriKaydet: 'ai:istemleri-kaydet',
+  aiUret: 'ai:uret',
+  aiIptal: 'ai:iptal',
+  aiOneriler: 'ai:oneriler',
 } as const
 
 export interface WorkspaceApi {
@@ -195,6 +208,18 @@ export interface WorkspaceApi {
   yeniBelge(tur: EditorTuru, konum?: 'belgeler' | 'google-drive' | 'onedrive'): Promise<string>
   googleKisayolAc(yol: string): Promise<void>
   webAc(url: string): Promise<void>
+
+  aiDurum(): Promise<AiDurumu>
+  /** Anahtarı doğrular (API'ye ücretsiz bir model sorgusu) ve şifreli olarak saklar */
+  aiAnahtarKaydet(anahtar: string): Promise<AiDurumu>
+  aiAnahtarSil(): Promise<AiDurumu>
+  aiIstemler(): Promise<IstemSablonu[]>
+  /** null → varsayılan şablonlara dön */
+  aiIstemleriKaydet(istemler: IstemSablonu[] | null): Promise<IstemSablonu[]>
+  /** Akış parçaları 'ai:parca' olayıyla gelir; sonuç tamamlanınca döner */
+  aiUret(istek: AiIstegi): Promise<AiSonucu>
+  aiIptal(id: string): Promise<void>
+  aiOneriler(istek: Omit<AiIstegi, 'id' | 'talimat' | 'cikti'>): Promise<AiOnerisi[]>
 
   olayDinle<K extends keyof OlayHaritasi>(kanal: K, dinleyici: (veri: OlayHaritasi[K]) => void): () => void
 }

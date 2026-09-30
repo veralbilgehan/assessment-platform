@@ -10,12 +10,20 @@ export interface EkIcerik {
   slaytlar?: Slayt[] // PowerPoint
 }
 
+/** Ekleme işlemini geri alır (AI panelindeki "Geri al" düğmesi) */
+export type GeriAl = () => void
+
 export interface EditorKoprusu {
   tur: EditorTuru
   belgeAdi: string
   metinAl(): string
   seciliMetin(): string
-  ekle(icerik: EkIcerik): void
+  /** Excel: seçili hücre adresi, PowerPoint: aktif slayt */
+  konum?(): string
+  /** İmlecin/seçimin ardına ekler */
+  ekle(icerik: EkIcerik): GeriAl | void
+  /** Seçimin yerine koyar (yalnızca metin editörleri) */
+  degistir?(icerik: EkIcerik): GeriAl | void
 }
 
 let aktif: EditorKoprusu | null = null

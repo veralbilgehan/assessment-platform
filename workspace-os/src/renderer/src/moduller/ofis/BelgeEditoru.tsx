@@ -7,13 +7,22 @@ import WordEditor from './editorler/WordEditor'
 import ExcelEditor from './editorler/ExcelEditor'
 import SunumEditor from './editorler/SunumEditor'
 import MetinEditor from './editorler/MetinEditor'
+import AiPaneli from './AiPaneli'
+import type { Tercihler } from '@shared/tipler'
 
 type KayitDurumu = 'kayitli' | 'kirli' | 'kaydediliyor' | 'hata'
 
 const OTOMATIK_KAYIT_MS = 1500
 
 // Tüm editörlerin ortak çerçevesi: yükleme, otomatik kaydetme, adlandırma, farklı kaydet, proje statüsü.
-export default function BelgeEditoru({ yol: ilkYol, kapat }: { yol: string; kapat: () => void }) {
+export default function BelgeEditoru({ yol: ilkYol, kapat, tercihler, aiIstem }: {
+  yol: string
+  kapat: () => void
+  tercihler: Tercihler
+  /** Office Agent: belge açılınca AI paneli bu istemle otomatik çalışır */
+  aiIstem?: string
+}) {
+  const [aiAcik, setAiAcik] = useState(!!aiIstem)
   const [belge, setBelge] = useState<AcikBelge | null>(null)
   const [yol, setYol] = useState(ilkYol)
   const [kayit, setKayit] = useState<KayitDurumu>('kayitli')
@@ -75,6 +84,10 @@ export default function BelgeEditoru({ yol: ilkYol, kapat }: { yol: string; kapa
   // Ctrl+S
   useEffect(() => {
     const tus = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'j') {
+        e.preventDefault()
+        setAiAcik((a) => !a)
+      }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault()
         if (korumaliRef.current) farkliKaydet()
@@ -166,6 +179,7 @@ export default function BelgeEditoru({ yol: ilkYol, kapat }: { yol: string; kapa
           {belge.korumali ? '🔒 Salt okunur' : { kayitli: '✓ Kaydedildi', kirli: 'Kaydedilmemiş değişiklik', kaydediliyor: 'Kaydediliyor…', hata: '⚠ Kaydedilemedi' }[kayit]}
         </span>
         <span className="bosluk" />
+        <button className={`dugme kucuk ${aiAcik ? 'birincil' : ''}`} onClick={() => setAiAcik((a) => !a)} title="Yapay zeka paneli (Ctrl+J)">✨ AI</button>
         <button className="dugme kucuk" onClick={() => (belge.korumali ? farkliKaydet() : kaydet())}>Kaydet</button>
         <button className="dugme kucuk" onClick={farkliKaydet}>Farklı kaydet…</button>
         <button className="dugme kucuk" onClick={tamamla} disabled={tamamlandi} title="Projeler'de Tamamlananlar'a taşı">
@@ -200,11 +214,14 @@ export default function BelgeEditoru({ yol: ilkYol, kapat }: { yol: string; kapa
       )}
       {hata && <div className="hata" role="alert">{hata}</div>}
 
-      <div className="belge-govde">
-        {belge.icerik.tur === 'word' && <WordEditor icerik={belge.icerik} {...ortak} />}
-        {belge.icerik.tur === 'excel' && <ExcelEditor icerik={belge.icerik} {...ortak} />}
-        {belge.icerik.tur === 'sunum' && <SunumEditor icerik={belge.icerik} {...ortak} />}
-        {belge.icerik.tur === 'metin' && <MetinEditor icerik={belge.icerik} {...ortak} />}
+      <div className={`belge-alan ${aiAcik ? 'ai-acik' : ''}`}>
+        <div className="belge-govde">
+          {belge.icerik.tur === 'word' && <WordEditor icerik={belge.icerik} {...ortak} />}
+          {belge.icerik.tur === 'excel' && <ExcelEditor icerik={belge.icerik} {...ortak} />}
+          {belge.icerik.tur === 'sunum' && <SunumEditor icerik={belge.icerik} {...ortak} />}
+          {belge.icerik.tur === 'metin' && <MetinEditor icerik={belge.icerik} {...ortak} />}
+        </div>
+        {aiAcik && <AiPaneli tur={belge.icerik.tur} tercihler={tercihler} baslangicIstemi={aiIstem} kapat={() => setAiAcik(false)} />}
       </div>
     </section>
   )

@@ -5,7 +5,8 @@ import TextAlign from '@tiptap/extension-text-align'
 import { TableKit } from '@tiptap/extension-table'
 import Image from '@tiptap/extension-image'
 import type { WordBelgesi } from '@shared/ofis'
-import { editorKaydet, metniHtmleCevir, tabloyuHtmleCevir } from '@core/editorKoprusu'
+import { editorKaydet, metniHtmleCevir, tabloyuHtmleCevir, type EkIcerik } from '@core/editorKoprusu'
+import { htmlTemizle } from '@core/htmlTemizle'
 import type { EditorProps } from './tipler'
 
 // "Kendi Word'ümüz": TipTap (ProseMirror) tabanlı zengin metin editörü, A4 sayfa görünümü.
@@ -33,9 +34,17 @@ export default function WordEditor({ icerik, belgeAdi, degisti }: EditorProps<Wo
       belgeAdi,
       metinAl: () => editor.getText(),
       seciliMetin: () => editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, '\n'),
-      ekle: ({ html, metin, tablo }) => {
-        const icerik = html ?? (tablo ? tabloyuHtmleCevir(tablo) : metin ? metniHtmleCevir(metin) : '')
-        if (icerik) editor.chain().focus().insertContent(icerik).run()
+      ekle: (ic) => {
+        const html = icerikHtml(ic)
+        if (!html) return
+        editor.chain().focus().setTextSelection(editor.state.selection.to).insertContent(html).run()
+        return () => editor.commands.undo()
+      },
+      degistir: (ic) => {
+        const html = icerikHtml(ic)
+        if (!html) return
+        editor.chain().focus().insertContent(html).run()
+        return () => editor.commands.undo()
       },
     })
   }, [editor, belgeAdi])
@@ -55,6 +64,10 @@ export default function WordEditor({ icerik, belgeAdi, degisti }: EditorProps<Wo
     </div>
   )
 }
+
+/** Dışarıdan gelen içerik her zaman beyaz listeyle temizlenerek belgeye girer */
+const icerikHtml = ({ html, metin, tablo }: EkIcerik) =>
+  htmlTemizle(html ?? (tablo ? tabloyuHtmleCevir(tablo) : metin ? metniHtmleCevir(metin) : ''))
 
 function AracCubugu({ editor }: { editor: Editor }) {
   const dosyaRef = useRef<HTMLInputElement>(null)

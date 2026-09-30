@@ -57,7 +57,7 @@ const UZANTI_FILTRELERI: Record<EditorTuru, { name: string; extensions: string[]
 }
 
 // Harici tarayıcıda açılmasına izin verilen adresler
-const IZINLI_ALANLAR = ['docs.google.com', 'drive.google.com', 'sheets.google.com', 'slides.google.com', 'www.office.com', 'office.com', 'www.microsoft365.com', 'onedrive.live.com', 'www.google.com']
+const IZINLI_ALANLAR = ['docs.google.com', 'drive.google.com', 'sheets.google.com', 'slides.google.com', 'www.office.com', 'office.com', 'www.microsoft365.com', 'onedrive.live.com', 'www.google.com', 'console.anthropic.com', 'platform.claude.com']
 
 export function ofisIpcKaydet() {
   ipcMain.handle(IPC.belgeAc, async (_e, yol: string): Promise<AcikBelge> => {

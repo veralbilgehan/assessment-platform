@@ -34,6 +34,15 @@ const api: WorkspaceApi = {
   googleKisayolAc: (yol) => ipcRenderer.invoke(IPC.googleKisayolAc, yol),
   webAc: (url) => ipcRenderer.invoke(IPC.webAc, url),
 
+  aiDurum: () => ipcRenderer.invoke(IPC.aiDurum),
+  aiAnahtarKaydet: (anahtar) => ipcRenderer.invoke(IPC.aiAnahtarKaydet, anahtar),
+  aiAnahtarSil: () => ipcRenderer.invoke(IPC.aiAnahtarSil),
+  aiIstemler: () => ipcRenderer.invoke(IPC.aiIstemler),
+  aiIstemleriKaydet: (istemler) => ipcRenderer.invoke(IPC.aiIstemleriKaydet, istemler),
+  aiUret: (istek) => ipcRenderer.invoke(IPC.aiUret, istek),
+  aiIptal: (id) => ipcRenderer.invoke(IPC.aiIptal, id),
+  aiOneriler: (istek) => ipcRenderer.invoke(IPC.aiOneriler, istek),
+
   olayDinle: (kanal, dinleyici) => {
     if (!OLAY_KANALLARI.includes(kanal)) throw new Error(`Bilinmeyen olay kanalı: ${kanal}`)
     const sarmalayici = (_e: IpcRendererEvent, veri: Parameters<typeof dinleyici>[0]) => dinleyici(veri)

@@ -92,19 +92,28 @@ export default function ExcelEditor({ icerik, belgeAdi, degisti }: EditorProps<T
     return Array.from(tablo, (s = []) => Array.from(s, (v = '') => v).join('\t')).join('\n')
   }
 
-  // AI köprüsü: tablo → seçili hücreden itibaren, metin → satır satır
-  const kopruRef = useRef({ tabloYerlestir, kullanilanAlan, secAdres })
-  kopruRef.current = { tabloYerlestir, kullanilanAlan, secAdres }
+  // AI köprüsü: tablo → seçili hücreden itibaren, metin → satır satır. Üzerine yazılan hücreler geri alınabilir.
+  const kopruRef = useRef({ tabloYerlestir, kullanilanAlan, secAdres, secim, hucreleriAyarla, sayfa })
+  kopruRef.current = { tabloYerlestir, kullanilanAlan, secAdres, secim, hucreleriAyarla, sayfa }
   useEffect(
     () =>
       editorKaydet({
         tur: 'excel',
         belgeAdi,
         metinAl: () => kopruRef.current.kullanilanAlan(),
-        seciliMetin: () => kopruRef.current.secAdres,
+        seciliMetin: () => kopruRef.current.sayfa.hucreler[kopruRef.current.secAdres] ?? '',
+        konum: () => kopruRef.current.secAdres,
         ekle: ({ tablo, metin }) => {
           const t = tablo ?? (metin ? tsvCoz(metin) : null)
-          if (t) kopruRef.current.tabloYerlestir(t)
+          if (!t?.length) return
+          const k = kopruRef.current
+          const onceki: Record<string, string> = {}
+          t.forEach((satir, r) => satir.forEach((_, c) => {
+            const a = adres(k.secim.satir + r, k.secim.sutun + c)
+            onceki[a] = k.sayfa.hucreler[a] ?? ''
+          }))
+          k.tabloYerlestir(t)
+          return () => kopruRef.current.hucreleriAyarla(onceki)
         },
       }),
     [belgeAdi],
