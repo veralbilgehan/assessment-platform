@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import type { DizinOzeti, DosyaKaydi, DosyaSorgusu, TaramaIlerlemesi } from '@shared/tipler'
+import type { DizinOzeti, DosyaSorgusu, TaramaIlerlemesi } from '@shared/tipler'
 import { KATEGORI_HARITASI, KATEGORILER, type KategoriId } from '@shared/kategoriler'
 import type { ModulProps } from '@core/modulKayit'
 import { boyutBicimle, hataMesaji, tarihBicimle } from '@core/bicim'
-import { sonParca, ustKlasor } from '@core/yol'
+import { sonParca } from '@core/yol'
+import ProjeListesi from '../projeler/ProjeListesi'
 
 // Kurulumda seçilen kullanım amacına göre ilgili kategoriler öne alınır
 const AMAC_KATEGORILERI: Record<string, KategoriId[]> = {
@@ -58,7 +59,13 @@ export default function Kutuphane({ durum, durumGuncelle }: ModulProps) {
   const kaynakCikar = async (yol: string) =>
     durumGuncelle(await window.workspace.kaynaklariKaydet(durum.kaynaklar.filter((k) => k !== yol)))
 
-  if (kategori) return <KategoriGorunumu kategori={kategori} geri={() => setKategori(null)} />
+  // Kategoriden dönünce özet (devam eden sayıları) yenilenir — statüler değişmiş olabilir
+  const kategoridenDon = () => {
+    setKategori(null)
+    window.workspace.dizinOzeti().then(setOzet)
+  }
+
+  if (kategori) return <KategoriGorunumu kategori={kategori} geri={kategoridenDon} />
 
   const oncelikli = new Set((durum.profil?.kullanimAmaci ?? []).flatMap((a) => AMAC_KATEGORILERI[a] ?? []))
   const kartlar = KATEGORILER.filter((k) => ozet?.kategoriler[k.id]?.adet).sort(
@@ -119,6 +126,7 @@ export default function Kutuphane({ durum, durumGuncelle }: ModulProps) {
               <span className="kategori-ikon">{k.ikon}</span>
               <strong>{k.ad}</strong>
               <small>{b.adet.toLocaleString('tr-TR')} dosya · {boyutBicimle(b.boyut)}</small>
+              {k.projeTakibi && b.yeni > 0 && <small className="devam-eden">● {b.yeni.toLocaleString('tr-TR')} devam eden</small>}
               {oncelikli.has(k.id) && <span className="rozet">Senin için</span>}
             </button>
           )
@@ -132,16 +140,7 @@ export default function Kutuphane({ durum, durumGuncelle }: ModulProps) {
 function KategoriGorunumu({ kategori, geri }: { kategori: KategoriId; geri: () => void }) {
   const k = KATEGORI_HARITASI[kategori]
   const [arama, setArama] = useState('')
-  const [siralama, setSiralama] = useState<NonNullable<DosyaSorgusu['siralama']>>('tarih')
-  const [sonuc, setSonuc] = useState<{ toplam: number; dosyalar: DosyaKaydi[] } | null>(null)
-  const [hata, setHata] = useState<string | null>(null)
-
-  useEffect(() => {
-    const z = setTimeout(() => window.workspace.dosyaSorgula({ kategori, arama, siralama }).then(setSonuc), 150)
-    return () => clearTimeout(z)
-  }, [kategori, arama, siralama])
-
-  const ac = (yol: string) => window.workspace.dosyaAc(yol).catch((e) => setHata(hataMesaji(e)))
+  const [siralama, setSiralama] = useState<NonNullable<DosyaSorgusu['siralama']>>(k.projeTakibi ? 'son' : 'tarih')
 
   return (
     <section>
@@ -150,37 +149,14 @@ function KategoriGorunumu({ kategori, geri }: { kategori: KategoriId; geri: () =
         <h2 className="arac-baslik">{k.ikon} {k.ad}</h2>
         <input className="arama" placeholder="Dosya adında ara…" value={arama} onChange={(e) => setArama(e.target.value)} autoFocus />
         <select value={siralama} onChange={(e) => setSiralama(e.target.value as typeof siralama)}>
+          <option value="son">Son çalışılan</option>
           <option value="tarih">En yeni</option>
           <option value="ad">Ada göre</option>
           <option value="boyut">En büyük</option>
         </select>
       </div>
-      {hata && <div className="hata">{hata}</div>}
-
-      <div className="dosya-tablo">
-        <div className="tablo-baslik">
-          <span>Ad</span><span>Klasör</span><span>Boyut</span><span>Değiştirilme</span>
-        </div>
-        {sonuc?.dosyalar.map((d) => (
-          <div key={d.yol} className="tablo-satir" onDoubleClick={() => ac(d.yol)} title={d.yol}>
-            <span className="hucre-ad">
-              <span className="dosya-ikon">{k.ikon}</span>
-              <span className="ad-metin">{d.ad}</span>
-            </span>
-            <span className="soluk tek-satir">
-              <button className="baglanti" onClick={() => window.workspace.klasordeGoster(d.yol)}>
-                {sonParca(ustKlasor(d.yol) ?? d.yol)}
-              </button>
-            </span>
-            <span className="soluk">{boyutBicimle(d.boyut)}</span>
-            <span className="soluk">{tarihBicimle(d.degistirilme)}</span>
-          </div>
-        ))}
-        {sonuc && sonuc.toplam === 0 && <p className="bos-durum">Eşleşen dosya yok</p>}
-      </div>
-      {sonuc && sonuc.toplam > sonuc.dosyalar.length && (
-        <p className="ipucu">İlk {sonuc.dosyalar.length} / {sonuc.toplam.toLocaleString('tr-TR')} dosya gösteriliyor. Daraltmak için ara.</p>
-      )}
+      {/* Modül 3: proje takibi olan kategorilerde "Yeni Projeler / Tamamlananlar" sekmeleri */}
+      <ProjeListesi sorgu={{ kategori, arama, siralama }} statuSekmeli={!!k.projeTakibi} />
     </section>
   )
 }

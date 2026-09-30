@@ -1,11 +1,13 @@
 import { app } from 'electron'
 import { promises as fs } from 'fs'
 import path from 'path'
-import type { DizinOzeti, DosyaKaydi, DosyaSorgusu } from '@shared/tipler'
+import { VARSAYILAN_PROJE_ESIK_GUN, type DizinOzeti, type DosyaKaydi, type DosyaSorgusu, type SorguSonucu } from '@shared/tipler'
+import { durumOku } from './durumDeposu'
+import { statuKayitlari, yollariTasi, zenginlestirici } from './statuDeposu'
 
 // Taranan dosyaların dizini: bellekte tutulur, %APPDATA%/Workspace OS/dizin.json'a yazılır.
 // Renderer'a tüm liste değil, yalnızca özet ve sayfalı sorgu sonuçları gönderilir.
-// (Modül 3 bu kayıtlara proje statüsü ekleyecek.)
+// Proje statüleri (Modül 3) sorgu anında statuDeposu'ndan eklenir.
 
 interface Dizin {
   olusturulma: string
@@ -39,13 +41,20 @@ async function kaydet() {
   await fs.rename(`${yol}.tmp`, yol)
 }
 
-function ozetCikar(d: Dizin): DizinOzeti {
+async function zenginlestir() {
+  const esikGun = (await durumOku()).tercihler.projeEsikGun ?? VARSAYILAN_PROJE_ESIK_GUN
+  return zenginlestirici(await statuKayitlari(), esikGun)
+}
+
+async function ozetCikar(d: Dizin): Promise<DizinOzeti> {
+  const z = await zenginlestir()
   const kategoriler: DizinOzeti['kategoriler'] = {}
   let toplamBoyut = 0
   for (const f of d.dosyalar) {
-    const k = (kategoriler[f.kategori] ??= { adet: 0, boyut: 0 })
+    const k = (kategoriler[f.kategori] ??= { adet: 0, boyut: 0, yeni: 0 })
     k.adet++
     k.boyut += f.boyut
+    if (z(f).statu === 'yeni') k.yeni++
     toplamBoyut += f.boyut
   }
   return { olusturulma: d.olusturulma, kokler: d.kokler, kesildi: d.kesildi, toplamDosya: d.dosyalar.length, toplamBoyut, kategoriler }
@@ -60,27 +69,42 @@ export async function dizinYaz(kokler: string[], dosyalar: DosyaKaydi[], kesildi
 
 export async function dizinOzeti(): Promise<DizinOzeti | null> {
   const d = await yukle()
-  return d ? ozetCikar(d) : null
+  return d ? await ozetCikar(d) : null
 }
 
-export async function dosyaSorgula(q: DosyaSorgusu): Promise<{ toplam: number; dosyalar: DosyaKaydi[] }> {
+export async function dosyaSorgula(q: DosyaSorgusu): Promise<SorguSonucu> {
   const d = await yukle()
-  if (!d) return { toplam: 0, dosyalar: [] }
+  const statuSayilari = { yeni: 0, tamamlandi: 0 }
+  if (!d) return { toplam: 0, dosyalar: [], statuSayilari }
+
+  const z = await zenginlestir()
   const arama = q.arama?.trim().toLocaleLowerCase('tr')
-  const sonuc = d.dosyalar.filter(
-    (f) => (!q.kategori || f.kategori === q.kategori) && (!arama || f.ad.toLocaleLowerCase('tr').includes(arama)),
-  )
+  const kategoriler = q.kategoriler && new Set(q.kategoriler)
+  const eslesenler = d.dosyalar
+    .filter(
+      (f) =>
+        (!q.kategori || f.kategori === q.kategori) &&
+        (!kategoriler || kategoriler.has(f.kategori)) &&
+        (!arama || f.ad.toLocaleLowerCase('tr').includes(arama)),
+    )
+    .map(z)
+  for (const f of eslesenler) statuSayilari[f.statu]++
+
+  const sonuc = q.statu ? eslesenler.filter((f) => f.statu === q.statu) : eslesenler
   const siralama = q.siralama ?? 'tarih'
+  const sonIs = (f: (typeof sonuc)[number]) => Math.max(f.sonAcilma ?? 0, f.degistirilme)
   sonuc.sort((a, b) =>
     siralama === 'ad' ? a.ad.localeCompare(b.ad, 'tr', { numeric: true })
     : siralama === 'boyut' ? b.boyut - a.boyut
+    : siralama === 'son' ? sonIs(b) - sonIs(a)
     : b.degistirilme - a.degistirilme,
   )
-  return { toplam: sonuc.length, dosyalar: sonuc.slice(0, q.limit ?? 500) }
+  return { toplam: sonuc.length, dosyalar: sonuc.slice(0, q.limit ?? 500), statuSayilari }
 }
 
 /** Taşıma/yeniden adlandırma sonrası dizindeki yolları günceller (yeniden tarama gerekmeden). */
 export async function yollariGuncelle(degisiklikler: { eski: string; yeni: string }[]) {
+  await yollariTasi(degisiklikler)
   const d = await yukle()
   if (!d || degisiklikler.length === 0) return
   const win = process.platform === 'win32'

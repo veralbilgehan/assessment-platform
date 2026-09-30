@@ -18,7 +18,11 @@ export interface Tercihler {
   tema: Tema
   dil: Dil
   aiOnerileriAcik: boolean
+  /** Modül 3: son N gün içinde değişen dosyalar otomatik olarak "Yeni Proje" sayılır */
+  projeEsikGun?: number
 }
+
+export const VARSAYILAN_PROJE_ESIK_GUN = 30
 
 export interface UygulamaDurumu {
   kurulumTamamlandi: boolean
@@ -74,20 +78,40 @@ export interface DosyaKaydi {
   degistirilme: number
 }
 
+// ── Modül 3: Proje statüsü ─────────────────────────────────────
+
+export type ProjeStatusu = 'yeni' | 'tamamlandi'
+
+export interface ProjeDosyasi extends DosyaKaydi {
+  statu: ProjeStatusu
+  statuOtomatik: boolean // kullanıcı işaretlemediyse tarihe göre tahmin edildi
+  korumali: boolean // tamamlanmış dosya salt okunur yapıldı
+  sonAcilma?: number
+}
+
 export interface DizinOzeti {
   olusturulma: string
   kokler: string[]
   toplamDosya: number
   toplamBoyut: number
   kesildi: boolean // dosya limiti veya iptal nedeniyle yarım kaldıysa
-  kategoriler: Partial<Record<KategoriId, { adet: number; boyut: number }>>
+  kategoriler: Partial<Record<KategoriId, { adet: number; boyut: number; yeni: number }>>
 }
 
 export interface DosyaSorgusu {
   kategori?: KategoriId
+  kategoriler?: KategoriId[]
+  statu?: ProjeStatusu
   arama?: string
-  siralama?: 'tarih' | 'ad' | 'boyut'
+  /** 'son' = son açılma veya son değişiklik (hangisi yeniyse) — "kaldığın yerden devam et" */
+  siralama?: 'tarih' | 'ad' | 'boyut' | 'son'
   limit?: number
+}
+
+export interface SorguSonucu {
+  toplam: number
+  dosyalar: ProjeDosyasi[]
+  statuSayilari: Record<ProjeStatusu, number> // statü filtresinden önceki sayılar (sekme rozetleri için)
 }
 
 export interface TaramaIlerlemesi {
@@ -122,6 +146,9 @@ export const IPC = {
   taramaIptal: 'dizin:iptal',
   dizinOzeti: 'dizin:ozet',
   dosyaSorgula: 'dizin:sorgula',
+  statuAyarla: 'proje:statu',
+  korumaAyarla: 'proje:koruma',
+  tercihleriKaydet: 'tercihler:kaydet',
 } as const
 
 export interface WorkspaceApi {
@@ -144,7 +171,13 @@ export interface WorkspaceApi {
   taramaBaslat(kokler?: string[]): Promise<DizinOzeti>
   taramaIptal(): Promise<void>
   dizinOzeti(): Promise<DizinOzeti | null>
-  dosyaSorgula(sorgu: DosyaSorgusu): Promise<{ toplam: number; dosyalar: DosyaKaydi[] }>
+  dosyaSorgula(sorgu: DosyaSorgusu): Promise<SorguSonucu>
+
+  /** null → elle işaretlemeyi kaldır, otomatik tahmine dön */
+  statuAyarla(yollar: string[], statu: ProjeStatusu | null): Promise<void>
+  /** Salt okunur koruma — tamamlanmış dosyaların yanlışlıkla değişmesini önler */
+  korumaAyarla(yollar: string[], korumali: boolean): Promise<void>
+  tercihleriKaydet(tercihler: Tercihler): Promise<UygulamaDurumu>
 
   olayDinle<K extends keyof OlayHaritasi>(kanal: K, dinleyici: (veri: OlayHaritasi[K]) => void): () => void
 }

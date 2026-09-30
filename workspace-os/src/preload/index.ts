@@ -23,6 +23,9 @@ const api: WorkspaceApi = {
   taramaIptal: () => ipcRenderer.invoke(IPC.taramaIptal),
   dizinOzeti: () => ipcRenderer.invoke(IPC.dizinOzeti),
   dosyaSorgula: (q) => ipcRenderer.invoke(IPC.dosyaSorgula, q),
+  statuAyarla: (yollar, statu) => ipcRenderer.invoke(IPC.statuAyarla, yollar, statu),
+  korumaAyarla: (yollar, korumali) => ipcRenderer.invoke(IPC.korumaAyarla, yollar, korumali),
+  tercihleriKaydet: (tercihler) => ipcRenderer.invoke(IPC.tercihleriKaydet, tercihler),
 
   olayDinle: (kanal, dinleyici) => {
     if (!OLAY_KANALLARI.includes(kanal)) throw new Error(`Bilinmeyen olay kanalı: ${kanal}`)

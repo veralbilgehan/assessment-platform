@@ -12,20 +12,22 @@ export interface Kategori {
   ikon: string
   renk: string
   uzantilar: string[]
+  /** Modül 3: bu kategorideki dosyalar "Yeni Projeler / Tamamlananlar" olarak takip edilir */
+  projeTakibi?: boolean
 }
 
 export const KATEGORILER: Kategori[] = [
-  { id: 'word', ad: 'Word Belgeleri', ikon: '📘', renk: '#2b579a', uzantilar: ['doc', 'docx', 'docm', 'dot', 'dotx', 'dotm', 'odt', 'rtf', 'pages', 'wps'] },
-  { id: 'metin', ad: 'Metin Dosyaları', ikon: '📝', renk: '#64748b', uzantilar: ['txt', 'md', 'markdown', 'log', 'rst', 'tex', 'nfo', 'text'] },
-  { id: 'excel', ad: 'Excel & Tablolar', ikon: '📗', renk: '#217346', uzantilar: ['xls', 'xlsx', 'xlsm', 'xlsb', 'xlt', 'xltx', 'xltm', 'csv', 'tsv', 'ods', 'numbers'] },
-  { id: 'sunum', ad: 'Sunumlar', ikon: '📙', renk: '#d24726', uzantilar: ['ppt', 'pptx', 'pptm', 'pps', 'ppsx', 'pot', 'potx', 'odp', 'key'] },
-  { id: 'pdf', ad: 'PDF', ikon: '📕', renk: '#b91c1c', uzantilar: ['pdf', 'xps', 'oxps'] },
+  { id: 'word', ad: 'Word Belgeleri', ikon: '📘', renk: '#2b579a', projeTakibi: true, uzantilar: ['doc', 'docx', 'docm', 'dot', 'dotx', 'dotm', 'odt', 'rtf', 'pages', 'wps'] },
+  { id: 'metin', ad: 'Metin Dosyaları', ikon: '📝', renk: '#64748b', projeTakibi: true, uzantilar: ['txt', 'md', 'markdown', 'log', 'rst', 'tex', 'nfo', 'text'] },
+  { id: 'excel', ad: 'Excel & Tablolar', ikon: '📗', renk: '#217346', projeTakibi: true, uzantilar: ['xls', 'xlsx', 'xlsm', 'xlsb', 'xlt', 'xltx', 'xltm', 'csv', 'tsv', 'ods', 'numbers'] },
+  { id: 'sunum', ad: 'Sunumlar', ikon: '📙', renk: '#d24726', projeTakibi: true, uzantilar: ['ppt', 'pptx', 'pptm', 'pps', 'ppsx', 'pot', 'potx', 'odp', 'key'] },
+  { id: 'pdf', ad: 'PDF', ikon: '📕', renk: '#b91c1c', projeTakibi: true, uzantilar: ['pdf', 'xps', 'oxps'] },
   {
-    id: 'kod', ad: 'Kod', ikon: '💻', renk: '#7c3aed',
+    id: 'kod', projeTakibi: true, ad: 'Kod', ikon: '💻', renk: '#7c3aed',
     uzantilar: ['js', 'jsx', 'ts', 'tsx', 'mjs', 'cjs', 'py', 'ipynb', 'java', 'kt', 'kts', 'c', 'h', 'cpp', 'cc', 'hpp', 'cs', 'go', 'rs', 'rb', 'php', 'swift', 'dart', 'html', 'htm', 'css', 'scss', 'sass', 'less', 'vue', 'svelte', 'sh', 'bash', 'bat', 'cmd', 'ps1', 'lua', 'r', 'scala', 'pl', 'vb', 'vbs', 'asm', 'gradle'],
   },
   {
-    id: 'veri', ad: 'Veri & Yapılandırma', ikon: '🧩', renk: '#0891b2',
+    id: 'veri', projeTakibi: true, ad: 'Veri & Yapılandırma', ikon: '🧩', renk: '#0891b2',
     uzantilar: ['json', 'jsonl', 'xml', 'yaml', 'yml', 'toml', 'ini', 'cfg', 'conf', 'env', 'sql', 'db', 'sqlite', 'sqlite3', 'mdb', 'accdb', 'parquet', 'avro', 'geojson', 'kml', 'gpx', 'properties'],
   },
   {
@@ -36,7 +38,7 @@ export const KATEGORILER: Kategori[] = [
   { id: 'ses', ad: 'Ses & Müzik', ikon: '🎵', renk: '#16a34a', uzantilar: ['mp3', 'wav', 'flac', 'aac', 'ogg', 'oga', 'm4a', 'wma', 'opus', 'aiff', 'aif', 'mid', 'midi', 'amr'] },
   { id: 'arsiv', ad: 'Arşivler', ikon: '🗜️', renk: '#a16207', uzantilar: ['zip', 'rar', '7z', 'tar', 'gz', 'tgz', 'bz2', 'xz', 'zst', 'iso', 'img', 'cab', 'dmg'] },
   {
-    id: 'tasarim', ad: 'Tasarım & 3D', ikon: '🎨', renk: '#c026d3',
+    id: 'tasarim', projeTakibi: true, ad: 'Tasarım & 3D', ikon: '🎨', renk: '#c026d3',
     uzantilar: ['psd', 'ai', 'eps', 'indd', 'fig', 'sketch', 'xd', 'afdesign', 'afphoto', 'cdr', 'dwg', 'dxf', 'blend', 'fbx', 'obj', 'stl', 'skp', '3mf'],
   },
   { id: 'eposta', ad: 'E-posta & Kişiler', ikon: '✉️', renk: '#2563eb', uzantilar: ['eml', 'msg', 'pst', 'ost', 'mbox', 'vcf', 'ics'] },
@@ -45,6 +47,8 @@ export const KATEGORILER: Kategori[] = [
   { id: 'font', ad: 'Yazı Tipleri', ikon: '🔤', renk: '#57534e', uzantilar: ['ttf', 'otf', 'woff', 'woff2', 'fon'] },
   { id: 'diger', ad: 'Diğer', ikon: '📄', renk: '#9ca3af', uzantilar: [] },
 ]
+
+export const PROJE_KATEGORILERI = KATEGORILER.filter((k) => k.projeTakibi).map((k) => k.id)
 
 export const KATEGORI_HARITASI = Object.fromEntries(KATEGORILER.map((k) => [k.id, k])) as Record<KategoriId, Kategori>
 

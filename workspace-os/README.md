@@ -22,6 +22,7 @@ src/
     dosyaIslemleri.ts     Listeleme, klasör oluşturma, yeniden adlandırma, taşıma
     tarayici.ts           Kaynak klasörleri tarayıp dosyaları sınıflandırır
     dizinDeposu.ts        Taranan dosya dizini (özet + sayfalı sorgu)
+    statuDeposu.ts        Proje statüleri (Yeni / Tamamlandı), koruma, son açılma
     ipc/                  Modül başına IPC kayıtları
   preload/                contextBridge ile dar `window.workspace` API'si
   renderer/src/
@@ -30,6 +31,7 @@ src/
     moduller/kurulum/     Modül 1 — Kurulum sihirbazı
     moduller/masaustu/    Kabuk (kenar çubuğu) + Ana Sayfa
     moduller/dosyalar/    Modül 2 — Sürücüler, klasör gezgini, Kütüphane
+    moduller/projeler/    Modül 3 — Projeler, ortak ProjeListesi bileşeni
 ```
 
 ### Yeni modül eklemek
@@ -43,4 +45,10 @@ src/
 ### Yeni dosya türü eklemek
 `src/shared/kategoriler.ts` içindeki ilgili kategorinin `uzantilar` listesine ekle (veya yeni kategori tanımla).
 
-Durum `%APPDATA%/Workspace OS/durum.json`, dosya dizini `dizin.json` dosyasında saklanır.
+### Proje statüsü nasıl belirlenir?
+Elle işaretlenmemiş dosyalar, son değiştirilme tarihine göre otomatik sınıflanır: son N gün (varsayılan 30,
+Projeler ekranından değiştirilebilir) içinde değişenler **Yeni Projeler**, diğerleri **Tamamlananlar**.
+Elle işaretleme yeniden taramada ve taşıma/yeniden adlandırmada korunur. Takip edilen kategoriler
+`kategoriler.ts` içinde `projeTakibi: true` ile belirlenir.
+
+Durum `%APPDATA%/Workspace OS/durum.json`, dosya dizini `dizin.json`, proje statüleri `statuler.json` dosyasında saklanır.

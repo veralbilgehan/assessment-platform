@@ -47,6 +47,8 @@ function ipcKaydet() {
 
   ipcMain.handle(IPC.kurulumSifirla, () => durumSifirla())
 
+  ipcMain.handle(IPC.tercihleriKaydet, async (_e, tercihler: Tercihler) => durumYaz({ ...(await durumOku()), tercihler }))
+
   ipcMain.handle(IPC.kaynaklariKaydet, async (_e, kaynaklar: string[]) => durumYaz({ ...(await durumOku()), kaynaklar }))
 
   ipcMain.handle(IPC.sistemBilgisi, () => ({

@@ -1,10 +1,11 @@
 import { BrowserWindow, dialog, ipcMain, shell } from 'electron'
-import { IPC, type DosyaSorgusu, type OlayHaritasi } from '@shared/tipler'
+import { IPC, type DosyaSorgusu, type OlayHaritasi, type ProjeStatusu } from '@shared/tipler'
 import { durumOku } from '../durumDeposu'
 import { klasorListele, klasorOlustur, tasi, yenidenAdlandir } from '../dosyaIslemleri'
 import { onemliKlasorleriGetir, surucuIzle, suruculeriGetir } from '../suruculer'
 import { tara } from '../tarayici'
 import { dizinOzeti, dizinYaz, dosyaSorgula, yollariGuncelle } from '../dizinDeposu'
+import { acildiIsaretle, korumaAyarla, statuAyarla } from '../statuDeposu'
 
 function yayinla<K extends keyof OlayHaritasi>(kanal: K, veri: OlayHaritasi[K]) {
   for (const p of BrowserWindow.getAllWindows()) p.webContents.send(kanal, veri)
@@ -34,6 +35,7 @@ export function dosyaIpcKaydet() {
   ipcMain.handle(IPC.dosyaAc, async (_e, yol: string) => {
     const hata = await shell.openPath(yol)
     if (hata) throw new Error(hata)
+    await acildiIsaretle(yol) // "kaldığın yerden devam et" sıralaması için
   })
   ipcMain.handle(IPC.klasordeGoster, (_e, yol: string) => shell.showItemInFolder(yol))
 
@@ -65,6 +67,8 @@ export function dosyaIpcKaydet() {
   })
   ipcMain.handle(IPC.dizinOzeti, () => dizinOzeti())
   ipcMain.handle(IPC.dosyaSorgula, (_e, q: DosyaSorgusu) => dosyaSorgula(q))
+  ipcMain.handle(IPC.statuAyarla, (_e, yollar: string[], statu: ProjeStatusu | null) => statuAyarla(yollar, statu))
+  ipcMain.handle(IPC.korumaAyarla, (_e, yollar: string[], korumali: boolean) => korumaAyarla(yollar, korumali))
 
   surucuIzle(() => yayinla('suruculer:degisti', null))
 }
