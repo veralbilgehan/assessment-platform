@@ -17,6 +17,10 @@ import Ayarlar from './pages/Ayarlar.jsx';
 import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
 import TestCoz from './pages/TestCoz.jsx';
+import Kullanicilar from './pages/Kullanicilar.jsx';
+import EmailSablonlari from './pages/EmailSablonlari.jsx';
+import SifreSifirla from './pages/SifreSifirla.jsx';
+import DavetKabul from './pages/DavetKabul.jsx';
 
 const qc = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -63,6 +67,8 @@ function MainApp() {
           {tab === 'deneme'          && <UcretsizDenemeTesti />}
           {tab === 'evrak'           && <EvrakKutusu />}
           {tab === 'ayarlar'         && <Ayarlar />}
+          {tab === 'kullanicilar'    && <Kullanicilar />}
+          {tab === 'sablonlar'       && <EmailSablonlari />}
         </main>
       </div>
     </div>
@@ -81,6 +87,8 @@ export default function App() {
               <ProtectedRoute><MainApp /></ProtectedRoute>
             } />
             <Route path="/test" element={<TestCoz />} />
+            <Route path="/sifre-sifirla" element={<SifreSifirla />} />
+            <Route path="/davet" element={<DavetKabul />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>

@@ -16,6 +16,8 @@ const kiyaslamalarRouter     = require('./routes/kiyaslamalar');
 const denemeRouter           = require('./routes/deneme');
 const evrakKutusuRouter      = require('./routes/evrakKutusu');
 const ayarlarRouter          = require('./routes/ayarlar');
+const kullanicilarRouter     = require('./routes/kullanicilar');
+const emailSablonlariRouter  = require('./routes/emailSablonlari');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -45,6 +47,8 @@ app.use('/api/kiyaslamalar',     kiyaslamalarRouter);
 app.use('/api/deneme',           denemeRouter);
 app.use('/api/evrak',            evrakKutusuRouter);
 app.use('/api/ayarlar',          ayarlarRouter);
+app.use('/api/kullanicilar',     kullanicilarRouter);
+app.use('/api/email-sablonlari', emailSablonlariRouter);
 
 // Statik frontend dosyaları (production)
 const FRONTEND_DIST = path.join(__dirname, '../../frontend-react/dist');

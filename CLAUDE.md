@@ -31,6 +31,7 @@ cd backend
 node src/db/migrate.js    # migration 002 + admin user seed
 node src/db/migrate4.js   # migration 004
 node src/db/migrate5.js   # migration 005
+node src/db/migrate6.js   # migration 006 — kullanıcı yönetimi, davetler, e-posta şablonları
 ```
 
 ### Docker (production)
@@ -90,10 +91,17 @@ A keepalive `setInterval` writes `: ping\n\n` every 20 s to prevent proxy/Cloud 
 | `/api/kiyaslamalar` | kiyaslamalar.js — head-to-head CV comparison with AI scoring (SSE) |
 | `/api/deneme` | deneme.js — free trial test flow |
 | `/api/evrak` | evrakKutusu.js — document inbox |
+| `/api/ayarlar` | ayarlar.js — SMTP settings (admin) |
+| `/api/kullanicilar` | kullanicilar.js — user list/create/update, sign-up approval, invitations (admin) |
+| `/api/email-sablonlari` | emailSablonlari.js — editable email templates + preview (admin) |
+
+`/api/auth` also exposes the public flows `sifremi-unuttum`, `sifre-sifirla`, `kayit-ol` (account starts inactive until an admin approves it), `davet/:token` and `davet-kabul`. One-time link tokens are stored only as SHA-256 hashes (`kullanici_tokenlari`, `davetler`).
+
+**Email templates:** defaults live in `src/services/emailSablonlari.js`; admin edits are stored in `email_sablonlari` and override them. Send with `sablonluGonder({ anahtar, alici, aliciAd, degiskenler })` from `emailService.js`; `{{degisken}}` values are HTML-escaped.
 
 ### Frontend
 
-**Routing:** Three top-level routes (`/`, `/giris`, `/app`). The entire authenticated experience lives on `/app` with tab-based navigation — active tab is `useState` in `App.jsx`, not URL segments.
+**Routing:** Top-level routes `/`, `/giris`, `/app`, plus public `/test` (candidate test), `/sifre-sifirla` and `/davet` (email links). The entire authenticated experience lives on `/app` with tab-based navigation — active tab is `useState` in `App.jsx`, not URL segments.
 
 **Auth state:** `src/context/AuthContext.jsx` — stores JWT and user object in `localStorage`. Provides `{ user, token, girisYap, cikisYap, girisli }` via `useAuth()`.
 
@@ -113,6 +121,7 @@ DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
 JWT_SECRET
 ANTHROPIC_API_KEY
 PORT                     # 3001 locally, 8080 in Docker
+APP_URL                  # public base URL used in email links (e.g. https://app.sirket.com); falls back to the request host
 SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, EMAIL_FROM   # optional — email features disabled if absent
 ```
 

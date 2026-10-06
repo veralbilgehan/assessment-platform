@@ -26,6 +26,14 @@ export function AuthProvider({ children }) {
     return data.kullanici;
   }, []);
 
+  // Davet kabulü gibi token'ı doğrudan dönen akışlar için
+  const oturumAc = useCallback((yeniToken, kullanici) => {
+    localStorage.setItem('token', yeniToken);
+    localStorage.setItem('kullanici', JSON.stringify(kullanici));
+    setToken(yeniToken);
+    setUser(kullanici);
+  }, []);
+
   const cikisYap = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('kullanici');
@@ -36,7 +44,7 @@ export function AuthProvider({ children }) {
   const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
 
   return (
-    <AuthCtx.Provider value={{ user, token, authHeader, girisYap, cikisYap, girisli: !!user }}>
+    <AuthCtx.Provider value={{ user, token, authHeader, girisYap, oturumAc, cikisYap, girisli: !!user }}>
       {children}
     </AuthCtx.Provider>
   );

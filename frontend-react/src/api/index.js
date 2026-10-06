@@ -41,3 +41,32 @@ export const apiGiris       = (e, s) => client.post('/api/auth/giris', { eposta:
 export const apiBen         = ()     => client.get('/api/auth/ben').then(r => r.data);
 export const apiKullanicilar= ()     => client.get('/api/auth/kullanicilar').then(r => r.data);
 export const apiKayit       = (d)    => client.post('/api/auth/kayit', d).then(r => r.data);
+
+// Axios hatasından API'nin Türkçe mesajını çıkar
+export const hataMesaji = (err) =>
+  err?.response?.data?.hata || err?.response?.data?.hatalar?.[0]?.msg || err?.message || 'Beklenmeyen bir hata oluştu';
+
+// ── Şifre sıfırlama, kayıt talebi, davet kabul (herkese açık) ─────────
+export const apiSifremiUnuttum = (eposta)      => client.post('/api/auth/sifremi-unuttum', { eposta }).then(r => r.data);
+export const apiSifreSifirla   = (token, yeni) => client.post('/api/auth/sifre-sifirla', { token, yeni }).then(r => r.data);
+export const apiKayitOl        = (d)           => client.post('/api/auth/kayit-ol', d).then(r => r.data);
+export const apiDavetBilgi     = (token)       => client.get(`/api/auth/davet/${encodeURIComponent(token)}`).then(r => r.data);
+export const apiDavetKabul     = (d)           => client.post('/api/auth/davet-kabul', d).then(r => r.data);
+
+// ── Kullanıcı yönetimi (admin) ─────────────────────────────────────────
+export const getKullaniciListesi   = (params = {}) => client.get('/api/kullanicilar', { params }).then(r => r.data);
+export const postKullanici         = (d)           => client.post('/api/kullanicilar', d).then(r => r.data);
+export const patchKullanici        = (id, d)       => client.patch(`/api/kullanicilar/${id}`, d).then(r => r.data);
+export const deleteKayitTalebi     = (id)          => client.delete(`/api/kullanicilar/${id}`).then(r => r.data);
+export const postSifreSifirlamaGonder = (id)       => client.post(`/api/kullanicilar/${id}/sifre-sifirlama`).then(r => r.data);
+export const getDavetler           = ()            => client.get('/api/kullanicilar/davetler').then(r => r.data);
+export const postDavet             = (d)           => client.post('/api/kullanicilar/davetler', d).then(r => r.data);
+export const postDavetYenidenGonder= (id)          => client.post(`/api/kullanicilar/davetler/${id}/yeniden-gonder`).then(r => r.data);
+export const postDavetIptal        = (id)          => client.post(`/api/kullanicilar/davetler/${id}/iptal`).then(r => r.data);
+
+// ── E-posta şablonları (admin) ─────────────────────────────────────────
+export const getEmailSablonlari = ()          => client.get('/api/email-sablonlari').then(r => r.data);
+export const getEmailSablonu    = (anahtar)   => client.get(`/api/email-sablonlari/${anahtar}`).then(r => r.data);
+export const putEmailSablonu    = (anahtar, d)=> client.put(`/api/email-sablonlari/${anahtar}`, d).then(r => r.data);
+export const deleteEmailSablonu = (anahtar)   => client.delete(`/api/email-sablonlari/${anahtar}`).then(r => r.data);
+export const postEmailOnizle    = (d)         => client.post('/api/email-sablonlari/onizle', d).then(r => r.data);
