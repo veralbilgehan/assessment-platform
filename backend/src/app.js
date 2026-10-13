@@ -16,6 +16,7 @@ const kiyaslamalarRouter     = require('./routes/kiyaslamalar');
 const denemeRouter           = require('./routes/deneme');
 const evrakKutusuRouter      = require('./routes/evrakKutusu');
 const ayarlarRouter          = require('./routes/ayarlar');
+const cvlerRouter            = require('./routes/cvler');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -45,6 +46,7 @@ app.use('/api/kiyaslamalar',     kiyaslamalarRouter);
 app.use('/api/deneme',           denemeRouter);
 app.use('/api/evrak',            evrakKutusuRouter);
 app.use('/api/ayarlar',          ayarlarRouter);
+app.use('/api/cvler',            cvlerRouter);
 
 // Statik frontend dosyaları (production)
 const FRONTEND_DIST = path.join(__dirname, '../../frontend-react/dist');

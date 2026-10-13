@@ -31,6 +31,7 @@ cd backend
 node src/db/migrate.js    # migration 002 + admin user seed
 node src/db/migrate4.js   # migration 004
 node src/db/migrate5.js   # migration 005
+node src/db/migrate6.js   # migration 006 (CV builder)
 ```
 
 ### Docker (production)
@@ -90,6 +91,7 @@ A keepalive `setInterval` writes `: ping\n\n` every 20 s to prevent proxy/Cloud 
 | `/api/kiyaslamalar` | kiyaslamalar.js — head-to-head CV comparison with AI scoring (SSE) |
 | `/api/deneme` | deneme.js — free trial test flow |
 | `/api/evrak` | evrakKutusu.js — document inbox |
+| `/api/cvler` | cvler.js — CV builder CRUD (education, certificates, experience, 4M skills, competencies); owner-scoped, admin sees all |
 
 ### Frontend
 

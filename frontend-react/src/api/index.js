@@ -41,3 +41,10 @@ export const apiGiris       = (e, s) => client.post('/api/auth/giris', { eposta:
 export const apiBen         = ()     => client.get('/api/auth/ben').then(r => r.data);
 export const apiKullanicilar= ()     => client.get('/api/auth/kullanicilar').then(r => r.data);
 export const apiKayit       = (d)    => client.post('/api/auth/kayit', d).then(r => r.data);
+
+// ── CV Oluşturucu ────────────────────────────────────────────────────
+export const getCVler  = ()         => client.get('/api/cvler').then(r => r.data);
+export const getCV     = (id)       => client.get(`/api/cvler/${id}`).then(r => r.data);
+export const postCV    = (data)     => client.post('/api/cvler', data).then(r => r.data);
+export const putCV     = (id, data) => client.put(`/api/cvler/${id}`, data).then(r => r.data);
+export const deleteCV  = (id)       => client.delete(`/api/cvler/${id}`).then(r => r.data);
