@@ -221,7 +221,7 @@ export default function CVOlustur() {
     onSuccess: (kayit) => {
       setSeciliId(kayit.id);
       qc.invalidateQueries({ queryKey: ['cvler'] });
-      setMesaj({ tip: 'ok', metin: 'CV kaydedildi.' });
+      setMesaj({ tip: 'ok', metin: kayit.yerel ? 'CV bu tarayıcıya kaydedildi (veritabanı bağlı değil).' : 'CV kaydedildi.' });
     },
     onError: (e) => {
       const d = e.response?.data;
@@ -285,7 +285,9 @@ export default function CVOlustur() {
             color: seciliId === c.id ? 'var(--accent)' : 'var(--text)',
           }}>
             <div style={{ fontSize: 12.5, fontWeight: 600 }}>{c.ad_soyad}</div>
-            <div style={{ fontSize: 11, color: 'var(--muted)' }}>{c.unvan || '—'}</div>
+            <div style={{ fontSize: 11, color: 'var(--muted)' }}>
+              {c.unvan || '—'}{c.yerel && <span title="Bu tarayıcıda saklanıyor"> · 💾 yerel</span>}
+            </div>
           </button>
         ))}
       </div>
