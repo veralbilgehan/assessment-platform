@@ -10,22 +10,25 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    # Adım düzeyindeki `if` içinde `secrets` kullanılamaz; kontrol iş düzeyinde env'e alınır.
+    env:
+      HAS_GCP: ${{ secrets.GCP_SA_KEY != '' && secrets.GCP_SERVICE_NAME != '' }}
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Google Auth
-        if: secrets.GCP_SA_KEY && secrets.GCP_SERVICE_NAME
+        if: env.HAS_GCP == 'true'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
-        if: secrets.GCP_SA_KEY && secrets.GCP_SERVICE_NAME
+        if: env.HAS_GCP == 'true'
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Deploy to Cloud Run
-        if: secrets.GCP_SA_KEY && secrets.GCP_SERVICE_NAME
+        if: env.HAS_GCP == 'true'
         id: deploy
         uses: google-github-actions/deploy-cloudrun@v2
         with:
@@ -55,9 +58,9 @@ jobs:
             EMAIL_FROM=${{ secrets.EMAIL_FROM }}
 
       - name: Show deployed URL
-        if: secrets.GCP_SA_KEY && secrets.GCP_SERVICE_NAME
+        if: env.HAS_GCP == 'true'
         run: echo "Deployed to ${{ steps.deploy.outputs.url }}"
 
       - name: Deployment skipped
-        if: '!secrets.GCP_SA_KEY || !secrets.GCP_SERVICE_NAME'
+        if: env.HAS_GCP != 'true'
         run: echo "GCP_SA_KEY veya GCP_SERVICE_NAME tanımlı olmadığı için deploy adımları atlandı."
