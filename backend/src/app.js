@@ -2,6 +2,7 @@ require('dotenv').config({ override: true });
 const express = require('express');
 const cors    = require('cors');
 const path    = require('path');
+const fs      = require('fs');
 const pool    = require('./db/pool');
 const { errorHandler } = require('./middleware/errorHandler');
 
@@ -62,6 +63,11 @@ app.get('*', (req, res) => {
 
 // Hata yakalayıcı
 app.use(errorHandler);
+
+// CV Oluşturucu tablosu (migration 006) — idempotent, her açılışta güvenle çalışır
+pool.query(fs.readFileSync(path.join(__dirname, 'db/migrations/006_cv_olusturucu.sql'), 'utf8'))
+  .then(() => console.log('✓ Migration 006 (cv_profilleri) hazır'))
+  .catch(err => console.error('Migration 006 uygulanamadı:', err.message));
 
 app.listen(PORT, () => {
   console.log(`\nSunucu çalışıyor → http://localhost:${PORT}`);
