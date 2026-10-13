@@ -43,9 +43,9 @@ export async function getCVler() {
   try {
     const sunucu = (await client.get('/api/cvler')).data;
     return [...yerel, ...sunucu];
-  } catch (e) {
-    if (sunucuYok(e)) return yerel;
-    throw e;
+  } catch {
+    // Sunucu yoksa ya da oturum geçersizse (401) yerel CV'ler yine de görünür kalmalı
+    return yerel;
   }
 }
 
