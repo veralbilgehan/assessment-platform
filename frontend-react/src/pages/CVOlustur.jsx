@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCVler, getCV, postCV, putCV, deleteCV } from '../api/index.js';
+import { getCVler, getCV, postCV, putCV, deleteCV, aktarCV } from '../api/index.js';
 
 /* ─── 4M Beceri Kategorileri ─────────────────────────── */
 const DORT_M = [
@@ -234,6 +234,17 @@ export default function CVOlustur() {
     onSuccess: () => { yeniCV(); qc.invalidateQueries({ queryKey: ['cvler'] }); },
   });
 
+  const aktar = useMutation({
+    mutationFn: aktarCV,
+    onSuccess: (kayit) => {
+      setSeciliId(kayit.id);
+      setCv(c => ({ ...c, yerel: false }));
+      qc.invalidateQueries({ queryKey: ['cvler'] });
+      setMesaj({ tip: 'ok', metin: 'CV veritabanına aktarıldı.' });
+    },
+    onError: (e) => setMesaj({ tip: 'hata', metin: e.response?.data?.hata || e.message }),
+  });
+
   async function ac(id) {
     const d = await getCV(id);
     setCv({ ...BOS_CV, ...Object.fromEntries(Object.entries(d).map(([k, v]) => [k, v ?? ''])) });
@@ -382,6 +393,13 @@ export default function CVOlustur() {
             {kaydet.isPending ? 'Kaydediliyor…' : seciliId ? 'Güncelle' : 'Kaydet'}
           </button>
           <button type="button" onClick={yazdir} style={ikincilBtn}>🖨️ Yazdır / PDF</button>
+          {String(seciliId).startsWith('yerel-') && (
+            <button type="button" style={ikincilBtn} disabled={aktar.isPending}
+              title="Önce Güncelle ile son değişiklikleri kaydedin"
+              onClick={() => aktar.mutate(seciliId)}>
+              {aktar.isPending ? 'Aktarılıyor…' : '☁️ Veritabanına aktar'}
+            </button>
+          )}
           {seciliId && (
             <button type="button" style={{ ...ikincilBtn, color: 'var(--red)' }}
               onClick={() => { if (confirm('Bu CV silinsin mi?')) sil.mutate(seciliId); }}>Sil</button>

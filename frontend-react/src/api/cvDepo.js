@@ -79,3 +79,23 @@ export async function deleteCV(id) {
   }
   return (await client.delete(`/api/cvler/${id}`)).data;
 }
+
+/**
+ * Yerel CV'yi veritabanına taşır. Sunucu kaydı başarılı olursa yerel kopya silinir;
+ * sunucu hâlâ yoksa hata fırlatır ve yerel kopya korunur.
+ */
+export async function aktarCV(id) {
+  const c = yerelOku().find(x => x.id === id);
+  if (!c) throw new Error('CV bulunamadı');
+  const veri = { ...c };
+  delete veri.id; delete veri.yerel; delete veri.guncelleme;
+  let kayit;
+  try {
+    kayit = (await client.post('/api/cvler', veri)).data;
+  } catch (e) {
+    if (sunucuYok(e)) throw new Error('Veritabanına ulaşılamadı; CV tarayıcıda kalmaya devam ediyor.', { cause: e });
+    throw e;
+  }
+  yerelYaz(yerelOku().filter(x => x.id !== id));
+  return kayit;
+}

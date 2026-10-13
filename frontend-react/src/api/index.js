@@ -43,4 +43,4 @@ export const apiKullanicilar= ()     => client.get('/api/auth/kullanicilar').the
 export const apiKayit       = (d)    => client.post('/api/auth/kayit', d).then(r => r.data);
 
 // ── CV Oluşturucu (veritabanı yoksa tarayıcıda saklar) ───────────────
-export { getCVler, getCV, postCV, putCV, deleteCV } from './cvDepo.js';
+export { getCVler, getCV, postCV, putCV, deleteCV, aktarCV } from './cvDepo.js';
