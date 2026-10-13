@@ -41,3 +41,6 @@ export const apiGiris       = (e, s) => client.post('/api/auth/giris', { eposta:
 export const apiBen         = ()     => client.get('/api/auth/ben').then(r => r.data);
 export const apiKullanicilar= ()     => client.get('/api/auth/kullanicilar').then(r => r.data);
 export const apiKayit       = (d)    => client.post('/api/auth/kayit', d).then(r => r.data);
+
+// ── CV Oluşturucu (veritabanı yoksa tarayıcıda saklar) ───────────────
+export { getCVler, getCV, postCV, putCV, deleteCV, aktarCV } from './cvDepo.js';

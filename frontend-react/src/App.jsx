@@ -14,6 +14,7 @@ import PerformansRaporu from './pages/PerformansRaporu.jsx';
 import UcretsizDenemeTesti from './pages/UcretsizDenemeTesti.jsx';
 import EvrakKutusu from './pages/EvrakKutusu.jsx';
 import Ayarlar from './pages/Ayarlar.jsx';
+import CVOlustur from './pages/CVOlustur.jsx';
 import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
 import TestCoz from './pages/TestCoz.jsx';
@@ -61,6 +62,7 @@ function MainApp() {
           {tab === 'kiyasla'         && <AdayKiyasla />}
           {tab === 'rapor'           && <PerformansRaporu />}
           {tab === 'deneme'          && <UcretsizDenemeTesti />}
+          {tab === 'cv'              && <CVOlustur />}
           {tab === 'evrak'           && <EvrakKutusu />}
           {tab === 'ayarlar'         && <Ayarlar />}
         </main>

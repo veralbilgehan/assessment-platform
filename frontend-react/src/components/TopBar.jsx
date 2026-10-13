@@ -9,6 +9,7 @@ const SAYFA_ADLARI = {
   kiyasla:         { etiket: 'Aday Kıyasla',           simge: '⚖️' },
   akis:            { etiket: 'Görev Akışı',            simge: '🔄' },
   rapor:           { etiket: 'Performans Raporu',      simge: '📊' },
+  cv:              { etiket: 'CV Oluşturucu',          simge: '🪪' },
   deneme:          { etiket: 'Ücretsiz Deneme Testi', simge: '🆓' },
   evrak:           { etiket: 'Evrak Kutusu',           simge: '📦' },
 };

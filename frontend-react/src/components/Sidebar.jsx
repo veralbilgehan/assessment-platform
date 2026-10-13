@@ -24,6 +24,7 @@ const NAV_GRUPLARI = [
   {
     baslik: 'ARAÇLAR',
     oğeler: [
+      { tab: 'cv',      simge: '🪪', etiket: 'CV Oluştur'    },
       { tab: 'deneme',  simge: '🆓', etiket: 'Deneme Testi'  },
       { tab: 'evrak',   simge: '📦', etiket: 'Evrak Kutusu'  },
       { tab: 'ayarlar', simge: '⚙️', etiket: 'Ayarlar', adminOnly: true },
