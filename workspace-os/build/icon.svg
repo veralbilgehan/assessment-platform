@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="z" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6b91ff"/>
+      <stop offset="1" stop-color="#3b5bdb"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#z)"/>
+  <!-- Dört çalışma alanı karesi: dosyalar, projeler, ofis, yapay zeka -->
+  <rect x="112" y="112" width="128" height="128" rx="28" fill="#fff"/>
+  <rect x="272" y="112" width="128" height="128" rx="28" fill="#fff" fill-opacity=".72"/>
+  <rect x="112" y="272" width="128" height="128" rx="28" fill="#fff" fill-opacity=".72"/>
+  <path d="M336 272l18 42 42 18-42 18-18 42-18-42-42-18 42-18z" fill="#fff"/>
+</svg>

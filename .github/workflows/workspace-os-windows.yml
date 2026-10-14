@@ -1,0 +1,67 @@
+name: Workspace OS — Windows kurulum dosyası
+
+# PR'larda: derler ve kurulum dosyasını artefakt olarak ekler (yayınlamaz).
+# "v*" etiketinde: kurulum dosyasını GitHub Release olarak yayınlar; kurulu uygulamalar
+# bu sürümü otomatik güncelleme ile alır.
+on:
+  push:
+    tags: ['v*']
+  pull_request:
+    paths:
+      - 'workspace-os/**'
+      - '.github/workflows/workspace-os-windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write # Release oluşturmak için
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: workspace-os
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: workspace-os/package-lock.json
+
+      - run: npm ci
+
+      - name: Tip denetimi
+        run: npm run typecheck
+
+      - name: Uygulamayı derle
+        run: npx electron-vite build
+
+      - name: Etiket ile sürüm uyumu
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          surum="v$(node -p "require('./package.json').version")"
+          if [ "$surum" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::Etiket (${GITHUB_REF_NAME}) package.json sürümüyle ($surum) aynı olmalı"
+            exit 1
+          fi
+
+      - name: Kurulum dosyası (yayınlamadan)
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        run: npx electron-builder --win --publish never
+
+      - name: Kurulum dosyası + GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: npx electron-builder --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Workspace-OS-Windows
+          path: |
+            workspace-os/release/*.exe
+            workspace-os/release/latest.yml
+          if-no-files-found: error
