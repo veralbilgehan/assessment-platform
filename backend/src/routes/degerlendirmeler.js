@@ -45,9 +45,15 @@ router.post('/',
 router.get('/:id', async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      `SELECT d.*, ms.ad AS sablon_adi
+      `SELECT d.*, ms.ad AS sablon_adi,
+              p.ad  AS pozisyon_adi,
+              dep.ad AS departman_adi,
+              s.ad   AS sektor_adi
        FROM degerlendirmeler d
        LEFT JOIN makale_sablonlari ms ON ms.id = d.sablon_id
+       LEFT JOIN pozisyonlar p        ON p.id   = d.pozisyon_id
+       LEFT JOIN departmanlar dep     ON dep.id  = p.departman_id
+       LEFT JOIN sektorler s          ON s.id    = dep.sektor_id
        WHERE d.id = $1`,
       [req.params.id]
     );
