@@ -1,0 +1,14 @@
+{
+  "name": "meet-teams-kayit-botu",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Google Meet ve Microsoft Teams toplantılarına katılıp sesini dosyaya kaydeden basit bot",
+  "main": "src/bot.js",
+  "scripts": {
+    "basla": "bash basla.sh",
+    "durdur": "bash durdur.sh"
+  },
+  "dependencies": {
+    "playwright": "^1.47.0"
+  }
+}
