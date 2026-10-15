@@ -25,9 +25,10 @@ npm run preview    # preview the production build locally
 ```
 
 ### Database migrations
-Each migration file is a standalone script — run the one(s) needed:
+Each migration file is a standalone script — run them in order on a fresh database:
 ```bash
 cd backend
+node src/db/migrate1.js   # migration 001: base schema, views, functions, seed data
 node src/db/migrate.js    # migration 002 + admin user seed
 node src/db/migrate4.js   # migration 004
 node src/db/migrate5.js   # migration 005
