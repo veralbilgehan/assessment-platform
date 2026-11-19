@@ -29,6 +29,10 @@ export const BELGE_KONU_SSE   = `${BASE}/api/belgeler/konu/olustur`;
 export const BELGE_PROFIL_SSE = `${BASE}/api/belgeler/profil/olustur`;
 export const BELGE_KARS_SSE   = `${BASE}/api/belgeler/karsilastir`;
 
+// ── Çoklu CV Karşılaştırma ───────────────────────────────────────────
+export const CV_KARSILASTIR_SSE       = `${BASE}/api/cv-karsilastir/stream`;
+export const CV_KARSILASTIR_KRITERLER = `${BASE}/api/cv-karsilastir/kriterler`;
+
 // ── Belgeler REST ────────────────────────────────────────────────────
 export const saveBelge   = (data)       => client.post('/api/belgeler', data).then(r => r.data);
 export const getBelgeler = ()           => client.get('/api/belgeler').then(r => r.data);

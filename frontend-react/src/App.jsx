@@ -10,6 +10,7 @@ import Degerlendirmeler from './pages/Degerlendirmeler.jsx';
 import BelgeAnaliz from './pages/BelgeAnaliz.jsx';
 import TestModulu from './pages/TestModulu.jsx';
 import AdayKiyasla from './pages/AdayKiyasla.jsx';
+import CVKarsilastir from './pages/CVKarsilastir.jsx';
 import PerformansRaporu from './pages/PerformansRaporu.jsx';
 import UcretsizDenemeTesti from './pages/UcretsizDenemeTesti.jsx';
 import EvrakKutusu from './pages/EvrakKutusu.jsx';
@@ -60,6 +61,7 @@ function MainApp() {
           {tab === 'belge'           && <BelgeAnaliz />}
           {tab === 'test'            && <TestModulu />}
           {tab === 'kiyasla'         && <AdayKiyasla />}
+          {tab === 'cvkarsilastir'   && <CVKarsilastir />}
           {tab === 'rapor'           && <PerformansRaporu />}
           {tab === 'deneme'          && <UcretsizDenemeTesti />}
           {tab === 'cv'              && <CVOlustur />}
