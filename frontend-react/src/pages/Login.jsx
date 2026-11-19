@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { apiSifremiUnuttum, apiKayitOl, hataMesaji } from '../api/index.js';
+import { Alan, SifreAlani, Uyari, AnaDugme, Baglanti } from '../components/FormAlanlari.jsx';
 
 /* ─── Logo SVG ───────────────────────────────────────── */
 function Logo({ size = 48 }) {
@@ -53,25 +55,63 @@ function DotPattern() {
 export default function Login() {
   const { girisYap } = useAuth();
   const navigate = useNavigate();
-  const [eposta, setEposta] = useState('');
-  const [sifre, setSifre] = useState('');
+  // 'giris' | 'unuttum' | 'kayit'
+  const [mod, setMod] = useState('giris');
+  const [form, setForm] = useState({ ad: '', soyad: '', sirket: '', eposta: '', sifre: '', sifre2: '' });
   const [hata, setHata] = useState('');
+  const [bilgi, setBilgi] = useState('');
   const [yukleniyor, setYukleniyor] = useState(false);
-  const [sifreGoster, setSifreGoster] = useState(false);
+
+  const alan = (k) => ({ value: form[k], onChange: e => setForm(f => ({ ...f, [k]: e.target.value })) });
+
+  function modDegistir(yeni) {
+    setMod(yeni);
+    setHata('');
+    setBilgi('');
+    setForm(f => ({ ...f, sifre: '', sifre2: '' }));
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setHata('');
+    setBilgi('');
+    if (mod === 'kayit' && form.sifre !== form.sifre2) {
+      setHata('Şifreler eşleşmiyor');
+      return;
+    }
     setYukleniyor(true);
     try {
-      await girisYap(eposta, sifre);
-      navigate('/app');
+      if (mod === 'giris') {
+        await girisYap(form.eposta, form.sifre);
+        navigate('/app');
+      } else if (mod === 'unuttum') {
+        const d = await apiSifremiUnuttum(form.eposta);
+        setBilgi(d.mesaj);
+      } else {
+        const d = await apiKayitOl({
+          ad: form.ad, soyad: form.soyad, sirket: form.sirket,
+          eposta: form.eposta, sifre: form.sifre,
+        });
+        modDegistir('giris');
+        setBilgi(d.mesaj);
+      }
     } catch (err) {
-      setHata(err.message);
+      setHata(mod === 'giris' ? err.message : hataMesaji(err));
     } finally {
       setYukleniyor(false);
     }
   }
+
+  const basliklar = {
+    giris:   ['Giriş Yapın', 'Hesabınıza erişmek için bilgilerinizi girin'],
+    unuttum: ['Şifremi Unuttum', 'E-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim'],
+    kayit:   ['Kayıt Olun', 'Talebiniz yönetici onayından sonra aktifleşir'],
+  };
+  const dugmeMetni = {
+    giris:   ['Giriş Yap →', 'Giriş yapılıyor...'],
+    unuttum: ['Sıfırlama Bağlantısı Gönder', 'Gönderiliyor...'],
+    kayit:   ['Kayıt Ol', 'Kaydediliyor...'],
+  };
 
   return (
     <div style={{
@@ -181,136 +221,78 @@ export default function Login() {
         background: 'var(--surface)',
         borderLeft: '1px solid var(--border)',
         position: 'relative',
+        overflowY: 'auto',
       }}>
         <div style={{ width: '100%', maxWidth: 360, margin: '0 auto' }}>
           {/* Form başlığı */}
           <div style={{ marginBottom: '2rem' }}>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text)', margin: '0 0 6px' }}>
-              Giriş Yapın
+              {basliklar[mod][0]}
             </h2>
             <p style={{ color: 'var(--muted)', fontSize: 13, margin: 0 }}>
-              Hesabınıza erişmek için bilgilerinizi girin
+              {basliklar[mod][1]}
             </p>
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* E-posta */}
-            <div style={{ marginBottom: '1.1rem' }}>
-              <label style={{
-                display: 'block', fontSize: 11, fontWeight: 700,
-                color: 'var(--muted)', marginBottom: 6, letterSpacing: '0.06em',
-              }}>
-                E-POSTA ADRESİ
-              </label>
-              <input
-                type="email"
-                value={eposta}
-                onChange={e => setEposta(e.target.value)}
-                required
-                placeholder="ornek@sirket.com"
-                style={{
-                  width: '100%', boxSizing: 'border-box',
-                  padding: '0.7rem 0.9rem', fontSize: 14,
-                  borderRadius: 8,
-                }}
-              />
-            </div>
+            {mod === 'kayit' && (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <Alan etiket="AD" zorunlu {...alan('ad')} />
+                  <Alan etiket="SOYAD" zorunlu {...alan('soyad')} />
+                </div>
+                <Alan etiket="ŞİRKET" placeholder="İsteğe bağlı" {...alan('sirket')} />
+              </>
+            )}
 
-            {/* Şifre */}
-            <div style={{ marginBottom: '1.75rem' }}>
-              <label style={{
-                display: 'block', fontSize: 11, fontWeight: 700,
-                color: 'var(--muted)', marginBottom: 6, letterSpacing: '0.06em',
-              }}>
-                ŞİFRE
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={sifreGoster ? 'text' : 'password'}
-                  value={sifre}
-                  onChange={e => setSifre(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  style={{
-                    width: '100%', boxSizing: 'border-box',
-                    padding: '0.7rem 2.5rem 0.7rem 0.9rem', fontSize: 14,
-                    borderRadius: 8,
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setSifreGoster(v => !v)}
-                  style={{
-                    position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    color: 'var(--muted)', fontSize: 14, padding: 4,
-                  }}
-                  title={sifreGoster ? 'Gizle' : 'Göster'}
-                >
-                  {sifreGoster ? '🙈' : '👁'}
-                </button>
-              </div>
-            </div>
+            <Alan etiket="E-POSTA ADRESİ" type="email" zorunlu placeholder="ornek@sirket.com" {...alan('eposta')} />
 
-            {/* Hata mesajı */}
-            {hata && (
-              <div style={{
-                background: 'rgba(239,68,68,0.10)',
-                border: '1px solid rgba(239,68,68,0.3)',
-                color: '#f87171',
-                borderRadius: 8, padding: '0.65rem 0.9rem',
-                fontSize: 13, marginBottom: '1.25rem',
-                display: 'flex', gap: 8, alignItems: 'flex-start',
-              }}>
-                <span>⚠️</span> {hata}
+            {mod !== 'unuttum' && (
+              <SifreAlani etiket="ŞİFRE" minLength={mod === 'kayit' ? 6 : undefined} {...alan('sifre')}
+                style={{ marginBottom: mod === 'giris' ? '0.5rem' : '1.1rem' }} />
+            )}
+            {mod === 'kayit' && (
+              <SifreAlani etiket="ŞİFRE (TEKRAR)" minLength={6} {...alan('sifre2')} />
+            )}
+
+            {mod === 'giris' && (
+              <div style={{ textAlign: 'right', fontSize: 12, marginBottom: '1.5rem' }}>
+                <Baglanti onClick={() => modDegistir('unuttum')}>Şifremi Unuttum</Baglanti>
               </div>
             )}
 
-            {/* Giriş butonu */}
-            <button
-              type="submit"
-              disabled={yukleniyor}
-              style={{
-                width: '100%', padding: '0.85rem',
-                background: yukleniyor
-                  ? 'var(--muted)'
-                  : 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
-                color: '#fff', border: 'none', borderRadius: 8,
-                fontSize: 14, fontWeight: 700,
-                cursor: yukleniyor ? 'wait' : 'pointer',
-                letterSpacing: '0.02em',
-                transition: 'opacity 0.2s, transform 0.1s',
-                boxShadow: yukleniyor ? 'none' : '0 4px 16px rgba(99,102,241,0.4)',
-              }}
-              onMouseEnter={e => { if (!yukleniyor) e.currentTarget.style.opacity = '0.9'; }}
-              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-            >
-              {yukleniyor ? '⏳ Giriş yapılıyor...' : 'Giriş Yap →'}
-            </button>
+            <Uyari tur="hata">{hata}</Uyari>
+            <Uyari tur="bilgi">{bilgi}</Uyari>
+
+            <AnaDugme yukleniyor={yukleniyor} yukleniyorMetni={dugmeMetni[mod][1]}>
+              {dugmeMetni[mod][0]}
+            </AnaDugme>
           </form>
 
-          {/* Demo bilgisi */}
-          <div style={{
-            marginTop: '1.5rem',
-            padding: '0.75rem 1rem',
-            background: 'var(--surface2)',
-            border: '1px solid var(--border)',
-            borderRadius: 8,
-          }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', marginBottom: 4, letterSpacing: '0.05em' }}>
-              🔑 DEMO HESABI
+          {mod === 'giris' && (
+            <div style={{
+              marginTop: '1.5rem',
+              padding: '0.75rem 1rem',
+              background: 'var(--surface2)',
+              border: '1px solid var(--border)',
+              borderRadius: 8,
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', marginBottom: 4, letterSpacing: '0.05em' }}>
+                🔑 DEMO HESABI
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', fontFamily: 'monospace' }}>
+                admin@sirket.com / Admin2024!
+              </div>
             </div>
-            <div style={{ fontSize: 12, color: 'var(--muted)', fontFamily: 'monospace' }}>
-              admin@sirket.com / Admin2024!
-            </div>
-          </div>
+          )}
 
           {/* Alt not */}
-          <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 11, marginTop: '1.5rem' }}>
-            Hesabınız yok mu?{' '}
-            <span style={{ color: 'var(--accent)', cursor: 'pointer' }}>
-              Yöneticinizle iletişime geçin
-            </span>
+          <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 12, marginTop: '1.5rem' }}>
+            {mod === 'giris' ? (
+              <>Hesabınız yok mu? <Baglanti onClick={() => modDegistir('kayit')}>Kayıt Ol</Baglanti></>
+            ) : (
+              <Baglanti onClick={() => modDegistir('giris')}>← Giriş ekranına dön</Baglanti>
+            )}
           </p>
         </div>
       </div>

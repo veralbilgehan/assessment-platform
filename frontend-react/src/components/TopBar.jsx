@@ -7,11 +7,15 @@ const SAYFA_ADLARI = {
   belge:           { etiket: 'Belge & Profil',         simge: '📄' },
   test:            { etiket: 'Test Modülü',            simge: '🧪' },
   kiyasla:         { etiket: 'Aday Kıyasla',           simge: '⚖️' },
+  cvkarsilastir:   { etiket: 'Çoklu CV Karşılaştırma', simge: '📑' },
   akis:            { etiket: 'Görev Akışı',            simge: '🔄' },
   rapor:           { etiket: 'Performans Raporu',      simge: '📊' },
   cv:              { etiket: 'CV Oluşturucu',          simge: '🪪' },
   deneme:          { etiket: 'Ücretsiz Deneme Testi', simge: '🆓' },
   evrak:           { etiket: 'Evrak Kutusu',           simge: '📦' },
+  kullanicilar:    { etiket: 'Kullanıcılar',           simge: '👥' },
+  sablonlar:       { etiket: 'E-posta Şablonları',     simge: '✉️' },
+  ayarlar:         { etiket: 'Ayarlar',                simge: '⚙️' },
 };
 
 const ROL_RENK = { admin: '#ef4444', degerlendirici: '#6366f1', izleyici: '#8892a4' };

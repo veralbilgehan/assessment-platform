@@ -18,6 +18,7 @@ const NAV_GRUPLARI = [
       { tab: 'belge',   simge: '📄', etiket: 'Belge & Profil' },
       { tab: 'test',    simge: '🧪', etiket: 'Test Modülü'    },
       { tab: 'kiyasla', simge: '⚖️', etiket: 'Aday Kıyasla'  },
+      { tab: 'cvkarsilastir', simge: '📑', etiket: 'Çoklu CV Karşılaştır' },
       { tab: 'rapor',   simge: '📊', etiket: 'Perf. Raporu'  },
     ],
   },
@@ -27,7 +28,14 @@ const NAV_GRUPLARI = [
       { tab: 'cv',      simge: '🪪', etiket: 'CV Oluştur'    },
       { tab: 'deneme',  simge: '🆓', etiket: 'Deneme Testi'  },
       { tab: 'evrak',   simge: '📦', etiket: 'Evrak Kutusu'  },
-      { tab: 'ayarlar', simge: '⚙️', etiket: 'Ayarlar', adminOnly: true },
+    ],
+  },
+  {
+    baslik: 'YÖNETİM',
+    oğeler: [
+      { tab: 'kullanicilar', simge: '👥', etiket: 'Kullanıcılar',        adminOnly: true },
+      { tab: 'sablonlar',    simge: '✉️', etiket: 'E-posta Şablonları',  adminOnly: true },
+      { tab: 'ayarlar',      simge: '⚙️', etiket: 'Ayarlar',             adminOnly: true },
     ],
   },
 ];
@@ -225,7 +233,7 @@ export default function Sidebar({ activeTab, onTabChange, selectedId, onSelect, 
 
       {/* ── Navigasyon listesi ── */}
       <div style={{ overflowY: 'auto', flex: 1 }}>
-        {NAV_GRUPLARI.map(grup => (
+        {NAV_GRUPLARI.filter(g => g.oğeler.some(o => !o.adminOnly || user?.rol === 'admin')).map(grup => (
           <div key={grup.baslik} style={{ padding: '0.75rem 0.6rem 0.25rem' }}>
             {/* Grup başlığı */}
             <div style={{

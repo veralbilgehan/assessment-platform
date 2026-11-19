@@ -18,6 +18,9 @@ const denemeRouter           = require('./routes/deneme');
 const evrakKutusuRouter      = require('./routes/evrakKutusu');
 const ayarlarRouter          = require('./routes/ayarlar');
 const cvlerRouter            = require('./routes/cvler');
+const cvKarsilastirRouter    = require('./routes/cvKarsilastir');
+const kullanicilarRouter     = require('./routes/kullanicilar');
+const emailSablonlariRouter  = require('./routes/emailSablonlari');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -48,6 +51,9 @@ app.use('/api/deneme',           denemeRouter);
 app.use('/api/evrak',            evrakKutusuRouter);
 app.use('/api/ayarlar',          ayarlarRouter);
 app.use('/api/cvler',            cvlerRouter);
+app.use('/api/cv-karsilastir',    cvKarsilastirRouter);
+app.use('/api/kullanicilar',     kullanicilarRouter);
+app.use('/api/email-sablonlari', emailSablonlariRouter);
 
 // Statik frontend dosyaları (production)
 const FRONTEND_DIST = path.join(__dirname, '../../frontend-react/dist');
@@ -68,6 +74,11 @@ app.use(errorHandler);
 pool.query(fs.readFileSync(path.join(__dirname, 'db/migrations/006_cv_olusturucu.sql'), 'utf8'))
   .then(() => console.log('✓ Migration 006 (cv_profilleri) hazır'))
   .catch(err => console.error('Migration 006 uygulanamadı:', err.message));
+
+// Kullanıcı yönetimi tabloları (migration 007) — idempotent
+pool.query(fs.readFileSync(path.join(__dirname, 'db/migrations/007_kullanici_yonetimi.sql'), 'utf8'))
+  .then(() => console.log('✓ Migration 007 (kullanıcı yönetimi) hazır'))
+  .catch(err => console.error('Migration 007 uygulanamadı:', err.message));
 
 app.listen(PORT, () => {
   console.log(`\nSunucu çalışıyor → http://localhost:${PORT}`);

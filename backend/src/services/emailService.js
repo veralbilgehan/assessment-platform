@@ -330,4 +330,24 @@ async function davetGonder({ alici, aliciAd, testLinki, proje_adi, pozisyon, dav
   });
 }
 
-module.exports = { raporGonder, davetGonder, olusturHTMLRapor, hesaplaGruplar };
+/* ─── Şablonlu E-posta (şifre sıfırlama, kullanıcı daveti vb.) ─── */
+async function sablonluGonder({ anahtar, alici, aliciAd, degiskenler }) {
+  const { sablonGetir, isle } = require('./emailSablonlari');
+  const sablon = await sablonGetir(anahtar);
+  if (!sablon) throw new Error(`E-posta şablonu bulunamadı: ${anahtar}`);
+
+  const { t, s } = await buildTransporter();
+  if (!s.user) {
+    throw new Error('SMTP ayarları yapılandırılmamış. Ayarlar sayfasından SMTP bilgilerini girin.');
+  }
+
+  const { konu, html } = isle(sablon, degiskenler);
+  await t.sendMail({
+    from:    s.from || `"Değerlendirme Sistemi" <${s.user}>`,
+    to:      aliciAd ? `"${aliciAd.replace(/"/g, '')}" <${alici}>` : alici,
+    subject: konu,
+    html,
+  });
+}
+
+module.exports = { raporGonder, davetGonder, sablonluGonder, olusturHTMLRapor, hesaplaGruplar };
