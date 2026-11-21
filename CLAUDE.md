@@ -48,6 +48,7 @@ There is no automated test suite.
 ### Monorepo layout
 - `backend/` — Node.js / Express REST API (CommonJS)
 - `frontend-react/` — React 19 / Vite SPA (ESM)
+- `personel-maliyet/` — standalone personnel cost calculator (own Express server, vanilla JS UI, own DB tables and login); not part of the main app or its deploy. See its README.
 - `belgelerimden_sec.py` — standalone Python utility, unrelated to the main app
 
 ### Backend

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Personel Maliyet</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Giriş -->
+  <section id="giris" class="giris" hidden>
+    <form id="girisForm" class="kart giris-kart">
+      <h1>Personel Maliyet</h1>
+      <p class="soluk">Kişi, bölüm ve firma bazında personel maliyeti</p>
+      <label>Şifre<input type="password" name="sifre" required autofocus></label>
+      <div id="girisHata" class="uyari hata" hidden></div>
+      <button class="dugme birincil" type="submit">Giriş yap</button>
+    </form>
+  </section>
+
+  <!-- Uygulama -->
+  <div id="uygulama" hidden>
+    <header class="ust">
+      <div class="marka">Personel Maliyet</div>
+      <nav class="sekmeler" id="sekmeler">
+        <button data-sekme="rapor" class="aktif">Maliyet Raporu</button>
+        <button data-sekme="personel">Personel</button>
+        <button data-sekme="giderler">İş Yeri Giderleri</button>
+        <button data-sekme="parametreler">Parametreler</button>
+      </nav>
+      <button class="dugme" id="cikis">Çıkış</button>
+    </header>
+
+    <main>
+      <!-- Rapor -->
+      <section data-panel="rapor">
+        <div class="baslik-satir">
+          <h2>Firma geneli</h2>
+          <span class="soluk" id="raporNot"></span>
+        </div>
+        <div class="kpi-izgara" id="firmaKpi"></div>
+
+        <h2>Bölümler</h2>
+        <div class="tablo-kap"><table id="bolumTablo"></table></div>
+
+        <div class="baslik-satir">
+          <h2>Kişiler</h2>
+          <select id="bolumFiltre"><option value="">Tüm bölümler</option></select>
+        </div>
+        <div class="tablo-kap"><table id="kisiTablo"></table></div>
+      </section>
+
+      <!-- Personel -->
+      <section data-panel="personel" hidden>
+        <div class="baslik-satir">
+          <h2>Personel</h2>
+          <div class="arac">
+            <button class="dugme" id="sablonIndir">Excel şablonu indir</button>
+            <label class="dugme">Excel'den aktar<input type="file" id="excelDosya" accept=".xlsx,.xls" hidden></label>
+            <button class="dugme birincil" id="personelEkle">+ Personel ekle</button>
+          </div>
+        </div>
+        <div id="aktarSonuc"></div>
+        <div class="tablo-kap"><table id="personelTablo"></table></div>
+      </section>
+
+      <!-- Giderler -->
+      <section data-panel="giderler" hidden>
+        <div class="baslik-satir">
+          <h2>İş yeri giderleri <span class="soluk">(aylık, aktif personel sayısına bölünür)</span></h2>
+          <button class="dugme birincil" id="giderEkle">+ Gider ekle</button>
+        </div>
+        <div class="tablo-kap"><table id="giderTablo"></table></div>
+      </section>
+
+      <!-- Parametreler -->
+      <section data-panel="parametreler" hidden>
+        <h2>Yasal parametreler <span class="soluk" id="prmYil"></span></h2>
+        <div class="uyari bilgi">Varsayılan oranlar bilgi amaçlıdır. Her yıl güncel SGK oranı, teşvik puanı, prime esas kazanç tavanı ve kıdem tazminatı tavanını kontrol edip burada güncelleyin.</div>
+        <form id="prmForm" class="kart form-izgara"></form>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="modal">
+    <form method="dialog" id="modalForm" class="kart">
+      <h3 id="modalBaslik"></h3>
+      <div id="modalIcerik" class="form-izgara"></div>
+      <div id="modalHata" class="uyari hata" hidden></div>
+      <div class="modal-alt">
+        <button class="dugme" value="iptal" formnovalidate>Vazgeç</button>
+        <button class="dugme birincil" value="kaydet" id="modalKaydet">Kaydet</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
